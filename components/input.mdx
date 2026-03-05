@@ -1,0 +1,351 @@
+---
+title: 'Input'
+description: 'Standard text input field for capturing single-line text with validation and character limits'
+---
+
+## Overview
+
+The `Input` component creates a standard text input field for single-line text entry. It includes support for character count limits, read-only mode, validation, and Material Design icons.
+
+## When to Use
+
+Use the Input component when you need to:
+
+- Capture short text like names, email addresses, or usernames
+- Enforce character limits on text entry
+- Display read-only text that users can copy
+- Implement real-time validation on text input
+
+<Note>
+  For multi-line text entry, use [Textarea](/components/textarea) instead.
+</Note>
+
+## Basic Usage
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+
+const nameInput = new Input('fullName', 'Full Name');
+```
+
+This creates a basic text input with the id `fullName` and the placeholder text "Full Name".
+
+## Common Patterns
+
+### Input with Validation
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const emailInput = new Input('email', 'Email Address').apply({
+  icon: 'email',
+  validator: [Validators.required, Validators.email],
+  errorMessage: 'Please enter a valid email address',
+  hint: 'We will never share your email'
+});
+```
+
+### Input with Character Limit
+
+```typescript
+const usernameInput = new Input('username', 'Username', '', 20).apply({
+  icon: 'person',
+  validator: [Validators.required, Validators.minLength(3)],
+  hint: 'Choose a unique username (3-20 characters)'
+});
+```
+
+The character counter will automatically appear when `maxCharCount` is set.
+
+### Read-Only Input
+
+```typescript
+const referenceInput = new Input('refNumber', 'Reference Number', 'REF-12345').apply({
+  readOnly: true,
+  icon: 'tag',
+  hint: 'This reference number is generated automatically'
+});
+```
+
+### Input with Value Change Handler
+
+```typescript
+const searchInput = new Input('search', 'Search').apply({
+  icon: 'search',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const query = param.event;
+      console.log('Searching for:', query);
+      // Trigger search logic
+      this.performSearch(query);
+    }
+  }
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the input field. Used to retrieve the value from the form.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Placeholder text shown when the input is empty.
+</ParamField>
+
+<ParamField path="value" type="any">
+  Initial value of the input field.
+</ParamField>
+
+<ParamField path="maxCharCount" type="number">
+  Maximum number of characters allowed. Shows a character counter.
+</ParamField>
+
+<ParamField path="minCharCount" type="number">
+  Minimum number of characters required.
+</ParamField>
+
+<ParamField path="readOnly" type="boolean" default="false">
+  Whether the input is read-only. Users can select and copy but not edit.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display (e.g., `'person'`, `'email'`, `'phone'`).
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Angular validators to apply. Common: `Validators.required`, `Validators.email`, `Validators.pattern()`.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message shown when validation fails.
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the input field.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the input is disabled and non-interactive.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the input takes up a full row in the form grid.
+</ParamField>
+
+<ParamField path="autoFocus" type="boolean" default="false">
+  Whether the input receives focus when the form loads.
+</ParamField>
+
+## Methods
+
+### editable()
+
+Makes the input editable by setting `readOnly` to `false`.
+
+```typescript
+const input = new Input('field', 'Field').apply({ readOnly: true });
+
+// Later, make it editable
+input.editable();
+```
+
+### readonly()
+
+Makes the input read-only by setting `readOnly` to `true`.
+
+```typescript
+const input = new Input('field', 'Field');
+
+// Make it read-only
+input.readonly();
+```
+
+### apply()
+
+Applies multiple properties at once using a fluent interface.
+
+```typescript
+input.apply({
+  icon: 'email',
+  validator: Validators.required,
+  hint: 'Enter your email'
+});
+```
+
+### getNativeElement()
+
+Returns the native DOM element for direct manipulation.
+
+```typescript
+const element = input.getNativeElement();
+if (element) {
+  element.focus();
+  element.scrollIntoView();
+}
+```
+
+## Validation Examples
+
+### Required Field
+
+```typescript
+const field = new Input('name', 'Name').apply({
+  validator: Validators.required,
+  errorMessage: 'Name is required'
+});
+```
+
+### Email Validation
+
+```typescript
+const field = new Input('email', 'Email').apply({
+  validator: [Validators.required, Validators.email],
+  errorMessage: 'Please enter a valid email address'
+});
+```
+
+### Pattern Matching (Phone Number)
+
+```typescript
+const field = new Input('phone', 'Phone Number').apply({
+  validator: [Validators.required, Validators.pattern(/^\d{10}$/)],
+  errorMessage: 'Phone must be 10 digits',
+  hint: 'Format: 1234567890'
+});
+```
+
+### Min/Max Length
+
+```typescript
+const field = new Input('username', 'Username').apply({
+  validator: [
+    Validators.required,
+    Validators.minLength(3),
+    Validators.maxLength(20)
+  ],
+  errorMessage: 'Username must be 3-20 characters'
+});
+```
+
+### Custom Validator
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+function noSpacesValidator(control: AbstractControl): ValidationErrors | null {
+  if (control.value && control.value.includes(' ')) {
+    return { noSpaces: true };
+  }
+  return null;
+}
+
+const field = new Input('username', 'Username').apply({
+  validator: [Validators.required, noSpacesValidator],
+  errorMessage: 'Username cannot contain spaces'
+});
+```
+
+## Best Practices
+
+<Tip>
+  **Use appropriate icons** - Icons help users quickly identify field purpose. Use `'person'` for names, `'email'` for emails, `'phone'` for phone numbers, etc.
+</Tip>
+
+<Tip>
+  **Provide helpful hints** - Use the `hint` property to give users context about what to enter or format requirements.
+</Tip>
+
+<Warning>
+  **Don't rely solely on placeholders** - Placeholders disappear when users start typing. Use labels and hints for important information.
+</Warning>
+
+<Tip>
+  **Combine validators** - Use multiple validators together for robust validation:
+  ```typescript
+  validator: [
+    Validators.required,
+    Validators.minLength(8),
+    Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)/)
+  ]
+  ```
+</Tip>
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { FormStructure, Input } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-contact-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class ContactFormComponent {
+  formStructure: FormStructure;
+
+  constructor() {
+    this.formStructure = new FormStructure('Contact Information');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+
+    this.formStructure.nodes = [
+      new Input('firstName', 'First Name').apply({
+        icon: 'person',
+        validator: Validators.required,
+        autoFocus: true
+      }),
+
+      new Input('lastName', 'Last Name').apply({
+        validator: Validators.required
+      }),
+
+      new Input('email', 'Email Address').apply({
+        icon: 'email',
+        validator: [Validators.required, Validators.email],
+        errorMessage: 'Please enter a valid email',
+        singleLine: true
+      }),
+
+      new Input('phone', 'Phone Number').apply({
+        icon: 'phone',
+        validator: [Validators.required, Validators.pattern(/^\d{10}$/)],
+        hint: 'Format: 1234567890',
+        maxCharCount: 10
+      }),
+
+      new Input('company', 'Company Name').apply({
+        icon: 'business',
+        maxCharCount: 100
+      }),
+
+      new Input('website', 'Website').apply({
+        icon: 'language',
+        validator: Validators.pattern(/^https?:\/\/.+/),
+        hint: 'Must start with http:// or https://'
+      })
+    ];
+  }
+}
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Textarea" icon="align-left" href="/components/textarea">
+    Multi-line text input for longer content
+  </Card>
+  
+  <Card title="Input File" icon="upload" href="/components/input-file">
+    File upload with validation
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [Validators](/concepts/validators) - Learn about all available validators
+- [Actions](/concepts/actions) - Handle input events and interactions
+- [Form Structure](/concepts/form-structure) - Understanding form layout and configuration

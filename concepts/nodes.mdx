@@ -1,0 +1,633 @@
+---
+title: 'Nodes'
+description: 'Understanding form nodes - the building blocks of dynamic forms'
+---
+
+## Overview
+
+Nodes are the individual form fields and components that make up your dynamic form. Each node represents a specific input type (text input, dropdown, checkbox, etc.) and contains configuration for its appearance, behavior, and validation.
+
+## Node Base Class
+
+All nodes inherit from the `NodeBase` class which provides common properties:
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the node. Used to access form values and controls.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Placeholder text displayed in the input field
+</ParamField>
+
+<ParamField path="type" type="NodeType">
+  The type of node: `'input'`, `'checkbox'`, `'dropdown'`, `'button'`, `'date'`, `'radiogroup'`, `'textarea'`, `'file'`, `'password'`, `'number'`, `'switch'`, `'custom'`, `'autocomplete'`, `'datetime'`, `'daterange'`, `'timepicker'`
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Event handlers for the node - see [Actions](/concepts/actions)
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the node takes up a full row in the form grid
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the field
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the field is disabled
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Synchronous validators - see [Validators](/concepts/validators)
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidatorFn">
+  Asynchronous validators for server-side validation
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the field
+</ParamField>
+
+<ParamField path="autoFocus" type="boolean" default="false">
+  Whether the field receives focus on form load
+</ParamField>
+
+## Available Node Types
+
+### Input
+
+Standard text input field.
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const nameInput = new Input(
+  'name',           // id
+  'Full Name',      // placeholder
+  '',               // initial value
+  100               // maxCharCount (optional)
+).apply({
+  icon: 'person',
+  hint: 'Enter your full name',
+  validator: Validators.required,
+  singleLine: true
+});
+```
+
+**Additional Properties:**
+- `value`: Initial/current value
+- `maxCharCount`: Maximum character limit
+- `minCharCount`: Minimum character count
+- `readOnly`: Whether the input is read-only
+
+**Methods:**
+- `editable()`: Makes the input editable
+- `readonly()`: Makes the input read-only
+
+### InputPassword
+
+Password input field with masked characters.
+
+```typescript
+import { InputPassword } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const passwordInput = new InputPassword(
+  'password',
+  'Password'
+).apply({
+  validator: [Validators.required, Validators.minLength(8)],
+  icon: 'lock',
+  hint: 'Minimum 8 characters'
+});
+```
+
+### InputNumber
+
+Numeric input with optional min/max constraints.
+
+```typescript
+import { InputNumber } from 'mat-dynamic-form';
+
+const ageInput = new InputNumber(
+  'age',
+  'Age',
+  null
+).apply({
+  min: 18,
+  max: 120,
+  icon: 'calendar_today'
+});
+```
+
+**Additional Properties:**
+- `min`: Minimum allowed value
+- `max`: Maximum allowed value
+- `decimalCount`: Number of decimal places
+
+### TextArea
+
+Multi-line text input.
+
+```typescript
+import { TextArea } from 'mat-dynamic-form';
+
+const commentsArea = new TextArea(
+  'comments',
+  'Comments',
+  '',
+  500  // maxCharCount
+).apply({
+  singleLine: true,
+  hint: 'Share your thoughts'
+});
+```
+
+### Checkbox
+
+Boolean checkbox input.
+
+```typescript
+import { Checkbox } from 'mat-dynamic-form';
+
+const agreeCheckbox = new Checkbox(
+  'agreement',
+  'I agree to the terms and conditions',
+  false  // initial value
+).apply({
+  validator: Validators.requiredTrue
+});
+```
+
+### Switch
+
+Toggle switch (alternative to checkbox).
+
+```typescript
+import { Switch } from 'mat-dynamic-form';
+
+const notificationSwitch = new Switch(
+  'notifications',
+  'Enable notifications',
+  true
+).apply({
+  hint: 'Receive email updates'
+});
+```
+
+### Dropdown
+
+Single or multi-select dropdown.
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+
+const countryDropdown = new Dropdown(
+  'country',
+  'Country',
+  [
+    new OptionChild('United States', 'us'),
+    new OptionChild('United Kingdom', 'uk'),
+    new OptionChild('Canada', 'ca')
+  ],
+  'us',     // selectedValue
+  false     // multiple selection
+).apply({
+  icon: 'public',
+  hint: 'Select your country'
+});
+```
+
+**Additional Properties:**
+- `selectedValue`: Initially selected value
+- `multiple`: Enable multi-select mode
+
+**Loading Options Dynamically:**
+
+```typescript
+// From Promise
+const dropdown1 = new Dropdown(
+  'country',
+  'Country',
+  fetch('/api/countries').then(r => r.json())
+);
+
+// From Observable
+import { Observable } from 'rxjs';
+
+const dropdown2 = new Dropdown(
+  'country',
+  'Country',
+  this.http.get<OptionChild[]>('/api/countries')
+);
+```
+
+### RadioGroup
+
+Mutually exclusive radio button group.
+
+```typescript
+import { RadioGroup, OptionChild } from 'mat-dynamic-form';
+
+const genderRadio = new RadioGroup(
+  'gender',
+  'Gender',
+  [
+    new OptionChild('Male', 'm'),
+    new OptionChild('Female', 'f'),
+    new OptionChild('Other', 'o')
+  ],
+  'm'  // selected value
+).apply({
+  hint: 'Select your gender'
+});
+```
+
+### AutoComplete
+
+Searchable dropdown with filtering.
+
+```typescript
+import { AutoComplete, OptionChild } from 'mat-dynamic-form';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+
+const countryAutocomplete = new AutoComplete(
+  'country',
+  'Country',
+  this.http.get<any[]>('https://restcountries.com/v3.1/all').pipe(
+    map(countries => countries.map(c => 
+      new OptionChild(c.name.common, c.cca2)
+    ))
+  ),
+  'us',     // selectedValue
+  false     // multiple
+).apply({
+  hint: 'Type to search countries',
+  icon: 'search'
+});
+```
+
+<Tip>
+  AutoComplete automatically filters options as the user types, matching against both title and value fields.
+</Tip>
+
+### DatePicker
+
+Date selection input.
+
+```typescript
+import { DatePicker } from 'mat-dynamic-form';
+
+const birthdateInput = new DatePicker(
+  'birthdate',
+  'Date of Birth',
+  null  // initial value
+).apply({
+  minDate: new Date(1900, 0, 1),
+  maxDate: new Date(),
+  icon: 'calendar_today'
+});
+```
+
+**Additional Properties:**
+- `value`: Selected date
+- `minDate`: Minimum selectable date
+- `maxDate`: Maximum selectable date
+
+### DateTimePicker
+
+Date and time selection input.
+
+```typescript
+import { DateTimePicker } from 'mat-dynamic-form';
+
+const appointmentInput = new DateTimePicker(
+  'appointment',
+  'Appointment',
+  new Date(),
+  'dd/MM/yyyy hh:mm a'  // dateFormat
+).apply({
+  minDate: new Date(),
+  maxDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+  orientation: 'portrait',
+  showClockPicker: true,
+  acceptLabel: 'Confirm',
+  cancelLabel: 'Cancel'
+});
+```
+
+**Additional Properties:**
+- `dateFormat`: Display format (e.g., `'dd-MM-yyyy hh:mm a'`)
+- `acceptLabel`: Label for confirm button
+- `cancelLabel`: Label for cancel button
+- `selectTimeLabel`: Label for time selection
+- `enterTimeLabel`: Label for manual time entry
+- `showClockPicker`: Show visual clock picker
+- `orientation`: `'portrait'` or `'landscape'`
+
+### TimePicker
+
+Time-only selection input.
+
+```typescript
+import { TimePicker } from 'mat-dynamic-form';
+
+const timeInput = new TimePicker(
+  'meetingTime',
+  'Meeting Time',
+  new Date(),
+  'hh:mm a'
+).apply({
+  orientation: 'portrait',
+  showClockPicker: true
+});
+```
+
+### DateRangePicker
+
+Select a start and end date range.
+
+```typescript
+import { DateRangePicker } from 'mat-dynamic-form';
+
+const dateRangeInput = new DateRangePicker(
+  'vacationDates',
+  'Vacation Dates'
+).apply({
+  startDate: '2024-01-01',
+  endDate: '2024-01-07',
+  minDate: new Date(),
+  maxDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+});
+```
+
+<Note>
+  DateRangePicker creates a FormGroup with `start` and `end` controls internally.
+</Note>
+
+### InputFile
+
+File upload input with drag-and-drop support.
+
+```typescript
+import { InputFile } from 'mat-dynamic-form';
+
+const profilePicInput = new InputFile(
+  'profilePic',
+  'Profile Picture'
+).apply({
+  accept: ['png', 'jpg', 'jpeg'],
+  maxSize: 5000,  // KB
+  filename: 'profile.png',
+  dragLabel: 'Drag & Drop your file here',
+  downloadHint: 'Download file',
+  removeHint: 'Remove file',
+  retryHint: 'Retry upload',
+  onStatusChange: (change: FileChange) => {
+    console.log('File status:', change);
+  }
+});
+```
+
+**Additional Properties:**
+- `accept`: Array of allowed file extensions
+- `filename`: Default filename
+- `maxSize`: Maximum file size in KB
+- `dragLabel`: Text shown in drag-drop area
+- `downloadHint`: Tooltip for download button
+- `removeHint`: Tooltip for remove button
+- `retryHint`: Tooltip for retry button
+- `onStatusChange`: Callback when file status changes
+
+### Button
+
+Action button (typically used for validateActions).
+
+```typescript
+import { Button } from 'mat-dynamic-form';
+
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    style: 'primary',
+    onEvent: (param) => {
+      if (param.structure.isValid()) {
+        const data = param.structure.getValue();
+        console.log('Form data:', data);
+      }
+    }
+  }
+).apply({
+  icon: 'check',
+  validateForm: true,
+  validation: (param) => {
+    // Custom validation logic
+    return param.structure.getControlById('email')?.value?.length > 0;
+  }
+});
+```
+
+**Additional Properties:**
+- `validateForm`: Whether to validate the form before executing the action
+- `validation`: Custom validation function that returns boolean
+
+### CustomNode
+
+Embed custom Angular components in your form.
+
+```typescript
+import { CustomNode } from 'mat-dynamic-form';
+import { MyCustomComponent } from './my-custom.component';
+
+const customField = new CustomNode<MyCustomComponent>(
+  'customField',
+  MyCustomComponent,
+  {
+    // Properties passed to your component
+    label: 'Custom Field',
+    placeholder: 'Enter value',
+    config: { theme: 'dark' }
+  }
+);
+```
+
+**Additional Properties:**
+- `component`: The Angular component class
+- `instance`: Reference to the component instance after creation
+- `properties`: Object of properties passed to the component
+
+<Tip>
+  Your custom component will receive the properties object as `@Input()` bindings.
+</Tip>
+
+## Working with Nodes
+
+### Using apply() Method
+
+All nodes support the `apply()` method for fluent configuration:
+
+```typescript
+const input = new Input('email', 'Email Address')
+  .apply({
+    icon: 'email',
+    validator: [Validators.required, Validators.email],
+    hint: 'We will never share your email',
+    singleLine: true,
+    autoFocus: true
+  });
+```
+
+### Accessing Native Elements
+
+```typescript
+const element = node.getNativeElement();
+if (element) {
+  element.focus();
+  element.scrollIntoView();
+}
+```
+
+### Getting Node Options
+
+For selectable nodes (Dropdown, RadioGroup, AutoComplete):
+
+```typescript
+const dropdown = formStructure.getNodeById<Dropdown>('country');
+const options = dropdown.getOptions();
+console.log(options); // Array of OptionChild
+```
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import {
+  FormStructure,
+  Input,
+  InputPassword,
+  InputNumber,
+  Checkbox,
+  Dropdown,
+  RadioGroup,
+  DatePicker,
+  TextArea,
+  Button,
+  OptionChild
+} from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-registration',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class RegistrationComponent {
+  formStructure: FormStructure;
+
+  constructor() {
+    this.formStructure = new FormStructure('User Registration');
+    this.formStructure.nodeGrid = 2;
+    this.formStructure.appearance = 'outline';
+
+    this.formStructure.nodes = [
+      new Input('firstName', 'First Name').apply({
+        icon: 'person',
+        validator: Validators.required,
+        autoFocus: true
+      }),
+      
+      new Input('lastName', 'Last Name').apply({
+        validator: Validators.required
+      }),
+      
+      new Input('email', 'Email').apply({
+        icon: 'email',
+        validator: [Validators.required, Validators.email],
+        singleLine: true
+      }),
+      
+      new InputPassword('password', 'Password').apply({
+        icon: 'lock',
+        validator: [Validators.required, Validators.minLength(8)],
+        hint: 'At least 8 characters'
+      }),
+      
+      new InputNumber('age', 'Age').apply({
+        min: 18,
+        max: 120,
+        validator: Validators.required
+      }),
+      
+      new Dropdown('country', 'Country', [
+        new OptionChild('United States', 'us'),
+        new OptionChild('United Kingdom', 'uk'),
+        new OptionChild('Canada', 'ca')
+      ]).apply({
+        icon: 'public',
+        validator: Validators.required
+      }),
+      
+      new RadioGroup('gender', 'Gender', [
+        new OptionChild('Male', 'm'),
+        new OptionChild('Female', 'f'),
+        new OptionChild('Other', 'o')
+      ]),
+      
+      new DatePicker('birthdate', 'Date of Birth').apply({
+        maxDate: new Date(),
+        validator: Validators.required
+      }),
+      
+      new TextArea('bio', 'Bio', '', 500).apply({
+        singleLine: true,
+        hint: 'Tell us about yourself'
+      }),
+      
+      new Checkbox(
+        'terms',
+        'I accept the terms and conditions',
+        false
+      ).apply({
+        validator: Validators.requiredTrue,
+        singleLine: true
+      })
+    ];
+
+    this.formStructure.validateActions = [
+      new Button('cancel', 'Cancel', {
+        style: 'warn',
+        onEvent: (param) => param.structure.reset()
+      }).apply({ icon: 'close' }),
+      
+      new Button('submit', 'Register', {
+        style: 'primary',
+        onEvent: (param) => this.handleSubmit(param.structure)
+      }).apply({
+        icon: 'check',
+        validateForm: true
+      })
+    ];
+  }
+
+  handleSubmit(structure: FormStructure) {
+    const data = structure.getValue();
+    console.log('Registration data:', data);
+    // Submit to API
+  }
+}
+```
+
+## Related Concepts
+
+- [Form Structure](/concepts/form-structure) - Managing your dynamic forms
+- [Actions](/concepts/actions) - Handling node events
+- [Validators](/concepts/validators) - Adding validation to nodes

@@ -1,0 +1,515 @@
+---
+title: 'Date Time Picker'
+description: 'Combined date and time selection component with customizable formats and clock picker'
+---
+
+## Overview
+
+The `DateTimePicker` component combines date and time selection in a single, user-friendly interface. It includes a Material Design calendar picker and optional clock picker for time selection, with support for custom date/time formats.
+
+## When to Use
+
+Use the DateTimePicker component when you need to:
+
+- Schedule appointments or meetings (date + specific time)
+- Set deadlines with precise timing
+- Create events that require both date and time
+- Provide a unified interface for datetime selection
+
+<Note>
+  For date only, use [DatePicker](/components/date-picker). For time only, use [TimePicker](/components/time-picker).
+</Note>
+
+## Basic Usage
+
+```typescript
+import { DateTimePicker } from 'mat-dynamic-form';
+
+const appointmentPicker = new DateTimePicker(
+  'appointment',
+  'Appointment'
+);
+```
+
+## Common Patterns
+
+### DateTime Picker with Custom Format
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const meetingPicker = new DateTimePicker(
+  'meeting',
+  'Meeting Time',
+  new Date(), // Initial value: now
+  'MM/dd/yyyy hh:mm a' // Format: 12/31/2024 02:30 PM
+).apply({
+  icon: 'event',
+  validator: Validators.required,
+  minDate: new Date()
+});
+```
+
+### DateTime Picker with Clock Picker
+
+```typescript
+const appointmentPicker = new DateTimePicker(
+  'appointment',
+  'Appointment Date & Time',
+  null,
+  'dd-MM-yyyy HH:mm' // Format: 31-12-2024 14:30
+).apply({
+  showClockPicker: true,
+  orientation: 'portrait',
+  icon: 'schedule',
+  validator: Validators.required,
+  hint: 'Select date and time for your appointment'
+});
+```
+
+### Business Hours Only
+
+```typescript
+const businessMeetingPicker = new DateTimePicker(
+  'businessMeeting',
+  'Meeting',
+  null,
+  'EEEE, MMMM d, yyyy \u2018at\u2019 h:mm a' // Format: Monday, December 31, 2024 at 2:30 PM
+).apply({
+  minDate: new Date(),
+  icon: 'business',
+  validator: Validators.required,
+  hint: 'Business hours: Mon-Fri, 9 AM - 5 PM'
+});
+```
+
+### Custom Labels
+
+```typescript
+const customPicker = new DateTimePicker(
+  'deadline',
+  'Project Deadline',
+  null,
+  'yyyy-MM-dd HH:mm'
+).apply({
+  acceptLabel: 'Confirm',
+  cancelLabel: 'Cancel',
+  selectTimeLabel: 'Choose Time',
+  enterTimeLabel: 'Type Time',
+  minDate: new Date(),
+  icon: 'alarm'
+});
+```
+
+### Landscape Orientation
+
+```typescript
+const landscapePicker = new DateTimePicker(
+  'event',
+  'Event Date & Time',
+  null,
+  'MMM dd, yyyy - HH:mm'
+).apply({
+  orientation: 'landscape',
+  showClockPicker: true,
+  icon: 'event'
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the datetime picker.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Label text for the datetime picker.
+</ParamField>
+
+<ParamField path="value" type="Date | string">
+  Initial selected date and time.
+</ParamField>
+
+<ParamField path="dateFormat" type="string" default="'dd-MM-yyyy hh:mm a'">
+  Display format for the selected date and time. Examples:
+  - `'dd-MM-yyyy hh:mm a'` → 31-12-2024 02:30 PM
+  - `'MM/dd/yyyy HH:mm'` → 12/31/2024 14:30
+  - `'yyyy-MM-dd HH:mm:ss'` → 2024-12-31 14:30:00
+</ParamField>
+
+<ParamField path="minDate" type="Date">
+  Minimum selectable date. Dates before this are disabled.
+</ParamField>
+
+<ParamField path="maxDate" type="Date">
+  Maximum selectable date. Dates after this are disabled.
+</ParamField>
+
+<ParamField path="acceptLabel" type="string" default="'OK'">
+  Label for the confirm/accept button.
+</ParamField>
+
+<ParamField path="cancelLabel" type="string" default="'Cancel'">
+  Label for the cancel button.
+</ParamField>
+
+<ParamField path="selectTimeLabel" type="string" default="'Select Time'">
+  Label for the time selection header.
+</ParamField>
+
+<ParamField path="enterTimeLabel" type="string" default="'Enter Time'">
+  Label for manual time entry mode.
+</ParamField>
+
+<ParamField path="showClockPicker" type="boolean" default="false">
+  Whether to show the visual clock picker for time selection.
+</ParamField>
+
+<ParamField path="orientation" type="'portrait' | 'landscape'" default="'portrait'">
+  Picker dialog orientation.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display.
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Angular validators to apply.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message shown when validation fails.
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the picker.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the picker is disabled.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the picker takes up a full row in the form grid.
+</ParamField>
+
+## Date Format Patterns
+
+Use these patterns to customize the display format:
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| `yyyy` | 2024 | Full year |
+| `yy` | 24 | Short year |
+| `MMMM` | December | Full month name |
+| `MMM` | Dec | Short month name |
+| `MM` | 12 | Month number (01-12) |
+| `dd` | 31 | Day of month (01-31) |
+| `EEEE` | Monday | Full day name |
+| `EEE` | Mon | Short day name |
+| `HH` | 14 | Hour (00-23) |
+| `hh` | 02 | Hour (01-12) |
+| `mm` | 30 | Minutes (00-59) |
+| `ss` | 45 | Seconds (00-59) |
+| `a` | PM | AM/PM marker |
+
+### Common Format Examples
+
+```typescript
+// US Format: 12/31/2024 2:30 PM
+new DateTimePicker('dt', 'DateTime', null, 'MM/dd/yyyy h:mm a')
+
+// European Format: 31-12-2024 14:30
+new DateTimePicker('dt', 'DateTime', null, 'dd-MM-yyyy HH:mm')
+
+// ISO Format: 2024-12-31 14:30:00
+new DateTimePicker('dt', 'DateTime', null, 'yyyy-MM-dd HH:mm:ss')
+
+// Readable Format: Monday, December 31, 2024 at 2:30 PM
+new DateTimePicker('dt', 'DateTime', null, 'EEEE, MMMM d, yyyy \u2018at\u2019 h:mm a')
+
+// Short Format: Dec 31, 2024 - 14:30
+new DateTimePicker('dt', 'DateTime', null, 'MMM dd, yyyy - HH:mm')
+```
+
+## Validation Examples
+
+### Required DateTime
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const picker = new DateTimePicker('datetime', 'Date & Time', null, 'MM/dd/yyyy hh:mm a').apply({
+  validator: Validators.required,
+  errorMessage: 'Date and time are required'
+});
+```
+
+### Future DateTime Only
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+function futureDateTimeValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  
+  const selectedDateTime = new Date(control.value);
+  const now = new Date();
+  
+  if (selectedDateTime <= now) {
+    return { pastDateTime: true };
+  }
+  
+  return null;
+}
+
+const picker = new DateTimePicker('appointment', 'Appointment', null, 'MM/dd/yyyy hh:mm a').apply({
+  validator: [Validators.required, futureDateTimeValidator],
+  errorMessage: 'Please select a future date and time',
+  minDate: new Date()
+});
+```
+
+### Business Hours Validator
+
+```typescript
+function businessHoursValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  
+  const dateTime = new Date(control.value);
+  const day = dateTime.getDay(); // 0 = Sunday, 6 = Saturday
+  const hour = dateTime.getHours();
+  
+  // Check if weekend
+  if (day === 0 || day === 6) {
+    return { weekend: true };
+  }
+  
+  // Check if outside business hours (9 AM - 5 PM)
+  if (hour < 9 || hour >= 17) {
+    return { outsideBusinessHours: true };
+  }
+  
+  return null;
+}
+
+const picker = new DateTimePicker('meeting', 'Meeting Time', null, 'MM/dd/yyyy hh:mm a').apply({
+  validator: [Validators.required, businessHoursValidator],
+  errorMessage: 'Meetings must be scheduled Mon-Fri, 9 AM - 5 PM',
+  hint: 'Business hours only'
+});
+```
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { FormStructure, Input, DateTimePicker, TextArea, Button } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-appointment-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class AppointmentFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Schedule Appointment');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    // Set date constraints
+    const now = new Date();
+    const threeMonthsFromNow = new Date();
+    threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
+    
+    this.formStructure.nodes = [
+      new Input('name', 'Full Name').apply({
+        icon: 'person',
+        validator: Validators.required,
+        singleLine: true
+      }),
+      
+      new Input('email', 'Email').apply({
+        icon: 'email',
+        validator: [Validators.required, Validators.email],
+        singleLine: true
+      }),
+      
+      new Input('phone', 'Phone Number').apply({
+        icon: 'phone',
+        validator: Validators.required
+      }),
+      
+      new DateTimePicker(
+        'appointmentDateTime',
+        'Appointment Date & Time',
+        null,
+        'EEEE, MMMM d, yyyy \u2018at\u2019 h:mm a'
+      ).apply({
+        minDate: now,
+        maxDate: threeMonthsFromNow,
+        showClockPicker: true,
+        orientation: 'portrait',
+        acceptLabel: 'Confirm',
+        cancelLabel: 'Cancel',
+        icon: 'event',
+        validator: Validators.required,
+        hint: 'Available Mon-Fri, 9 AM - 5 PM',
+        singleLine: false
+      }),
+      
+      new TextArea(
+        'notes',
+        'Additional Notes',
+        '',
+        500
+      ).apply({
+        icon: 'notes',
+        hint: 'Any special requirements or questions',
+        singleLine: true
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('reset', 'Clear', {
+        style: 'warn',
+        onEvent: (param) => {
+          param.structure.reset();
+          param.structure.remapValues();
+        }
+      }).apply({
+        icon: 'clear'
+      }),
+      
+      new Button('submit', 'Schedule Appointment', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'check'
+      })
+    ];
+  }
+  
+  onSubmit(structure: FormStructure) {
+    const data = structure.getValue();
+    console.log('Appointment data:', data);
+    
+    // Format datetime for display
+    const appointmentDate = new Date(data.appointmentDateTime);
+    console.log('Scheduled for:', appointmentDate.toLocaleString());
+    
+    // Send to API
+    // this.appointmentService.schedule(data).subscribe(...);
+  }
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Choose appropriate date formats** - Use formats familiar to your users:
+  - US: `MM/dd/yyyy hh:mm a`
+  - Europe: `dd-MM-yyyy HH:mm`
+  - ISO: `yyyy-MM-dd HH:mm`
+</Tip>
+
+<Tip>
+  **Enable clock picker for better UX** - The visual clock picker (`showClockPicker: true`) is more intuitive than typing time:
+  ```typescript
+  showClockPicker: true
+  ```
+</Tip>
+
+<Warning>
+  **Handle timezone carefully** - DateTime values are in the user's local timezone. For server communication, convert to UTC:
+  ```typescript
+  const utcDate = new Date(localDate).toISOString();
+  ```
+</Warning>
+
+<Tip>
+  **Set reasonable date constraints** - Prevent invalid selections:
+  ```typescript
+  minDate: new Date(), // No past dates
+  maxDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days ahead
+  ```
+</Tip>
+
+<Tip>
+  **Provide clear hints** - Tell users about scheduling constraints:
+  ```typescript
+  hint: 'Business hours: Mon-Fri, 9 AM - 5 PM'
+  hint: 'Appointments available up to 3 months in advance'
+  ```
+</Tip>
+
+<Tip>
+  **Use portrait orientation for mobile** - Portrait orientation works better on smaller screens:
+  ```typescript
+  orientation: 'portrait'
+  ```
+</Tip>
+
+## Working with DateTime Values
+
+### Getting DateTime Value
+
+```typescript
+const formData = formStructure.getValue();
+const appointmentDateTime = formData.appointment;
+
+// Convert to Date object
+const date = new Date(appointmentDateTime);
+
+console.log('Date:', date.toLocaleDateString());
+console.log('Time:', date.toLocaleTimeString());
+console.log('ISO:', date.toISOString());
+```
+
+### Setting DateTime Programmatically
+
+```typescript
+// Set to now
+formStructure.patchValue({
+  appointment: new Date()
+});
+
+// Set specific datetime
+const specificDateTime = new Date(2024, 11, 31, 14, 30); // Dec 31, 2024 2:30 PM
+formStructure.patchValue({
+  appointment: specificDateTime
+});
+
+// Set to tomorrow at 10 AM
+const tomorrow10AM = new Date();
+tomorrow10AM.setDate(tomorrow10AM.getDate() + 1);
+tomorrow10AM.setHours(10, 0, 0, 0);
+formStructure.patchValue({
+  appointment: tomorrow10AM
+});
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Date Picker" icon="calendar" href="/components/date-picker">
+    Select date only (no time)
+  </Card>
+  
+  <Card title="Time Picker" icon="clock" href="/components/time-picker">
+    Select time only (no date)
+  </Card>
+  
+  <Card title="Date Range Picker" icon="calendar-range" href="/api/nodes/date-range-picker">
+    Select start and end dates
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [Validators](/concepts/validators) - Learn about validation
+- [Actions](/concepts/actions) - Handle datetime selection changes
+- [Form Structure](/concepts/form-structure) - Form layout and configuration

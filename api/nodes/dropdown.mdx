@@ -1,0 +1,464 @@
+---
+title: Dropdown
+description: Select input for choosing from a list of options with single or multiple selection support
+---
+
+The `Dropdown` class creates a dropdown select input for choosing one or more options from a list. It extends `SelectableNode` and supports both single and multiple selection modes, with options that can be loaded synchronously, asynchronously, or from an Observable.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → SelectableNode → Dropdown
+```
+
+## Constructor
+
+```typescript
+new Dropdown(
+  id: string,
+  placeholder?: string,
+  value?: OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>,
+  selected?: string,
+  multiple?: boolean,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+## Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the dropdown in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text displayed when no option is selected.
+</ParamField>
+
+<ParamField path="value" type="OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>">
+  The list of options to display in the dropdown. Can be:
+  - An array of `OptionChild` objects
+  - A Promise that resolves to an array of `OptionChild` objects
+  - An Observable that emits an array of `OptionChild` objects
+</ParamField>
+
+<ParamField path="selected" type="string">
+  The initial selected value (the `value` property of an `OptionChild`).
+</ParamField>
+
+<ParamField path="multiple" type="boolean" default="false">
+  Whether multiple options can be selected.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the dropdown should be displayed in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the dropdown.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the dropdown is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator">
+  Synchronous validator(s) to apply to the dropdown. Can be a single `ValidatorFn`, an array of `ValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidator">
+  Asynchronous validator(s) to apply to the dropdown. Can be a single `AsyncValidatorFn`, an array of `AsyncValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when the dropdown selection changes.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the dropdown |
+| `placeholder` | `string` | The placeholder text |
+| `type` | `NodeType` | The type of node (set to `'dropdown'`) |
+| `value` | `OptionChild[]` | The list of available options |
+| `selectedValue` | `string` | The currently selected value(s) |
+| `multiple` | `boolean` | Whether multiple selection is enabled |
+| `singleLine` | `boolean` | Single line layout flag |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Disabled state |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validator |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text displayed below the dropdown |
+
+## Methods
+
+### getOptions()
+
+Returns the list of options for the dropdown.
+
+```typescript
+getOptions(): OptionChild[]
+```
+
+### apply()
+
+Inherited from `ObjectBase`. Applies additional properties to the node instance.
+
+```typescript
+apply(options: Partial<Dropdown>): this
+```
+
+### getNativeElement()
+
+Returns the native DOM element for this dropdown.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## OptionChild Class
+
+Options for the dropdown are defined using the `OptionChild` class:
+
+```typescript
+new OptionChild(label: string, value: any)
+```
+
+- `label` - The text displayed to the user
+- `value` - The actual value stored when the option is selected
+
+## Usage Examples
+
+### Basic Dropdown
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const countryDropdown = new Dropdown('country', 'Select Country', [
+  new OptionChild('United States', 'US'),
+  new OptionChild('Canada', 'CA'),
+  new OptionChild('Mexico', 'MX'),
+  new OptionChild('United Kingdom', 'UK')
+]).apply({
+  icon: 'public',
+  validator: Validators.required
+});
+```
+
+### Dropdown with Initial Selection
+
+```typescript
+const languageDropdown = new Dropdown('language', 'Language', [
+  new OptionChild('English', 'en'),
+  new OptionChild('Spanish', 'es'),
+  new OptionChild('French', 'fr'),
+  new OptionChild('German', 'de')
+], 'en').apply({ // 'en' is pre-selected
+  icon: 'language',
+  hint: 'Select your preferred language'
+});
+```
+
+### Multiple Selection Dropdown
+
+```typescript
+const skillsDropdown = new Dropdown('skills', 'Skills', [
+  new OptionChild('JavaScript', 'js'),
+  new OptionChild('TypeScript', 'ts'),
+  new OptionChild('Python', 'python'),
+  new OptionChild('Java', 'java'),
+  new OptionChild('C#', 'csharp')
+], undefined, true).apply({ // true enables multiple selection
+  icon: 'code',
+  hint: 'Select all that apply',
+  validator: Validators.required
+});
+```
+
+### Dropdown with Async Options (Promise)
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+
+// Function that returns a Promise
+function fetchCountries(): Promise<OptionChild[]> {
+  return fetch('/api/countries')
+    .then(response => response.json())
+    .then(data => data.map(country => 
+      new OptionChild(country.name, country.code)
+    ));
+}
+
+const countryDropdown = new Dropdown('country', 'Country', fetchCountries()).apply({
+  icon: 'public',
+  validator: Validators.required,
+  hint: 'Loading countries...'
+});
+```
+
+### Dropdown with Observable Options
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+
+export class MyComponent {
+  constructor(private http: HttpClient) {}
+  
+  createDropdown() {
+    const cities$: Observable<OptionChild[]> = this.http.get('/api/cities').pipe(
+      map((data: any[]) => data.map(city => 
+        new OptionChild(city.name, city.id)
+      ))
+    );
+    
+    const cityDropdown = new Dropdown('city', 'City', cities$).apply({
+      icon: 'location_city',
+      validator: Validators.required
+    });
+    
+    return cityDropdown;
+  }
+}
+```
+
+### Dropdown with Action
+
+```typescript
+const stateDropdown = new Dropdown('state', 'State', [
+  new OptionChild('California', 'CA'),
+  new OptionChild('Texas', 'TX'),
+  new OptionChild('New York', 'NY'),
+  new OptionChild('Florida', 'FL')
+]).apply({
+  icon: 'map',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      console.log('Selected state:', param.event);
+      
+      // Load cities for the selected state
+      loadCitiesForState(param.event, param.structure);
+    }
+  }
+});
+
+function loadCitiesForState(stateCode: string, structure: FormStructure) {
+  fetch(`/api/cities?state=${stateCode}`)
+    .then(response => response.json())
+    .then(cities => {
+      const cityOptions = cities.map(city => new OptionChild(city.name, city.id));
+      const cityDropdown = structure.getNodeById('city');
+      
+      if (cityDropdown) {
+        cityDropdown.value = cityOptions;
+      }
+    });
+}
+```
+
+### Cascading Dropdowns
+
+```typescript
+import { FormStructure, Dropdown, OptionChild } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const formStructure = new FormStructure();
+formStructure.nodes = [
+  // Country dropdown
+  new Dropdown('country', 'Country', [
+    new OptionChild('United States', 'US'),
+    new OptionChild('Canada', 'CA'),
+    new OptionChild('Mexico', 'MX')
+  ]).apply({
+    validator: Validators.required,
+    action: {
+      type: 'valueChange',
+      onEvent: (param) => {
+        // Fetch and update states based on country
+        const stateDropdown = param.structure.getNodeById('state');
+        if (stateDropdown) {
+          stateDropdown.value = getStatesForCountry(param.event);
+          stateDropdown.selectedValue = null; // Reset selection
+        }
+        
+        // Clear city dropdown
+        const cityDropdown = param.structure.getNodeById('city');
+        if (cityDropdown) {
+          cityDropdown.value = [];
+          cityDropdown.selectedValue = null;
+          cityDropdown.disabled = true;
+        }
+      }
+    }
+  }),
+  
+  // State dropdown
+  new Dropdown('state', 'State', []).apply({
+    disabled: true,
+    validator: Validators.required,
+    action: {
+      type: 'valueChange',
+      onEvent: (param) => {
+        // Fetch and update cities based on state
+        const cityDropdown = param.structure.getNodeById('city');
+        if (cityDropdown) {
+          cityDropdown.value = getCitiesForState(param.event);
+          cityDropdown.selectedValue = null;
+          cityDropdown.disabled = false;
+        }
+      }
+    }
+  }),
+  
+  // City dropdown
+  new Dropdown('city', 'City', []).apply({
+    disabled: true,
+    validator: Validators.required
+  })
+];
+
+function getStatesForCountry(countryCode: string): OptionChild[] {
+  // Return states based on country
+  // This would typically be an API call
+  return [];
+}
+
+function getCitiesForState(stateCode: string): OptionChild[] {
+  // Return cities based on state
+  // This would typically be an API call
+  return [];
+}
+```
+
+### Role Selection
+
+```typescript
+const roleDropdown = new Dropdown('role', 'Role', [
+  new OptionChild('Administrator', 'admin'),
+  new OptionChild('Manager', 'manager'),
+  new OptionChild('Employee', 'employee'),
+  new OptionChild('Guest', 'guest')
+]).apply({
+  icon: 'admin_panel_settings',
+  validator: Validators.required,
+  hint: 'Select user role',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      console.log('Role selected:', param.event);
+      
+      // Show/hide additional fields based on role
+      if (param.event === 'admin') {
+        // Add admin-specific fields
+      }
+    }
+  }
+});
+```
+
+### Priority Dropdown
+
+```typescript
+const priorityDropdown = new Dropdown('priority', 'Priority', [
+  new OptionChild('🔴 Critical', 'critical'),
+  new OptionChild('🟠 High', 'high'),
+  new OptionChild('🟡 Medium', 'medium'),
+  new OptionChild('🟢 Low', 'low')
+], 'medium').apply({
+  icon: 'priority_high',
+  validator: Validators.required
+});
+```
+
+### Multi-Select with Select All
+
+```typescript
+const interestsDropdown = new Dropdown('interests', 'Interests', [
+  new OptionChild('Technology', 'tech'),
+  new OptionChild('Sports', 'sports'),
+  new OptionChild('Music', 'music'),
+  new OptionChild('Travel', 'travel'),
+  new OptionChild('Food', 'food'),
+  new OptionChild('Art', 'art')
+], undefined, true).apply({
+  icon: 'interests',
+  hint: 'Select multiple interests'
+});
+```
+
+### Dynamic Options Based on Another Field
+
+```typescript
+import { Input, Dropdown, OptionChild } from 'mat-dynamic-form';
+
+const searchInput = new Input('search', 'Search').apply({
+  icon: 'search',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const query = param.event;
+      
+      if (query && query.length >= 3) {
+        // Fetch filtered options
+        fetch(`/api/search?q=${query}`)
+          .then(response => response.json())
+          .then(results => {
+            const dropdown = param.structure.getNodeById('results');
+            if (dropdown) {
+              dropdown.value = results.map(r => new OptionChild(r.name, r.id));
+            }
+          });
+      }
+    }
+  }
+});
+
+const resultsDropdown = new Dropdown('results', 'Results', []).apply({
+  hint: 'Search results will appear here'
+});
+```
+
+## Best Practices
+
+1. **Clear Labels**: Use descriptive placeholder text and labels
+
+2. **Validation**: Add `Validators.required` for mandatory selections
+
+3. **Icons**: Use relevant icons to make dropdowns more recognizable
+
+4. **Hints**: Provide helpful hints, especially for multiple selection
+
+5. **Loading States**: Handle loading states for async options gracefully
+
+6. **Error Handling**: Implement error handling for failed async loads
+
+7. **Default Selection**: Set appropriate default values when applicable
+
+8. **Option Limits**: For very large lists, consider using autocomplete instead
+
+9. **Cascading Updates**: Clear dependent dropdowns when parent selection changes
+
+10. **Accessibility**: Ensure keyboard navigation works properly
+
+## Related Node Types
+
+- [RadioGroup](/api/nodes/radiogroup) - Single selection with radio buttons
+- [AutoComplete](/api/nodes/autocomplete) - Searchable dropdown with filtering
+- [Checkbox](/api/nodes/checkbox) - Boolean input for single option
+- [Switch](/api/nodes/switch) - Toggle switch for boolean values

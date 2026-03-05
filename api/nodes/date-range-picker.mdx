@@ -1,0 +1,454 @@
+---
+title: 'DateRangePicker'
+description: 'API reference for the DateRangePicker node class'
+---
+
+## Overview
+
+The `DateRangePicker` class provides a date range selection interface, allowing users to select both a start date and end date in a single picker. It's ideal for booking systems, report generation, and any feature requiring a date range.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → InputBaseNode → DateRangePicker
+```
+
+## Constructor
+
+```typescript
+new DateRangePicker(
+  id: string,
+  placeholder?: string,
+  startDate?: string,
+  endDate?: string,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator | AbstractControlOptions,
+  asyncValidator?: AsyncValidatorFn,
+  action?: Action | Action[],
+  minDate?: Date,
+  maxDate?: Date
+)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the date range picker node in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text to display when no date range is selected.
+</ParamField>
+
+<ParamField path="startDate" type="string">
+  The initial start date of the range.
+</ParamField>
+
+<ParamField path="endDate" type="string">
+  The initial end date of the range.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether to display the node in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display in the picker field.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the date range picker is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator | AbstractControlOptions">
+  Synchronous validator function(s) or control options.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidatorFn">
+  Asynchronous validator function(s) for the picker.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when a date range is selected.
+</ParamField>
+
+<ParamField path="minDate" type="Date">
+  The minimum selectable date. Dates before this will be disabled.
+</ParamField>
+
+<ParamField path="maxDate" type="Date">
+  The maximum selectable date. Dates after this will be disabled.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the node |
+| `placeholder` | `string` | The placeholder text |
+| `type` | `'daterange'` | The node type (read-only) |
+| `startDate` | `string` | The start date of the range |
+| `endDate` | `string` | The end date of the range |
+| `readOnly` | `boolean` | Whether the input field is read-only |
+| `minDate` | `Date` | Minimum selectable date |
+| `maxDate` | `Date` | Maximum selectable date |
+| `singleLine` | `boolean` | Whether displayed in single line layout |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Whether the node is disabled |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validators |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text to display |
+| `autoFocus` | `boolean` | Whether to auto-focus on load |
+
+## Methods
+
+### getNativeElement()
+
+Returns the native DOM element for this node.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Example
+
+```typescript
+import { DateRangePicker, Action } from '@ng-mdf/core';
+import { Validators } from '@angular/forms';
+
+// Simple date range picker
+const vacationRange = new DateRangePicker(
+  'vacationDates',
+  'Select vacation dates',
+  undefined,  // no initial start date
+  undefined,  // no initial end date
+  false,
+  'date_range',
+  'Please select valid vacation dates',
+  false,
+  Validators.required
+);
+
+// Date range picker with initial values
+const reportRange = new DateRangePicker(
+  'reportRange',
+  'Report period',
+  '2024-01-01',  // start date
+  '2024-12-31',  // end date
+  false,
+  'calendar_today',
+  'Please select a valid date range',
+  false,
+  Validators.required
+);
+
+// Date range picker with constraints
+const bookingRange = new DateRangePicker(
+  'bookingRange',
+  'Select booking dates',
+  undefined,
+  undefined,
+  false,
+  'event',
+  'Please select dates within the available booking period',
+  false,
+  Validators.required,
+  undefined,
+  undefined,
+  new Date(),  // minDate: today (no past dates)
+  new Date(new Date().setFullYear(new Date().getFullYear() + 1))  // maxDate: 1 year from now
+);
+
+// Date range picker with action
+const analyticsRange = new DateRangePicker(
+  'analyticsRange',
+  'Select date range for analytics',
+  undefined,
+  undefined,
+  false,
+  'analytics',
+  undefined,
+  false,
+  Validators.required,
+  undefined,
+  new Action('change', (event) => {
+    const { startDate, endDate } = event.value;
+    console.log('Selected range:', startDate, 'to', endDate);
+    // Load analytics data for the selected range
+    loadAnalyticsData(startDate, endDate);
+  })
+);
+
+// Date range picker for historical data
+const historicalRange = new DateRangePicker(
+  'historicalRange',
+  'Select historical period',
+  '2020-01-01',
+  '2023-12-31',
+  false,
+  'history',
+  'Please select a date range',
+  false,
+  undefined,
+  undefined,
+  undefined,
+  new Date('2000-01-01'),  // minDate
+  new Date()  // maxDate: today (no future dates)
+);
+
+// Custom validator for date range
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+function maxRangeValidator(maxDays: number) {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    
+    const { startDate, endDate } = control.value;
+    if (!startDate || !endDate) return null;
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > maxDays) {
+      return { maxRange: `Date range cannot exceed ${maxDays} days` };
+    }
+    return null;
+  };
+}
+
+const limitedRange = new DateRangePicker(
+  'limitedRange',
+  'Select up to 30 days',
+  undefined,
+  undefined,
+  false,
+  'date_range',
+  'Date range cannot exceed 30 days',
+  false,
+  maxRangeValidator(30)  // maximum 30-day range
+);
+```
+
+## Common Use Cases
+
+### Booking System
+
+```typescript
+const hotelBooking = new DateRangePicker(
+  'hotelDates',
+  'Check-in and Check-out dates',
+  undefined,
+  undefined,
+  false,
+  'hotel',
+  'Please select your stay dates',
+  false,
+  Validators.required,
+  undefined,
+  new Action('change', (event) => {
+    const { startDate, endDate } = event.value;
+    // Calculate number of nights
+    const nights = calculateNights(startDate, endDate);
+    // Update pricing
+    updatePricing(nights);
+  }),
+  new Date(),  // Can only book from today
+  new Date(new Date().setMonth(new Date().getMonth() + 12))  // Up to 1 year ahead
+);
+```
+
+### Report Generation
+
+```typescript
+const salesReport = new DateRangePicker(
+  'salesReportRange',
+  'Select report period',
+  getFirstDayOfMonth(),
+  getLastDayOfMonth(),
+  false,
+  'assessment',
+  'Please select a valid date range',
+  false,
+  Validators.required,
+  undefined,
+  new Action('change', (event) => {
+    // Generate report preview
+    generateReportPreview(event.value.startDate, event.value.endDate);
+  }),
+  new Date('2020-01-01'),  // Company founding date
+  new Date()  // Up to today
+);
+```
+
+### Data Filtering
+
+```typescript
+const logFilter = new DateRangePicker(
+  'logFilter',
+  'Filter logs by date',
+  getLast7Days(),
+  new Date().toISOString(),
+  false,
+  'filter_list',
+  undefined,
+  false,
+  undefined,
+  undefined,
+  new Action('change', (event) => {
+    // Apply filter to log viewer
+    filterLogs(event.value.startDate, event.value.endDate);
+  }),
+  new Date(new Date().setFullYear(new Date().getFullYear() - 1)),  // Last year
+  new Date()  // Today
+);
+```
+
+## Date Range Validation
+
+### Minimum Range Duration
+
+```typescript
+function minRangeValidator(minDays: number) {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value?.startDate || !control.value?.endDate) return null;
+    
+    const start = new Date(control.value.startDate);
+    const end = new Date(control.value.endDate);
+    const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < minDays) {
+      return { minRange: `Date range must be at least ${minDays} days` };
+    }
+    return null;
+  };
+}
+
+const minimumRange = new DateRangePicker(
+  'minRange',
+  'Select at least 7 days',
+  undefined,
+  undefined,
+  false,
+  'date_range',
+  'Please select a range of at least 7 days',
+  false,
+  minRangeValidator(7)
+);
+```
+
+### Maximum Range Duration
+
+See the `maxRangeValidator` example in the usage section above.
+
+### Business Days Only
+
+```typescript
+function businessDaysValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value?.startDate || !control.value?.endDate) return null;
+  
+  const start = new Date(control.value.startDate);
+  const end = new Date(control.value.endDate);
+  
+  // Check if start or end date is a weekend
+  if (start.getDay() === 0 || start.getDay() === 6 || 
+      end.getDay() === 0 || end.getDay() === 6) {
+    return { businessDays: 'Please select business days only (Monday-Friday)' };
+  }
+  return null;
+}
+
+const businessRange = new DateRangePicker(
+  'businessRange',
+  'Select business days',
+  undefined,
+  undefined,
+  false,
+  'work',
+  'Please select weekdays only',
+  false,
+  businessDaysValidator
+);
+```
+
+## Best Practices
+
+### Set Reasonable Constraints
+
+Always set `minDate` and `maxDate` to prevent users from selecting irrelevant dates:
+
+```typescript
+const reasonableRange = new DateRangePicker(
+  'dateRange',
+  'Select dates',
+  undefined,
+  undefined,
+  false,
+  'date_range',
+  undefined,
+  false,
+  Validators.required,
+  undefined,
+  undefined,
+  new Date('2020-01-01'),  // reasonable minimum
+  new Date(new Date().setFullYear(new Date().getFullYear() + 2))  // reasonable maximum
+);
+```
+
+### Provide Clear Feedback
+
+Use descriptive error messages and hints:
+
+```typescript
+const clearRange = new DateRangePicker(
+  'clearRange',
+  'Select date range (max 90 days)',
+  undefined,
+  undefined,
+  false,
+  'date_range',
+  'Date range is required and cannot exceed 90 days',
+  false,
+  [Validators.required, maxRangeValidator(90)]
+);
+clearRange.hint = 'Choose start and end dates for your report';
+```
+
+### Handle Range Changes
+
+Implement actions to respond to range changes:
+
+```typescript
+const reactiveRange = new DateRangePicker(
+  'reactiveRange',
+  'Select range',
+  undefined,
+  undefined,
+  false,
+  'date_range',
+  undefined,
+  false,
+  undefined,
+  undefined,
+  new Action('change', (event) => {
+    // Update dependent fields or data
+    updateDependentData(event.value);
+  })
+);
+```
+
+## Related Node Types
+
+- [DatePicker](/api/nodes/date-picker) - For selecting a single date
+- [DateTimePicker](/api/nodes/date-time-picker) - For selecting date and time
+- [TimePicker](/api/nodes/time-picker) - For selecting time only
+- [Input](/api/nodes/input) - Base input node for text values

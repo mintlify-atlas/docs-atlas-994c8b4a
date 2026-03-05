@@ -1,0 +1,1199 @@
+---
+title: 'Node'
+description: 'Form field node classes for creating dynamic form controls'
+icon: 'square-code'
+---
+
+## Overview
+
+Node classes represent different types of form fields in Mat Dynamic Form. Each node type corresponds to a specific UI control (input, dropdown, checkbox, etc.).
+
+**Source:** `projects/mat-dynamic-form/src/lib/models/Node.ts`
+
+## Base Classes
+
+### NodeBase
+
+Abstract base class for all node types.
+
+**Source:** `Node.ts:19`
+
+#### Properties
+
+<ResponseField name="id" type="string" required>
+  Unique identifier for the node (used as form control name)
+</ResponseField>
+
+<ResponseField name="placeholder" type="string" optional>
+  Placeholder text displayed in the input
+</ResponseField>
+
+<ResponseField name="type" type="NodeType" optional>
+  The node type: `'input'` | `'checkbox'` | `'dropdown'` | `'button'` | `'date'` | `'radiogroup'` | `'textarea'` | `'file'` | `'password'` | `'number'` | `'switch'` | `'custom'` | `'autocomplete'` | `'datetime'` | `'daterange'` | `'timepicker'`
+</ResponseField>
+
+<ResponseField name="action" type="Action | Action[]" optional>
+  Event action(s) to execute. See [Action](/api/action)
+</ResponseField>
+
+<ResponseField name="singleLine" type="boolean" optional default="false">
+  If true, label and input appear on same line
+</ResponseField>
+
+<ResponseField name="icon" type="string" optional>
+  Material icon name to display (e.g., 'person', 'email')
+</ResponseField>
+
+<ResponseField name="errorMessage" type="string" optional>
+  Custom error message when validation fails
+</ResponseField>
+
+<ResponseField name="disabled" type="boolean" optional>
+  Whether the control is disabled
+</ResponseField>
+
+<ResponseField name="validator" type="Validator | AbstractControlOptions" optional>
+  Synchronous validator function(s)
+</ResponseField>
+
+<ResponseField name="asyncValidator" type="AsyncValidatorFn" optional>
+  Asynchronous validator function
+</ResponseField>
+
+<ResponseField name="hint" type="string" optional>
+  Hint text displayed below the input
+</ResponseField>
+
+<ResponseField name="autoFocus" type="boolean" optional default="false">
+  Whether this field should receive focus on load
+</ResponseField>
+
+#### Methods
+
+##### getNativeElement
+
+```typescript
+getNativeElement(): HTMLElement
+```
+
+Returns the native DOM element for this node.
+
+**Source:** `Node.ts:59`
+
+<ResponseField name="returns" type="HTMLElement">
+  The DOM element with this node's ID
+</ResponseField>
+
+### InputBaseNode
+
+Base class for input-like nodes that accept user-entered values.
+
+**Source:** `Node.ts:64`
+
+#### Additional Properties
+
+<ResponseField name="value" type="any" optional>
+  The current/initial value of the input
+</ResponseField>
+
+<ResponseField name="readOnly" type="boolean" default="false">
+  Whether the input is read-only
+</ResponseField>
+
+### SelectableNode
+
+Base class for nodes with selectable options (Dropdown, RadioGroup, AutoComplete).
+
+**Source:** `Node.ts:87`
+
+#### Additional Properties
+
+<ResponseField name="selectedValue" type="string" optional>
+  The initially selected option value
+</ResponseField>
+
+<ResponseField name="value" type="OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>">
+  The options list. Can be an array, Promise, or Observable. See [OptionChild](/api/option-child)
+</ResponseField>
+
+#### Methods
+
+##### getOptions
+
+```typescript
+getOptions(): OptionChild[]
+```
+
+Returns the resolved options array.
+
+**Source:** `Node.ts:125`
+
+<ResponseField name="returns" type="OptionChild[]">
+  Array of selectable options
+</ResponseField>
+
+## Node Types
+
+### Input
+
+Standard text input field.
+
+**Source:** `Node.ts:169`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  value?: string,
+  maxCharCount?: number,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  readOnly?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="maxCharCount" type="number" optional>
+  Maximum number of characters allowed
+</ResponseField>
+
+<ResponseField name="minCharCount" type="number" optional>
+  Minimum number of characters required
+</ResponseField>
+
+#### Methods
+
+##### editable
+
+```typescript
+editable(): void
+```
+
+Makes the input editable by setting `readOnly` to false.
+
+**Source:** `Node.ts:179`
+
+##### readonly
+
+```typescript
+readonly(): void
+```
+
+Makes the input read-only.
+
+**Source:** `Node.ts:183`
+
+#### Example
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const nameInput = new Input(
+  'fullName',
+  'Full Name',
+  '',
+  50,          // maxCharCount
+  false,       // singleLine
+  'person',    // icon
+  'Name is required',
+  false,       // disabled
+  false,       // readOnly
+  [Validators.required, Validators.minLength(2)]
+);
+```
+
+### InputPassword
+
+Password input field with masked characters.
+
+**Source:** `Node.ts:209`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  value?: string,
+  maxCharCount?: number,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  readOnly?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+#### Example
+
+```typescript
+import { InputPassword } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const passwordInput = new InputPassword(
+  'password',
+  'Password',
+  '',
+  128,
+  false,
+  'lock',
+  'Password must be at least 8 characters',
+  false,
+  false,
+  [Validators.required, Validators.minLength(8)]
+);
+```
+
+### InputNumber
+
+Numeric input field with number-specific validation.
+
+**Source:** `Node.ts:224`
+
+#### Additional Properties
+
+<ResponseField name="min" type="number" optional>
+  Minimum allowed value
+</ResponseField>
+
+<ResponseField name="max" type="number" optional>
+  Maximum allowed value
+</ResponseField>
+
+<ResponseField name="decimalCount" type="number" optional>
+  Number of decimal places allowed
+</ResponseField>
+
+#### Example
+
+```typescript
+import { InputNumber } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const ageInput = new InputNumber(
+  'age',
+  'Age',
+  null,
+  3,
+  false,
+  'cake',
+  'Age must be between 18 and 100',
+  false,
+  false,
+  [Validators.required, Validators.min(18), Validators.max(100)]
+);
+
+ageInput.min = 18;
+ageInput.max = 100;
+ageInput.decimalCount = 0;
+```
+
+### TextArea
+
+Multi-line text input.
+
+**Source:** `Node.ts:217`
+
+#### Example
+
+```typescript
+import { TextArea } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const bioInput = new TextArea(
+  'bio',
+  'Biography',
+  '',
+  500,         // maxCharCount
+  false,
+  'description',
+  'Please enter your bio',
+  false,
+  false,
+  Validators.maxLength(500)
+);
+```
+
+### Checkbox
+
+Boolean checkbox input.
+
+**Source:** `Node.ts:151`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  value?: boolean,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="value" type="boolean" optional>
+  Initial checked state
+</ResponseField>
+
+#### Example
+
+```typescript
+import { Checkbox } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const termsCheckbox = new Checkbox(
+  'terms',
+  'I agree to the terms and conditions',
+  false,
+  false,
+  'check_circle',
+  'You must agree to the terms',
+  false,
+  Validators.requiredTrue
+);
+```
+
+### Switch
+
+Toggle switch (alternative to checkbox).
+
+**Source:** `Node.ts:160`
+
+#### Additional Properties
+
+<ResponseField name="value" type="boolean" optional>
+  Initial toggle state
+</ResponseField>
+
+#### Example
+
+```typescript
+import { Switch } from 'mat-dynamic-form';
+
+const notificationSwitch = new Switch(
+  'notifications',
+  'Enable notifications',
+  true,
+  false,
+  'notifications_active'
+);
+```
+
+### Dropdown
+
+Single or multi-select dropdown.
+
+**Source:** `Node.ts:243`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  value?: OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>,
+  selected?: string,
+  multiple?: boolean,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="multiple" type="boolean" default="false">
+  Whether multiple options can be selected
+</ResponseField>
+
+#### Example
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const countryDropdown = new Dropdown(
+  'country',
+  'Country',
+  [
+    new OptionChild('United States', 'us'),
+    new OptionChild('Canada', 'ca'),
+    new OptionChild('Mexico', 'mx'),
+    new OptionChild('United Kingdom', 'uk')
+  ],
+  'us',        // selected
+  false,       // multiple
+  false,
+  'public',
+  'Country is required',
+  false,
+  Validators.required
+);
+
+// Multi-select example
+const languagesDropdown = new Dropdown(
+  'languages',
+  'Languages',
+  [
+    new OptionChild('English', 'en'),
+    new OptionChild('Spanish', 'es'),
+    new OptionChild('French', 'fr'),
+    new OptionChild('German', 'de')
+  ],
+  null,
+  true         // multiple selection enabled
+);
+```
+
+### RadioGroup
+
+Radio button group for single selection.
+
+**Source:** `Node.ts:235`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  value?: OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>,
+  selected?: string,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+#### Example
+
+```typescript
+import { RadioGroup, OptionChild } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const genderRadio = new RadioGroup(
+  'gender',
+  'Gender',
+  [
+    new OptionChild('Male', 'male'),
+    new OptionChild('Female', 'female'),
+    new OptionChild('Other', 'other'),
+    new OptionChild('Prefer not to say', 'not_specified')
+  ],
+  'not_specified',
+  false,
+  'person',
+  'Please select your gender',
+  false,
+  Validators.required
+);
+```
+
+### AutoComplete
+
+Autocomplete input with filtered suggestions.
+
+**Source:** `Node.ts:253`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  value?: OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>,
+  selected?: string,
+  multiple?: boolean,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="multiple" type="boolean" default="false">
+  Whether multiple options can be selected
+</ResponseField>
+
+<ResponseField name="filteredOptions" type="BehaviorSubject<OptionChild[]>">
+  Observable that emits filtered options as user types
+</ResponseField>
+
+#### Example
+
+```typescript
+import { AutoComplete, OptionChild } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const cityAutocomplete = new AutoComplete(
+  'city',
+  'City',
+  [
+    new OptionChild('New York', 'ny'),
+    new OptionChild('Los Angeles', 'la'),
+    new OptionChild('Chicago', 'chi'),
+    new OptionChild('Houston', 'hou'),
+    new OptionChild('Phoenix', 'phx')
+  ],
+  null,
+  false,
+  false,
+  'location_city',
+  'Please select a city',
+  false,
+  Validators.required
+);
+
+// Options are automatically filtered as user types
+```
+
+### DatePicker
+
+Date selection input.
+
+**Source:** `Node.ts:270`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  value?: Date,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[],
+  minDate?: Date,
+  maxDate?: Date
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="minDate" type="Date" optional>
+  Minimum selectable date
+</ResponseField>
+
+<ResponseField name="maxDate" type="Date" optional>
+  Maximum selectable date
+</ResponseField>
+
+#### Example
+
+```typescript
+import { DatePicker } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const today = new Date();
+const maxDate = new Date();
+maxDate.setFullYear(today.getFullYear() + 1);
+
+const birthdayPicker = new DatePicker(
+  'birthday',
+  'Date of Birth',
+  null,
+  false,
+  'cake',
+  'Please select your birthday',
+  false,
+  Validators.required,
+  null,
+  null,
+  new Date('1900-01-01'),  // minDate
+  today                     // maxDate
+);
+```
+
+### DateTimePicker
+
+Date and time selection input.
+
+**Source:** `Node.ts:282`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  value?: Date,
+  dateFormat?: string,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[],
+  minDate?: Date,
+  maxDate?: Date,
+  acceptLabel?: string,
+  cancelLabel?: string,
+  selectTimeLabel?: string,
+  enterTimeLabel?: string,
+  showClockPicker?: boolean,
+  orientation?: 'portrait' | 'landscape'
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="dateFormat" type="string" optional>
+  Date/time display format (e.g., 'dd-MM-yyyy hh:mm a')
+</ResponseField>
+
+<ResponseField name="acceptLabel" type="string" default="'OK'">
+  Label for accept button
+</ResponseField>
+
+<ResponseField name="cancelLabel" type="string" default="'Cancel'">
+  Label for cancel button
+</ResponseField>
+
+<ResponseField name="selectTimeLabel" type="string" default="'Select Time'">
+  Label for time selection mode
+</ResponseField>
+
+<ResponseField name="enterTimeLabel" type="string" default="'Enter Time'">
+  Label for time entry mode
+</ResponseField>
+
+<ResponseField name="showClockPicker" type="boolean" default="false">
+  Whether to show visual clock picker
+</ResponseField>
+
+<ResponseField name="orientation" type="'portrait' | 'landscape'" default="'portrait'">
+  Picker orientation
+</ResponseField>
+
+#### Example
+
+```typescript
+import { DateTimePicker } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const appointmentPicker = new DateTimePicker(
+  'appointment',
+  'Appointment Date & Time',
+  null,
+  'dd/MM/yyyy hh:mm a',
+  false,
+  'event',
+  'Please select appointment time',
+  false,
+  Validators.required,
+  null,
+  null,
+  new Date(),           // minDate (today)
+  null,
+  null,
+  'Confirm',            // acceptLabel
+  'Cancel',             // cancelLabel
+  'Select Time',
+  'Enter Time',
+  true,                 // showClockPicker
+  'portrait'
+);
+```
+
+### TimePicker
+
+Time-only selection input.
+
+**Source:** `Node.ts:312`
+
+#### Example
+
+```typescript
+import { TimePicker } from 'mat-dynamic-form';
+
+const timePicker = new TimePicker(
+  'meetingTime',
+  'Meeting Time',
+  null,
+  'hh:mm a',
+  false,
+  'schedule',
+  'Please select a time'
+);
+```
+
+### DateRangePicker
+
+Date range selection (start and end dates).
+
+**Source:** `Node.ts:319`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  startDate?: string,
+  endDate?: string,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[],
+  minDate?: Date,
+  maxDate?: Date
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="startDate" type="string" optional>
+  Initial start date
+</ResponseField>
+
+<ResponseField name="endDate" type="string" optional>
+  Initial end date
+</ResponseField>
+
+#### Example
+
+```typescript
+import { DateRangePicker } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const vacationPicker = new DateRangePicker(
+  'vacation',
+  'Vacation Dates',
+  null,
+  null,
+  false,
+  'date_range',
+  'Please select vacation dates',
+  false,
+  Validators.required,
+  null,
+  null,
+  new Date()            // minDate (today)
+);
+
+// Access selected range
+// Form value will be: { start: Date, end: Date }
+```
+
+### InputFile
+
+File upload input.
+
+**Source:** `Node.ts:188`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder?: string,
+  value?: any,
+  accept?: string[],
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="accept" type="string[]" optional>
+  Accepted file types (e.g., ['.pdf', '.jpg', 'image/*'])
+</ResponseField>
+
+<ResponseField name="filename" type="string" optional>
+  Name of the uploaded file
+</ResponseField>
+
+<ResponseField name="maxSize" type="number" optional>
+  Maximum file size in bytes
+</ResponseField>
+
+<ResponseField name="dragLabel" type="string" optional>
+  Custom label for drag-and-drop area
+</ResponseField>
+
+<ResponseField name="downloadHint" type="string" optional>
+  Hint text for download action
+</ResponseField>
+
+<ResponseField name="removeHint" type="string" optional>
+  Hint text for remove action
+</ResponseField>
+
+<ResponseField name="retryHint" type="string" optional>
+  Hint text for retry action
+</ResponseField>
+
+<ResponseField name="onStatusChange" type="(value: FileChange) => void" optional>
+  Callback when file upload status changes
+</ResponseField>
+
+#### Methods
+
+##### executeStatusChange
+
+```typescript
+executeStatusChange(value: FileChange): void
+```
+
+Triggers the status change callback.
+
+**Source:** `Node.ts:204`
+
+#### Example
+
+```typescript
+import { InputFile } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const resumeUpload = new InputFile(
+  'resume',
+  'Upload Resume',
+  null,
+  ['.pdf', '.doc', '.docx'],
+  false,
+  'upload_file',
+  'Resume is required',
+  false,
+  Validators.required
+);
+
+resumeUpload.maxSize = 5 * 1024 * 1024; // 5MB
+resumeUpload.dragLabel = 'Drag and drop your resume here';
+resumeUpload.onStatusChange = (status) => {
+  console.log('File upload status:', status);
+};
+```
+
+### Button
+
+Action button (typically used for form submission or other actions).
+
+**Source:** `Node.ts:334`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  placeholder: string,
+  action: Action,
+  singleLine?: boolean,
+  icon?: string,
+  disabled?: boolean,
+  validateForm?: boolean,
+  validation?: (param: ActionEvent) => boolean
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="validateForm" type="boolean" optional>
+  Whether to validate the form before executing the action
+</ResponseField>
+
+<ResponseField name="validation" type="(param: ActionEvent) => boolean" optional>
+  Custom validation function (returns true if valid)
+</ResponseField>
+
+#### Example
+
+```typescript
+import { Button } from 'mat-dynamic-form';
+
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    type: 'click',
+    style: 'primary',
+    onEvent: ({ event, structure }) => {
+      if (structure.isValid()) {
+        const data = structure.getValue();
+        console.log('Submitting:', data);
+        // Submit to API
+      }
+    }
+  },
+  false,
+  'send',
+  false,
+  true,           // validateForm
+  ({ structure }) => {
+    // Custom validation logic
+    return structure.isValid() && structure.getValue().terms === true;
+  }
+);
+
+const cancelButton = new Button(
+  'cancel',
+  'Cancel',
+  {
+    type: 'click',
+    style: 'warn',
+    onEvent: () => {
+      window.history.back();
+    }
+  },
+  false,
+  'cancel'
+);
+```
+
+### CustomNode
+
+Custom component node for embedding custom Angular components.
+
+**Source:** `Node.ts:75`
+
+#### Constructor
+
+```typescript
+constructor(
+  id: string,
+  component: Type<T>,
+  properties?: { [key: string]: any },
+  placeholder?: string,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+#### Additional Properties
+
+<ResponseField name="component" type="Type<T>" required>
+  Angular component class to render
+</ResponseField>
+
+<ResponseField name="instance" type="T">
+  Instance of the component (set after render)
+</ResponseField>
+
+<ResponseField name="properties" type="{ [key: string]: any }" optional>
+  Input properties to pass to the component
+</ResponseField>
+
+#### Example
+
+```typescript
+import { CustomNode } from 'mat-dynamic-form';
+import { MyCustomInputComponent } from './my-custom-input.component';
+
+const customField = new CustomNode(
+  'customField',
+  MyCustomInputComponent,
+  {
+    label: 'Custom Field',
+    options: ['Option 1', 'Option 2'],
+    theme: 'dark'
+  },
+  'Enter custom value'
+);
+
+// After rendering, access component instance
+// customField.instance.someMethod();
+```
+
+## Type Aliases
+
+### Node
+
+```typescript
+type Node = Input | Checkbox | RadioGroup | Dropdown | TextArea | 
+            DatePicker | InputFile | InputNumber | InputPassword
+```
+
+Union type of all available node classes.
+
+**Source:** `Node.ts:9`
+
+### Validator
+
+```typescript
+type Validator = ValidatorFn | ValidatorFn[] | null
+```
+
+Type for synchronous validators.
+
+**Source:** `Node.ts:10`
+
+### AsyncValidator
+
+```typescript
+type AsyncValidator = AsyncValidatorFn | AsyncValidatorFn[] | null
+```
+
+Type for asynchronous validators.
+
+**Source:** `Node.ts:11`
+
+## Related Classes
+
+- [FormStructure](/api/form-structure) - Container for form nodes
+- [Action](/api/action) - Event action configuration
+- [OptionChild](/api/option-child) - Options for selectable nodes
+
+## Advanced Examples
+
+### Dynamic Options from API
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+import { of } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+// Using Promise
+const categoriesFromPromise = new Dropdown(
+  'category',
+  'Category',
+  fetch('/api/categories')
+    .then(res => res.json())
+    .then(data => data.map(item => new OptionChild(item.name, item.id)))
+);
+
+// Using Observable
+const categoriesFromObservable = new Dropdown(
+  'category',
+  'Category',
+  this.http.get<any[]>('/api/categories').pipe(
+    map(data => data.map(item => new OptionChild(item.name, item.id)))
+  )
+);
+```
+
+### Conditional Fields with Actions
+
+```typescript
+import { Dropdown, Input, OptionChild } from 'mat-dynamic-form';
+
+const accountTypeDropdown = new Dropdown(
+  'accountType',
+  'Account Type',
+  [
+    new OptionChild('Personal', 'personal'),
+    new OptionChild('Business', 'business')
+  ],
+  'personal',
+  false,
+  false,
+  'account_circle',
+  null,
+  false,
+  null,
+  null,
+  {
+    type: 'valueChange',
+    onEvent: ({ event, structure }) => {
+      if (event === 'business') {
+        // Add company field
+        const companyField = new Input(
+          'companyName',
+          'Company Name',
+          '',
+          null,
+          false,
+          'business'
+        );
+        structure.createNodes(2, [companyField]);
+      } else {
+        // Remove company field if exists
+        const companyNode = structure.getNodeById('companyName');
+        if (companyNode) {
+          structure.removeNodes([companyNode]);
+        }
+      }
+    }
+  }
+);
+```
+
+### Custom Async Validator
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { Observable, of } from 'rxjs';
+import { map, catchError, debounceTime, switchMap } from 'rxjs/operators';
+
+function usernameAvailabilityValidator(http: HttpClient): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    if (!control.value) {
+      return of(null);
+    }
+    
+    return of(control.value).pipe(
+      debounceTime(500),
+      switchMap(username => 
+        http.get<{ available: boolean }>(`/api/check-username/${username}`)
+      ),
+      map(result => result.available ? null : { usernameTaken: true }),
+      catchError(() => of(null))
+    );
+  };
+}
+
+const usernameInput = new Input(
+  'username',
+  'Username',
+  '',
+  20,
+  false,
+  'person',
+  'Username is already taken',
+  false,
+  false,
+  Validators.required,
+  usernameAvailabilityValidator(this.http)
+);
+```

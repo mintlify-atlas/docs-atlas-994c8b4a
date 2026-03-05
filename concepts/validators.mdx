@@ -1,0 +1,654 @@
+---
+title: 'Validators'
+description: 'Learn how to add validation rules to your dynamic forms'
+---
+
+## Overview
+
+Mat Dynamic Form leverages Angular's built-in validation system, supporting both synchronous and asynchronous validators at the field level and globally across the entire form.
+
+## Types of Validators
+
+Mat Dynamic Form supports all Angular validator types:
+
+```typescript
+type Validator = ValidatorFn | ValidatorFn[] | null;
+type AsyncValidator = AsyncValidatorFn | AsyncValidatorFn[] | null;
+```
+
+- **Synchronous Validators**: Execute immediately and return validation results
+- **Asynchronous Validators**: Return Promises or Observables (e.g., API validation)
+
+## Built-in Angular Validators
+
+Angular provides many validators out of the box via the `Validators` class:
+
+```typescript
+import { Validators } from '@angular/forms';
+
+// Common validators
+Validators.required              // Field must have a value
+Validators.requiredTrue          // Checkbox must be checked
+Validators.email                 // Valid email format
+Validators.min(value)           // Minimum numeric value
+Validators.max(value)           // Maximum numeric value
+Validators.minLength(length)    // Minimum string length
+Validators.maxLength(length)    // Maximum string length
+Validators.pattern(regex)       // Regex pattern match
+```
+
+## Field-Level Validators
+
+Add validators directly to individual nodes:
+
+### Single Validator
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const emailInput = new Input('email', 'Email').apply({
+  validator: Validators.required
+});
+```
+
+### Multiple Validators
+
+```typescript
+const passwordInput = new InputPassword('password', 'Password').apply({
+  validator: [
+    Validators.required,
+    Validators.minLength(8),
+    Validators.maxLength(100),
+    Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+  ],
+  hint: 'At least 8 characters with uppercase, lowercase, and number'
+});
+```
+
+### Validator Examples by Node Type
+
+```typescript
+import {
+  Input,
+  InputNumber,
+  TextArea,
+  Checkbox,
+  Dropdown,
+  DatePicker
+} from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+// Text input with length validation
+const nameInput = new Input('name', 'Full Name').apply({
+  validator: [Validators.required, Validators.maxLength(100)],
+  maxCharCount: 100
+});
+
+// Email validation
+const emailInput = new Input('email', 'Email').apply({
+  validator: [Validators.required, Validators.email]
+});
+
+// Number with range validation
+const ageInput = new InputNumber('age', 'Age').apply({
+  validator: [Validators.required, Validators.min(18), Validators.max(120)],
+  min: 18,
+  max: 120
+});
+
+// Phone number with pattern
+const phoneInput = new Input('phone', 'Phone').apply({
+  validator: [Validators.required, Validators.pattern(/^\d{10}$/)],
+  hint: 'Enter 10-digit phone number'
+});
+
+// Textarea with max length
+const bioInput = new TextArea('bio', 'Bio', '', 500).apply({
+  validator: Validators.maxLength(500),
+  maxCharCount: 500
+});
+
+// Required checkbox
+const termsCheckbox = new Checkbox('terms', 'I accept the terms').apply({
+  validator: Validators.requiredTrue
+});
+
+// Required dropdown
+const countryDropdown = new Dropdown('country', 'Country', options).apply({
+  validator: Validators.required
+});
+
+// Date with validation
+const birthdateInput = new DatePicker('birthdate', 'Date of Birth').apply({
+  validator: Validators.required,
+  maxDate: new Date()
+});
+```
+
+## Global Validators
+
+Apply validators to all fields in the form:
+
+```typescript
+import { FormStructure } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const formStructure = new FormStructure('Registration Form');
+
+// Apply required validator to all fields
+formStructure.globalValidators = Validators.required;
+
+// Or multiple global validators
+formStructure.globalValidators = [
+  Validators.required,
+  Validators.minLength(3)
+];
+```
+
+<Note>
+  Global validators are combined with field-level validators. Both sets of validators will be applied to each field.
+</Note>
+
+### Validate Disabled Fields
+
+By default, disabled fields are not validated. To validate them:
+
+```typescript
+formStructure.validateEvenDisabled = true;
+```
+
+## Custom Validators
+
+Create custom validation logic using Angular's `ValidatorFn`:
+
+### Simple Custom Validator
+
+```typescript
+import { AbstractControl, ValidatorFn, ValidationErrors } from '@angular/forms';
+
+// Validator function
+function noSpacesValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const hasSpaces = /\s/.test(control.value);
+    return hasSpaces ? { noSpaces: 'Spaces are not allowed' } : null;
+  };
+}
+
+// Use it
+const usernameInput = new Input('username', 'Username').apply({
+  validator: [Validators.required, noSpacesValidator()]
+});
+```
+
+### Parameterized Custom Validator
+
+```typescript
+function minDateValidator(minDate: Date): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    
+    const inputDate = new Date(control.value);
+    if (inputDate < minDate) {
+      return {
+        minDate: `Date must be after ${minDate.toLocaleDateString()}`
+      };
+    }
+    return null;
+  };
+}
+
+const eventDate = new DatePicker('eventDate', 'Event Date').apply({
+  validator: minDateValidator(new Date())
+});
+```
+
+### Password Match Validator Example
+
+```typescript
+import { InputPassword } from 'mat-dynamic-form';
+
+const passwordInput = new InputPassword('password', 'Password').apply({
+  validator: [Validators.required, Validators.minLength(8)]
+});
+
+const confirmInput = new InputPassword(
+  'passwordConfirm',
+  'Confirm Password'
+).apply({
+  validator: Validators.required,
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const password = param.structure.getControlById('password')?.value;
+      const confirm = param.event;
+      
+      if (password !== confirm) {
+        param.structure.getControlById('passwordConfirm')?.setErrors({
+          passwordMatch: 'Passwords must match'
+        });
+      } else {
+        param.structure.getControlById('passwordConfirm')?.setErrors(null);
+      }
+    }
+  }
+});
+```
+
+## Asynchronous Validators
+
+Use async validators for server-side validation (e.g., checking username availability):
+
+```typescript
+import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
+import { Observable, of } from 'rxjs';
+import { map, catchError, debounceTime, switchMap } from 'rxjs/operators';
+
+function usernameAvailableValidator(apiService: ApiService): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    if (!control.value) {
+      return of(null);
+    }
+    
+    return of(control.value).pipe(
+      debounceTime(500),  // Wait for user to stop typing
+      switchMap(username => 
+        apiService.checkUsername(username).pipe(
+          map(isAvailable => 
+            isAvailable ? null : { usernameTaken: 'Username already exists' }
+          ),
+          catchError(() => of(null))  // Handle errors gracefully
+        )
+      )
+    );
+  };
+}
+
+// Use it
+const usernameInput = new Input('username', 'Username').apply({
+  validator: [Validators.required, Validators.minLength(3)],
+  asyncValidator: usernameAvailableValidator(this.apiService),
+  hint: 'Checking availability...'
+});
+```
+
+<Tip>
+  Always debounce async validators to avoid excessive API calls as users type.
+</Tip>
+
+### Email Availability Validator
+
+```typescript
+function emailAvailableValidator(http: HttpClient): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    if (!control.value) return of(null);
+    
+    return http.post<{ available: boolean }>('/api/check-email', {
+      email: control.value
+    }).pipe(
+      map(response => 
+        response.available ? null : { emailTaken: 'Email already registered' }
+      ),
+      catchError(() => of(null))
+    );
+  };
+}
+```
+
+## Dynamic Validation
+
+Add or modify validators at runtime:
+
+### addValidators()
+
+Adds validators without removing existing ones:
+
+```typescript
+// Initially no validators
+const addressInput = new Input('address', 'Address');
+
+// Later, add validators dynamically
+formStructure.addValidators('address', [
+  Validators.required,
+  Validators.minLength(10)
+]);
+```
+
+### setValidator()
+
+Replaces all existing validators:
+
+```typescript
+// Replace validators completely
+formStructure.setValidator('email', [
+  Validators.required,
+  Validators.email,
+  Validators.pattern(/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/)
+]);
+```
+
+### addAsyncValidators()
+
+```typescript
+formStructure.addAsyncValidators(
+  'username',
+  usernameAvailableValidator(this.apiService)
+);
+```
+
+### setAsyncValidator()
+
+```typescript
+formStructure.setAsyncValidator(
+  'email',
+  emailAvailableValidator(this.http)
+);
+```
+
+### Conditional Validation Example
+
+```typescript
+import { RadioGroup, Input, OptionChild } from 'mat-dynamic-form';
+
+const shippingMethod = new RadioGroup(
+  'shippingMethod',
+  'Shipping Method',
+  [
+    new OptionChild('Standard', 'standard'),
+    new OptionChild('Express', 'express')
+  ]
+).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      if (param.event === 'express') {
+        // Add phone requirement for express shipping
+        param.structure.addValidators('phone', Validators.required);
+      } else {
+        // Remove phone requirement
+        param.structure.setValidator('phone', null);
+      }
+    }
+  }
+});
+
+const phoneInput = new Input('phone', 'Phone Number (optional)');
+```
+
+## Displaying Validation Errors
+
+### Error Messages
+
+Use the `errorMessage` property for custom error display:
+
+```typescript
+const emailInput = new Input('email', 'Email').apply({
+  validator: [Validators.required, Validators.email],
+  errorMessage: 'Please enter a valid email address'
+});
+```
+
+### Dynamic Error Messages
+
+Access specific validation errors programmatically:
+
+```typescript
+const control = formStructure.getControlById('email');
+
+if (control?.hasError('required')) {
+  console.log('Email is required');
+} else if (control?.hasError('email')) {
+  console.log('Email format is invalid');
+}
+```
+
+### Setting Errors Manually
+
+```typescript
+// Set custom error
+formStructure.getControlById('username')?.setErrors({
+  custom: 'This username is reserved'
+});
+
+// Clear errors
+formStructure.getControlById('username')?.setErrors(null);
+```
+
+## Validation Best Practices
+
+1. **Combine Validators**: Use both client-side and async validators for comprehensive validation.
+
+```typescript
+const emailInput = new Input('email', 'Email').apply({
+  validator: [Validators.required, Validators.email],  // Client-side
+  asyncValidator: emailAvailableValidator(this.http)    // Server-side
+});
+```
+
+2. **Provide Helpful Hints**: Guide users with clear validation requirements.
+
+```typescript
+const passwordInput = new InputPassword('password', 'Password').apply({
+  validator: [
+    Validators.required,
+    Validators.minLength(8),
+    Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
+  ],
+  hint: 'Must contain: 8+ chars, uppercase, lowercase, number, special character'
+});
+```
+
+3. **Debounce Async Validators**: Prevent excessive API calls.
+
+```typescript
+return of(control.value).pipe(
+  debounceTime(500),  // Wait 500ms after user stops typing
+  switchMap(value => apiService.validate(value))
+);
+```
+
+4. **Handle Validation Errors Gracefully**: Provide fallbacks for async validation failures.
+
+```typescript
+return apiService.checkAvailability(username).pipe(
+  map(result => result ? null : { taken: true }),
+  catchError(() => of(null))  // Don't block form on API error
+);
+```
+
+5. **Use Global Validators Sparingly**: Only use global validators for rules that truly apply to all fields.
+
+```typescript
+// Good: All fields are required
+formStructure.globalValidators = Validators.required;
+
+// Bad: Not all fields need min length
+formStructure.globalValidators = Validators.minLength(5);  // ❌
+```
+
+## Complete Validation Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators, AbstractControl } from '@angular/forms';
+import {
+  FormStructure,
+  Input,
+  InputPassword,
+  InputNumber,
+  Checkbox,
+  Dropdown,
+  Button,
+  OptionChild
+} from 'mat-dynamic-form';
+import { Observable, of } from 'rxjs';
+import { map, debounceTime, switchMap } from 'rxjs/operators';
+
+@Component({
+  selector: 'app-signup-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class SignupFormComponent {
+  formStructure: FormStructure;
+
+  constructor(private apiService: ApiService) {
+    this.formStructure = new FormStructure('Sign Up');
+    this.formStructure.appearance = 'outline';
+
+    this.formStructure.nodes = [
+      // Username with async validation
+      new Input('username', 'Username').apply({
+        validator: [
+          Validators.required,
+          Validators.minLength(3),
+          Validators.maxLength(20),
+          Validators.pattern(/^[a-zA-Z0-9_]+$/)
+        ],
+        asyncValidator: this.usernameValidator(),
+        hint: 'Letters, numbers, and underscores only',
+        icon: 'person'
+      }),
+
+      // Email with format and availability check
+      new Input('email', 'Email').apply({
+        validator: [Validators.required, Validators.email],
+        asyncValidator: this.emailValidator(),
+        icon: 'email'
+      }),
+
+      // Strong password validation
+      new InputPassword('password', 'Password').apply({
+        validator: [
+          Validators.required,
+          Validators.minLength(8),
+          this.strongPasswordValidator()
+        ],
+        hint: '8+ characters with uppercase, lowercase, number, and special character',
+        icon: 'lock'
+      }),
+
+      // Password confirmation
+      new InputPassword('passwordConfirm', 'Confirm Password').apply({
+        validator: Validators.required,
+        icon: 'lock',
+        action: {
+          type: 'valueChange',
+          onEvent: (param) => this.validatePasswordMatch(param)
+        }
+      }),
+
+      // Age with range validation
+      new InputNumber('age', 'Age').apply({
+        validator: [Validators.required, Validators.min(18), Validators.max(120)],
+        min: 18,
+        max: 120,
+        hint: 'Must be 18 or older'
+      }),
+
+      // Required terms acceptance
+      new Checkbox(
+        'terms',
+        'I accept the terms and conditions',
+        false
+      ).apply({
+        validator: Validators.requiredTrue,
+        singleLine: true
+      })
+    ];
+
+    this.formStructure.validateActions = [
+      new Button('submit', 'Sign Up', {
+        style: 'primary',
+        onEvent: (param) => this.handleSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'check'
+      })
+    ];
+  }
+
+  // Custom strong password validator
+  strongPasswordValidator() {
+    return (control: AbstractControl) => {
+      const value = control.value;
+      if (!value) return null;
+
+      const hasUpperCase = /[A-Z]/.test(value);
+      const hasLowerCase = /[a-z]/.test(value);
+      const hasNumeric = /[0-9]/.test(value);
+      const hasSpecial = /[@$!%*?&]/.test(value);
+
+      const valid = hasUpperCase && hasLowerCase && hasNumeric && hasSpecial;
+      return valid ? null : { weakPassword: 'Password is too weak' };
+    };
+  }
+
+  // Async username availability validator
+  usernameValidator() {
+    return (control: AbstractControl): Observable<any> => {
+      if (!control.value) return of(null);
+
+      return of(control.value).pipe(
+        debounceTime(500),
+        switchMap(username =>
+          this.apiService.checkUsername(username).pipe(
+            map(available => 
+              available ? null : { usernameTaken: 'Username already taken' }
+            )
+          )
+        )
+      );
+    };
+  }
+
+  // Async email availability validator
+  emailValidator() {
+    return (control: AbstractControl): Observable<any> => {
+      if (!control.value) return of(null);
+
+      return of(control.value).pipe(
+        debounceTime(500),
+        switchMap(email =>
+          this.apiService.checkEmail(email).pipe(
+            map(available => 
+              available ? null : { emailTaken: 'Email already registered' }
+            )
+          )
+        )
+      );
+    };
+  }
+
+  // Validate password match
+  validatePasswordMatch(param: any) {
+    const password = param.structure.getControlById('password')?.value;
+    const confirm = param.event;
+
+    if (password !== confirm) {
+      param.structure.getControlById('passwordConfirm')?.setErrors({
+        passwordMatch: 'Passwords do not match'
+      });
+    } else {
+      param.structure.getControlById('passwordConfirm')?.setErrors(null);
+    }
+  }
+
+  handleSubmit(structure: FormStructure) {
+    if (structure.isValid()) {
+      const userData = structure.getValue();
+      console.log('Submitting:', userData);
+      
+      this.apiService.signup(userData).subscribe(
+        response => console.log('Success:', response),
+        error => console.error('Error:', error)
+      );
+    }
+  }
+}
+```
+
+## Related Concepts
+
+- [Form Structure](/concepts/form-structure) - Accessing and managing validators
+- [Nodes](/concepts/nodes) - Applying validators to different field types
+- [Actions](/concepts/actions) - Implementing custom validation logic with events

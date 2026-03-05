@@ -1,0 +1,407 @@
+---
+title: TextArea
+description: Multi-line text input field for longer text content
+---
+
+The `TextArea` class creates a multi-line text input field designed for capturing longer text content such as descriptions, comments, or messages. It extends the `Input` class and automatically sets the type to `'textarea'`.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → InputBaseNode → Input → TextArea
+```
+
+## Constructor
+
+```typescript
+new TextArea(
+  id: string,
+  placeholder?: string,
+  value?: any,
+  maxCharCount?: number,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  readOnly?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+## Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the textarea field in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text displayed when the textarea is empty.
+</ParamField>
+
+<ParamField path="value" type="any">
+  The initial value of the textarea.
+</ParamField>
+
+<ParamField path="maxCharCount" type="number">
+  Maximum number of characters allowed in the textarea.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the textarea should be displayed in a single line layout (typically false for textareas).
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the textarea.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the textarea is disabled.
+</ParamField>
+
+<ParamField path="readOnly" type="boolean" default="false">
+  Whether the textarea is read-only.
+</ParamField>
+
+<ParamField path="validator" type="Validator">
+  Synchronous validator(s) to apply to the textarea. Can be a single `ValidatorFn`, an array of `ValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidator">
+  Asynchronous validator(s) to apply to the textarea. Can be a single `AsyncValidatorFn`, an array of `AsyncValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when specific events occur on the textarea.
+</ParamField>
+
+## Properties
+
+Inherits all properties from [Input](/api/nodes/input), with the following override:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `NodeType` | Automatically set to `'textarea'` |
+
+## Methods
+
+Inherits all methods from [Input](/api/nodes/input):
+
+- `editable()` - Makes the textarea editable
+- `readonly()` - Makes the textarea read-only
+- `apply()` - Applies additional properties to the node
+- `getNativeElement()` - Returns the native DOM element
+
+## Usage Examples
+
+### Basic TextArea
+
+```typescript
+import { TextArea } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const descriptionField = new TextArea('description', 'Description').apply({
+  validator: Validators.required,
+  icon: 'description'
+});
+```
+
+### TextArea with Character Limit
+
+```typescript
+const bioField = new TextArea('bio', 'Biography', undefined, 500).apply({
+  hint: 'Tell us about yourself (max 500 characters)',
+  icon: 'person',
+  validator: [Validators.required, Validators.maxLength(500)]
+});
+```
+
+### Comments Field
+
+```typescript
+const commentsField = new TextArea('comments', 'Additional Comments', undefined, 1000).apply({
+  hint: 'Share any additional information or questions',
+  icon: 'comment',
+  maxCharCount: 1000
+});
+```
+
+### Message Field with Validation
+
+```typescript
+const messageField = new TextArea('message', 'Your Message', undefined, 2000).apply({
+  validator: [
+    Validators.required,
+    Validators.minLength(10),
+    Validators.maxLength(2000)
+  ],
+  hint: 'Enter your message (10-2000 characters)',
+  errorMessage: 'Message must be between 10 and 2000 characters',
+  icon: 'mail'
+});
+```
+
+### Read-Only TextArea
+
+```typescript
+const termsField = new TextArea('terms', 'Terms and Conditions', termsText).apply({
+  readOnly: true,
+  hint: 'Please read the terms and conditions',
+  singleLine: false
+});
+```
+
+### Address Field
+
+```typescript
+const addressField = new TextArea('address', 'Full Address', undefined, 300).apply({
+  icon: 'location_on',
+  validator: Validators.required,
+  hint: 'Enter your complete mailing address',
+  maxCharCount: 300
+});
+```
+
+### Feedback Form
+
+```typescript
+import { FormStructure, TextArea, Button } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const formStructure = new FormStructure();
+formStructure.title = 'Feedback Form';
+formStructure.appearance = 'outline';
+
+formStructure.nodes = [
+  new TextArea('feedback', 'Your Feedback', undefined, 1000).apply({
+    validator: [Validators.required, Validators.minLength(20)],
+    hint: 'Please provide detailed feedback (min 20 characters)',
+    icon: 'feedback',
+    maxCharCount: 1000
+  }),
+  
+  new TextArea('suggestions', 'Suggestions for Improvement', undefined, 500).apply({
+    hint: 'Optional: Share any suggestions (max 500 characters)',
+    icon: 'lightbulb',
+    maxCharCount: 500
+  })
+];
+
+formStructure.validateActions = [
+  new Button('submit', 'Submit Feedback', {
+    onEvent: (param) => {
+      const formValue = param.structure?.getValue();
+      console.log('Feedback submitted:', formValue);
+    },
+    style: 'primary'
+  }).apply({
+    validateForm: true,
+    icon: 'send'
+  })
+];
+```
+
+### TextArea with Character Counter Action
+
+```typescript
+const reviewField = new TextArea('review', 'Product Review', undefined, 500).apply({
+  icon: 'rate_review',
+  validator: [Validators.required, Validators.minLength(50)],
+  hint: 'Write a detailed review (min 50 characters)',
+  maxCharCount: 500,
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const length = param.event?.length || 0;
+      const remaining = 500 - length;
+      console.log(`Characters remaining: ${remaining}`);
+      
+      // You can update a separate node to show character count
+      if (length >= 50) {
+        console.log('Minimum character requirement met');
+      }
+    }
+  }
+});
+```
+
+### Job Description Field
+
+```typescript
+const jobDescriptionField = new TextArea('jobDescription', 'Job Description', undefined, 5000).apply({
+  validator: Validators.required,
+  hint: 'Provide a detailed job description including responsibilities and requirements',
+  icon: 'work',
+  maxCharCount: 5000
+});
+```
+
+### Conditional Read-Only
+
+```typescript
+const notesField = new TextArea('notes', 'Notes', 'Initial notes content').apply({
+  icon: 'note',
+  hint: 'Add your notes here'
+});
+
+// Later in code, toggle read-only state
+if (isEditMode) {
+  notesField.editable();
+} else {
+  notesField.readonly();
+}
+```
+
+### Multi-Language Support
+
+```typescript
+import { Dropdown, OptionChild, TextArea } from 'mat-dynamic-form';
+
+const languageSelector = new Dropdown('language', 'Language', [
+  new OptionChild('English', 'en'),
+  new OptionChild('Spanish', 'es'),
+  new OptionChild('French', 'fr')
+]).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const placeholders = {
+        en: 'Enter your message in English',
+        es: 'Ingrese su mensaje en español',
+        fr: 'Entrez votre message en français'
+      };
+      
+      const messageNode = param.structure.getNodeById('message');
+      if (messageNode) {
+        messageNode.placeholder = placeholders[param.event] || placeholders.en;
+      }
+    }
+  }
+});
+
+const messageField = new TextArea('message', 'Enter your message in English', undefined, 1000).apply({
+  validator: Validators.required,
+  maxCharCount: 1000
+});
+```
+
+### Form with Auto-Save
+
+```typescript
+const draftField = new TextArea('draft', 'Draft', undefined, 10000).apply({
+  icon: 'edit',
+  hint: 'Your draft is automatically saved',
+  maxCharCount: 10000,
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      // Debounced auto-save logic
+      clearTimeout((window as any).autoSaveTimer);
+      (window as any).autoSaveTimer = setTimeout(() => {
+        console.log('Auto-saving draft...', param.event);
+        // Save to localStorage or backend
+        localStorage.setItem('draft', param.event);
+      }, 1000);
+    }
+  }
+});
+```
+
+## Validation Examples
+
+### Minimum and Maximum Length
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const essayField = new TextArea('essay', 'Essay', undefined, 5000).apply({
+  validator: [
+    Validators.required,
+    Validators.minLength(100),
+    Validators.maxLength(5000)
+  ],
+  hint: 'Write an essay between 100 and 5000 characters',
+  errorMessage: 'Essay must be between 100 and 5000 characters',
+  maxCharCount: 5000
+});
+```
+
+### Pattern Validation
+
+```typescript
+import { Validators } from '@angular/forms';
+
+// Ensure no HTML tags
+const noHtmlPattern = /^[^<>]*$/;
+
+const plainTextField = new TextArea('plainText', 'Plain Text Only', undefined, 1000).apply({
+  validator: [
+    Validators.required,
+    Validators.pattern(noHtmlPattern)
+  ],
+  hint: 'No HTML tags allowed',
+  errorMessage: 'Text cannot contain HTML tags',
+  maxCharCount: 1000
+});
+```
+
+### Custom Validator
+
+```typescript
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+
+function wordCountValidator(minWords: number, maxWords: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    
+    const wordCount = control.value.trim().split(/\s+/).length;
+    
+    if (wordCount < minWords) {
+      return { minWords: { required: minWords, actual: wordCount } };
+    }
+    if (wordCount > maxWords) {
+      return { maxWords: { required: maxWords, actual: wordCount } };
+    }
+    
+    return null;
+  };
+}
+
+const summaryField = new TextArea('summary', 'Summary', undefined, 2000).apply({
+  validator: [
+    Validators.required,
+    wordCountValidator(50, 300)
+  ],
+  hint: 'Write a summary between 50 and 300 words',
+  errorMessage: 'Summary must be between 50 and 300 words'
+});
+```
+
+## Best Practices
+
+1. **Character Limits**: Always set `maxCharCount` for better user experience and validation
+
+2. **Clear Hints**: Use `hint` to explain the purpose and any constraints
+
+3. **Minimum Length**: Use `Validators.minLength()` for fields requiring substantial input
+
+4. **Single Line Layout**: Keep `singleLine` as `false` (default) for textareas to allow full width
+
+5. **Read-Only Display**: Use `readOnly: true` for displaying long text that shouldn't be edited
+
+6. **Validation Feedback**: Combine `maxCharCount` with `Validators.maxLength()` for consistent validation
+
+7. **Auto-Save**: Consider implementing auto-save for long-form content
+
+8. **Accessibility**: Ensure proper labeling with `placeholder` and `hint` for screen readers
+
+## Related Node Types
+
+- [Input](/api/nodes/input) - Parent class for single-line text input
+- [InputPassword](/api/nodes/input-password) - Password input field
+- [InputNumber](/api/nodes/input-number) - Numeric input field

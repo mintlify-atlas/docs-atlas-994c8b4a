@@ -1,0 +1,240 @@
+---
+title: Dynamic Nodes
+description: Add and remove form fields dynamically based on user interactions
+---
+
+# Dynamic Nodes
+
+Mat Dynamic Form allows you to add and remove form fields dynamically at runtime based on user interactions or application state. This is useful for conditional forms, wizards, and multi-step processes.
+
+## Core Methods
+
+### createNodes()
+
+Adds multiple nodes to the form at a specific position.
+
+```typescript
+createNodes(from: number, nodes: Node[]): void
+```
+
+**Parameters:**
+- `from` - The index position where nodes will be inserted
+- `nodes` - Array of Node instances to add
+
+**Example:**
+
+```typescript
+import { FormStructure, Input, Dropdown, OptionChild } from 'mat-dynamic-form';
+
+const formStructure = new FormStructure();
+
+// Add nodes at position 5
+const newNodes = [
+  new Input('email', 'Email Address'),
+  new Dropdown('country', 'Country', [
+    new OptionChild('United States', 'US'),
+    new OptionChild('Canada', 'CA')
+  ])
+];
+
+formStructure.createNodes(5, newNodes);
+```
+
+See FormStructure.ts:232 for implementation details.
+
+### removeNodes()
+
+Removes multiple nodes from the form.
+
+```typescript
+removeNodes(nodes: Node[]): void
+```
+
+**Parameters:**
+- `nodes` - Array of Node instances to remove
+
+**Example:**
+
+```typescript
+// Remove previously added nodes
+formStructure.removeNodes(newNodes);
+```
+
+See FormStructure.ts:243 for implementation details.
+
+<Warning>
+When removing nodes, make sure to pass the same node instances that were added. The removal is based on node IDs, so nodes with matching IDs will be removed from both the form structure and the FormGroup.
+</Warning>
+
+## Conditional Form Fields
+
+A common use case is showing/hiding fields based on another field's value using the `valueChange` event.
+
+<Steps>
+  <Step title="Create the trigger field">
+    Add a field that will trigger the dynamic behavior:
+
+    ```typescript
+    new RadioGroup('hasPet', 'Has Pet', [
+      new OptionChild('Yes', 'y'),
+      new OptionChild('Not', 'n'),
+    ]).apply({
+      selectedValue: 'n',
+      action: { 
+        type: 'valueChange', 
+        onEvent: (param) => this.onHasPetValueChange(param) 
+      }
+    })
+    ```
+  </Step>
+
+  <Step title="Define the conditional nodes">
+    Create the nodes that will be added/removed:
+
+    ```typescript
+    onHasPetValueChange(param: ActionEvent) {
+      const petNodes = [
+        new Dropdown('petType', 'Pet Type', [
+          new OptionChild('Dog', 'PD'),
+          new OptionChild('Cat', 'PC')
+        ]),
+        new Input('breed', 'Pet Breed'),
+        new Input('petName', 'Pet Name')
+      ];
+
+      if (param.event == 'y') {
+        // Add nodes at position 7
+        this.formStructure.createNodes(7, petNodes);
+      } else {
+        // Remove nodes when not needed
+        this.formStructure.removeNodes(petNodes);
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Handle form submission">
+    When getting form values, only the currently visible nodes will be included:
+
+    ```typescript
+    const formValues = this.formStructure.getValue();
+    // petType, breed, and petName only present if hasPet === 'y'
+    ```
+  </Step>
+</Steps>
+
+See README.md:166-178 for a complete example.
+
+## Dynamic Validate Actions
+
+### createValidateActions()
+
+You can also dynamically add action buttons to the form.
+
+```typescript
+createValidateActions(from: number, nodes: Button[]): void
+```
+
+**Example:**
+
+```typescript
+import { Button } from 'mat-dynamic-form';
+
+const saveButton = new Button('save', 'Save', {
+  onEvent: (param) => {
+    const values = param.structure.getValue();
+    console.log(values);
+  },
+  style: 'primary'
+}).apply({
+  validateForm: true,
+  icon: 'save'
+});
+
+formStructure.createValidateActions(0, [saveButton]);
+```
+
+See FormStructure.ts:255 for implementation details.
+
+### removeValidateActions()
+
+Removes action buttons from the form.
+
+```typescript
+removeValidateActions(nodes: Button[]): void
+```
+
+**Example:**
+
+```typescript
+formStructure.removeValidateActions([saveButton]);
+```
+
+<Tip>
+Dynamic validate actions are useful for wizard-style forms where different steps require different action buttons (Next, Previous, Submit, etc.).
+</Tip>
+
+## Advanced Patterns
+
+### Cascading Dropdowns
+
+Create dropdowns where the options in one depend on the selection in another:
+
+```typescript
+new Dropdown('state', 'State', stateOptions).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const stateCode = param.event;
+      
+      // Remove old city dropdown if exists
+      const cityNode = new Dropdown('city', 'City', []);
+      this.formStructure.removeNodes([cityNode]);
+      
+      // Load cities for selected state
+      const cities = this.getCitiesForState(stateCode);
+      const newCityNode = new Dropdown('city', 'City', cities);
+      
+      // Add new city dropdown after state field
+      this.formStructure.createNodes(param.structure.nodes.length, [newCityNode]);
+    }
+  }
+})
+```
+
+### Multi-step Forms
+
+Implement wizard-style forms by dynamically swapping entire sections:
+
+```typescript
+goToStep(stepNumber: number) {
+  // Remove all current nodes
+  this.formStructure.removeNodes(this.currentStepNodes);
+  
+  // Add nodes for new step
+  const newStepNodes = this.getNodesForStep(stepNumber);
+  this.formStructure.createNodes(0, newStepNodes);
+  
+  // Update current step tracking
+  this.currentStepNodes = newStepNodes;
+  this.currentStep = stepNumber;
+}
+```
+
+<Warning>
+When dynamically adding nodes with validators, ensure that the form validation state is updated. You can call `param.structure.getFormGroup().updateValueAndValidity()` to recalculate the form's validation status.
+</Warning>
+
+## Best Practices
+
+- **Store Node References**: Keep references to dynamically created nodes if you need to remove them later
+- **Position Carefully**: Consider the visual flow when choosing insertion positions
+- **Clean Up**: Always remove nodes that are no longer needed to keep the form clean
+- **Validate After Changes**: Check form validity after adding/removing nodes with validators
+- **Preserve User Data**: When removing and re-adding nodes, consider storing user input to restore later
+
+## Related Resources
+
+- [Form Events](/advanced/form-events) - Learn about valueChange and other events
+- [Custom Validators](/advanced/custom-validators) - Add validation to dynamic nodes
+- [Node Types](/core-concepts/node-types) - Available node types for dynamic creation

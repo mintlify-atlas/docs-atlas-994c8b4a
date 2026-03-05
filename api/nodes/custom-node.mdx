@@ -1,0 +1,612 @@
+---
+title: 'CustomNode'
+description: 'API reference for the CustomNode class'
+---
+
+## Overview
+
+The `CustomNode<T>` class allows you to integrate any custom Angular component into a Mat Dynamic Form. This provides maximum flexibility for creating specialized form controls, complex input widgets, or entirely custom UI elements that don't fit into the standard node types.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → CustomNode<T>
+```
+
+## Generic Type Parameter
+
+`CustomNode` is a generic class that accepts a type parameter `T` representing your custom component class:
+
+```typescript
+class CustomNode<T>
+```
+
+This ensures type safety when working with component instances.
+
+## Constructor
+
+```typescript
+new CustomNode<T>(
+  id: string,
+  component: Type<T>,
+  properties?: { [key: string]: any },
+  placeholder?: string,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator | AbstractControlOptions,
+  asyncValidator?: AsyncValidatorFn,
+  action?: Action | Action[]
+)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the custom node in the DOM.
+</ParamField>
+
+<ParamField path="component" type="Type<T>" required>
+  The Angular component class to render. Must be a valid Angular component.
+</ParamField>
+
+<ParamField path="properties" type="{ [key: string]: any }">
+  An object containing properties to pass to the component instance. These will be set as inputs on the component.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Optional label or placeholder text for the custom node.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether to display the node in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display with the custom node.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the custom node is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator | AbstractControlOptions">
+  Synchronous validator function(s) or control options.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidatorFn">
+  Asynchronous validator function(s) for the custom node.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when events occur on the custom node.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the node |
+| `component` | `Type<T>` | The Angular component class to render |
+| `instance` | `T` | The component instance (available after rendering) |
+| `properties` | `{ [key: string]: any }` | Properties passed to the component |
+| `placeholder` | `string` | Label or placeholder text |
+| `type` | `'custom'` | The node type (read-only) |
+| `singleLine` | `boolean` | Whether displayed in single line layout |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Whether the node is disabled |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validators |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text to display |
+| `autoFocus` | `boolean` | Whether to auto-focus on load |
+
+## Methods
+
+### getNativeElement()
+
+Returns the native DOM element for this node.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Example
+
+### Creating a Custom Component
+
+First, create your custom Angular component:
+
+```typescript
+// color-picker.component.ts
+import { Component, Input, Output, EventEmitter, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+@Component({
+  selector: 'app-color-picker',
+  template: `
+    <div class="color-picker">
+      <div class="color-preview" [style.background-color]="value"></div>
+      <input 
+        type="color" 
+        [value]="value" 
+        (input)="onColorChange($event)"
+        [disabled]="disabled"
+      />
+      <span class="color-label">{{ label }}</span>
+    </div>
+  `,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => ColorPickerComponent),
+      multi: true
+    }
+  ]
+})
+export class ColorPickerComponent implements ControlValueAccessor {
+  @Input() label = 'Choose a color';
+  @Input() disabled = false;
+  @Output() colorChange = new EventEmitter<string>();
+
+  value = '#000000';
+  onChange: any = () => {};
+  onTouched: any = () => {};
+
+  onColorChange(event: any) {
+    this.value = event.target.value;
+    this.onChange(this.value);
+    this.colorChange.emit(this.value);
+  }
+
+  writeValue(value: any): void {
+    if (value) {
+      this.value = value;
+    }
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+  }
+}
+```
+
+### Using CustomNode
+
+Now create a `CustomNode` using your component:
+
+```typescript
+import { CustomNode } from '@ng-mdf/core';
+import { ColorPickerComponent } from './color-picker.component';
+
+// Simple custom node
+const colorPicker = new CustomNode(
+  'themeColor',
+  ColorPickerComponent,
+  {
+    label: 'Choose your theme color'
+  }
+);
+
+// Custom node with validation
+const requiredColorPicker = new CustomNode(
+  'brandColor',
+  ColorPickerComponent,
+  {
+    label: 'Brand color'
+  },
+  'Select brand color',
+  false,
+  'palette',
+  'Brand color is required',
+  false,
+  Validators.required
+);
+
+// Custom node with action
+const reactiveColorPicker = new CustomNode(
+  'accentColor',
+  ColorPickerComponent,
+  {
+    label: 'Accent color'
+  },
+  'Select accent color',
+  false,
+  'color_lens',
+  undefined,
+  false,
+  undefined,
+  undefined,
+  new Action('change', (event) => {
+    console.log('Color changed to:', event.value);
+    // Update theme preview
+    updateThemePreview(event.value);
+  })
+);
+```
+
+## Advanced Examples
+
+### Rich Text Editor
+
+```typescript
+// rich-text-editor.component.ts
+import { Component, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+@Component({
+  selector: 'app-rich-text-editor',
+  template: `
+    <div class="editor-toolbar">
+      <button (click)="formatText('bold')">Bold</button>
+      <button (click)="formatText('italic')">Italic</button>
+      <button (click)="formatText('underline')">Underline</button>
+    </div>
+    <div 
+      contenteditable="true"
+      (input)="onInput($event)"
+      [innerHTML]="value"
+      class="editor-content"
+    ></div>
+  `,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => RichTextEditorComponent),
+      multi: true
+    }
+  ]
+})
+export class RichTextEditorComponent implements ControlValueAccessor {
+  value = '';
+  onChange: any = () => {};
+  onTouched: any = () => {};
+
+  formatText(command: string) {
+    document.execCommand(command, false, undefined);
+  }
+
+  onInput(event: any) {
+    this.value = event.target.innerHTML;
+    this.onChange(this.value);
+  }
+
+  writeValue(value: any): void {
+    this.value = value || '';
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+}
+
+// Using the rich text editor
+const editor = new CustomNode(
+  'description',
+  RichTextEditorComponent,
+  {},
+  'Enter description',
+  false,
+  'edit',
+  'Description is required',
+  false,
+  Validators.required
+);
+```
+
+### Rating Component
+
+```typescript
+// star-rating.component.ts
+import { Component, Input, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+@Component({
+  selector: 'app-star-rating',
+  template: `
+    <div class="star-rating">
+      <span 
+        *ngFor="let star of stars; let i = index"
+        class="star"
+        [class.filled]="i < value"
+        (click)="rate(i + 1)"
+      >
+        ★
+      </span>
+      <span class="rating-text">{{ value }}/{{ maxStars }}</span>
+    </div>
+  `,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => StarRatingComponent),
+      multi: true
+    }
+  ]
+})
+export class StarRatingComponent implements ControlValueAccessor {
+  @Input() maxStars = 5;
+  value = 0;
+  stars: number[];
+  onChange: any = () => {};
+  onTouched: any = () => {};
+
+  ngOnInit() {
+    this.stars = Array(this.maxStars).fill(0);
+  }
+
+  rate(rating: number) {
+    this.value = rating;
+    this.onChange(this.value);
+    this.onTouched();
+  }
+
+  writeValue(value: any): void {
+    this.value = value || 0;
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+}
+
+// Using the star rating
+const rating = new CustomNode(
+  'productRating',
+  StarRatingComponent,
+  {
+    maxStars: 5
+  },
+  'Rate this product',
+  false,
+  'star',
+  'Please provide a rating',
+  false,
+  Validators.required
+);
+```
+
+### Signature Pad
+
+```typescript
+// signature-pad.component.ts
+import { Component, ViewChild, ElementRef, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+@Component({
+  selector: 'app-signature-pad',
+  template: `
+    <div class="signature-container">
+      <canvas 
+        #canvas
+        (mousedown)="startDrawing($event)"
+        (mousemove)="draw($event)"
+        (mouseup)="stopDrawing()"
+        (touchstart)="startDrawing($event)"
+        (touchmove)="draw($event)"
+        (touchend)="stopDrawing()"
+      ></canvas>
+      <button (click)="clear()">Clear</button>
+    </div>
+  `,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => SignaturePadComponent),
+      multi: true
+    }
+  ]
+})
+export class SignaturePadComponent implements ControlValueAccessor {
+  @ViewChild('canvas') canvas: ElementRef<HTMLCanvasElement>;
+  
+  private ctx: CanvasRenderingContext2D;
+  private drawing = false;
+  onChange: any = () => {};
+  onTouched: any = () => {};
+
+  ngAfterViewInit() {
+    this.ctx = this.canvas.nativeElement.getContext('2d');
+  }
+
+  startDrawing(event: any) {
+    this.drawing = true;
+    // Drawing logic...
+  }
+
+  draw(event: any) {
+    if (!this.drawing) return;
+    // Drawing logic...
+  }
+
+  stopDrawing() {
+    this.drawing = false;
+    const dataUrl = this.canvas.nativeElement.toDataURL();
+    this.onChange(dataUrl);
+  }
+
+  clear() {
+    this.ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
+    this.onChange(null);
+  }
+
+  writeValue(value: any): void {
+    if (value) {
+      // Load signature from data URL
+      const img = new Image();
+      img.onload = () => {
+        this.ctx.drawImage(img, 0, 0);
+      };
+      img.src = value;
+    }
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+}
+
+// Using the signature pad
+const signature = new CustomNode(
+  'signature',
+  SignaturePadComponent,
+  {},
+  'Please sign here',
+  false,
+  'gesture',
+  'Signature is required',
+  false,
+  Validators.required
+);
+```
+
+## Component Requirements
+
+### ControlValueAccessor
+
+For form integration, your custom component should implement `ControlValueAccessor`:
+
+```typescript
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+@Component({
+  // ... component metadata
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => YourComponent),
+      multi: true
+    }
+  ]
+})
+export class YourComponent implements ControlValueAccessor {
+  value: any;
+  onChange: any = () => {};
+  onTouched: any = () => {};
+
+  writeValue(value: any): void {
+    this.value = value;
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState?(isDisabled: boolean): void {
+    // Handle disabled state
+  }
+}
+```
+
+## Accessing Component Instance
+
+After the form renders, you can access the component instance:
+
+```typescript
+const customNode = new CustomNode(
+  'custom',
+  MyCustomComponent,
+  { someProperty: 'value' }
+);
+
+// After form is rendered
+setTimeout(() => {
+  const componentInstance = customNode.instance;
+  console.log('Component instance:', componentInstance);
+  
+  // Call component methods
+  componentInstance.someMethod();
+}, 1000);
+```
+
+## Best Practices
+
+### Implement ControlValueAccessor
+
+Always implement `ControlValueAccessor` for seamless form integration.
+
+### Use Type Safety
+
+Leverage TypeScript generics for type safety:
+
+```typescript
+const typedNode = new CustomNode<ColorPickerComponent>(
+  'color',
+  ColorPickerComponent,
+  { label: 'Pick a color' }
+);
+
+// TypeScript knows the instance type
+const instance: ColorPickerComponent = typedNode.instance;
+```
+
+### Pass Properties Appropriately
+
+Use the `properties` parameter to configure your component:
+
+```typescript
+const configuredNode = new CustomNode(
+  'editor',
+  RichTextEditorComponent,
+  {
+    toolbar: ['bold', 'italic', 'underline'],
+    maxLength: 1000,
+    placeholder: 'Start typing...'
+  }
+);
+```
+
+### Handle Validation
+
+Apply appropriate validators to custom nodes:
+
+```typescript
+const validatedNode = new CustomNode(
+  'rating',
+  StarRatingComponent,
+  { maxStars: 5 },
+  'Rate this',
+  false,
+  'star',
+  'Rating is required',
+  false,
+  [Validators.required, Validators.min(1)]
+);
+```
+
+## Related Node Types
+
+- [Input](/api/nodes/input) - Standard text input
+- [Button](/api/nodes/button) - Interactive button element
+- [NodeBase](/api/nodes/node-base) - Base class for all nodes
+- [Action](/api/action) - Event handling for components

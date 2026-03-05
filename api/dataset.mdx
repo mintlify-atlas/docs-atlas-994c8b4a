@@ -1,0 +1,530 @@
+---
+title: 'DataSet'
+description: 'Generic key-value interface for form data'
+icon: 'square-code'
+---
+
+## Overview
+
+The `DataSet` interface is a generic key-value structure used for passing data to and from form controls. It maps control IDs (strings) to their corresponding values.
+
+**Source:** `projects/mat-dynamic-form/src/lib/models/DataSet.ts:1`
+
+## Interface Definition
+
+```typescript
+interface DataSet<T> {
+  [key: string]: T;
+}
+```
+
+## Type Parameter
+
+<ParamField path="T" type="generic" required>
+  The type of values stored in the dataset. Can be any type - string, number, boolean, object, etc.
+</ParamField>
+
+## Usage
+
+DataSet is primarily used with FormStructure's value management methods:
+
+- [`patchValue()`](/api/form-structure#patchvalue) - Update form control values
+- [`getValue()`](/api/form-structure#getvalue) - Retrieve form values
+- [`getRawValue()`](/api/form-structure#getrawvalue) - Retrieve all values including disabled controls
+
+## Usage Examples
+
+### Basic String Values
+
+```typescript
+import { FormStructure, DataSet } from 'mat-dynamic-form';
+
+const structure = new FormStructure(/* ... */);
+
+// Patch values - all strings
+const userData: DataSet<string> = {
+  firstName: 'John',
+  lastName: 'Doe',
+  email: 'john.doe@example.com',
+  country: 'us'
+};
+
+structure.patchValue(userData);
+```
+
+### Mixed Value Types
+
+```typescript
+import { DataSet } from 'mat-dynamic-form';
+
+// Dataset with various types
+const formData: DataSet<any> = {
+  username: 'johndoe',              // string
+  age: 30,                          // number
+  subscribed: true,                 // boolean
+  birthdate: new Date('1993-05-15'),// Date
+  preferences: ['email', 'sms'],    // array
+  address: {                        // object
+    street: '123 Main St',
+    city: 'New York',
+    zip: '10001'
+  }
+};
+
+structure.patchValue(formData);
+```
+
+### Type-Safe Form Data
+
+```typescript
+import { FormStructure, DataSet, Input, Checkbox, Dropdown } from 'mat-dynamic-form';
+
+// Define your form data interface
+interface UserRegistration {
+  username: string;
+  email: string;
+  password: string;
+  country: string;
+  agreeToTerms: boolean;
+  age: number;
+}
+
+// Create form structure
+const structure = new FormStructure(
+  'User Registration',
+  [
+    new Input('username', 'Username'),
+    new Input('email', 'Email'),
+    new InputPassword('password', 'Password'),
+    new Dropdown('country', 'Country', countryOptions),
+    new Checkbox('agreeToTerms', 'I agree to terms'),
+    new InputNumber('age', 'Age')
+  ]
+);
+
+// Patch with type safety
+const initialData: DataSet<UserRegistration[keyof UserRegistration]> = {
+  username: 'johndoe',
+  email: 'john@example.com',
+  country: 'us',
+  agreeToTerms: false,
+  age: 25
+};
+
+structure.patchValue(initialData);
+
+// Get values with type safety
+const formValues = structure.getValue<UserRegistration>();
+console.log(formValues.username); // TypeScript knows this is a string
+console.log(formValues.agreeToTerms); // TypeScript knows this is a boolean
+```
+
+### Partial Updates
+
+```typescript
+import { DataSet } from 'mat-dynamic-form';
+
+// Update only specific fields
+const partialUpdate: DataSet<string> = {
+  email: 'newemail@example.com',
+  phone: '+1-555-0123'
+};
+
+structure.patchValue(partialUpdate);
+// Other fields remain unchanged
+```
+
+### Loading Data from API
+
+```typescript
+import { FormStructure, DataSet } from 'mat-dynamic-form';
+import { HttpClient } from '@angular/common/http';
+
+interface UserDTO {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  country: string;
+}
+
+@Component({
+  selector: 'app-user-form',
+  template: `<mat-dynamic-form [structure]="structure"></mat-dynamic-form>`
+})
+export class UserFormComponent implements OnInit {
+  structure: FormStructure;
+  
+  constructor(private http: HttpClient) {
+    this.structure = new FormStructure(/* ... */);
+  }
+  
+  ngOnInit() {
+    // Load user data
+    this.http.get<UserDTO>('/api/users/123').subscribe(user => {
+      // Convert API response to DataSet
+      const formData: DataSet<string> = {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        country: user.country
+      };
+      
+      this.structure.patchValue(formData);
+    });
+  }
+}
+```
+
+### Transforming Values
+
+```typescript
+import { DataSet } from 'mat-dynamic-form';
+
+// API returns different format than form needs
+interface ApiResponse {
+  user_name: string;
+  user_email: string;
+  is_active: boolean;
+}
+
+function transformToFormData(apiData: ApiResponse): DataSet<any> {
+  return {
+    username: apiData.user_name,
+    email: apiData.user_email,
+    active: apiData.is_active
+  };
+}
+
+const apiResponse: ApiResponse = {
+  user_name: 'johndoe',
+  user_email: 'john@example.com',
+  is_active: true
+};
+
+const formData = transformToFormData(apiResponse);
+structure.patchValue(formData);
+```
+
+### Form Submission
+
+```typescript
+import { FormStructure, DataSet, Button } from 'mat-dynamic-form';
+
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    type: 'click',
+    style: 'primary',
+    onEvent: ({ structure }) => {
+      if (structure.isValid()) {
+        // Get form values as DataSet
+        const formData: DataSet<any> = structure.getValue();
+        
+        // Submit to API
+        fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        }).then(response => {
+          if (response.ok) {
+            console.log('Form submitted successfully');
+          }
+        });
+      }
+    }
+  },
+  false,
+  'send',
+  false,
+  true
+);
+```
+
+### Conditional Field Updates
+
+```typescript
+import { DataSet, ActionEvent } from 'mat-dynamic-form';
+
+const accountTypeDropdown = new Dropdown(
+  'accountType',
+  'Account Type',
+  [
+    new OptionChild('Personal', 'personal'),
+    new OptionChild('Business', 'business')
+  ],
+  'personal',
+  false,
+  false,
+  null,
+  null,
+  false,
+  null,
+  null,
+  {
+    type: 'valueChange',
+    onEvent: ({ event, structure }: ActionEvent) => {
+      if (event === 'business') {
+        // Pre-fill business-specific fields
+        const businessDefaults: DataSet<string> = {
+          taxId: '',
+          companyName: '',
+          businessType: 'llc'
+        };
+        structure.patchValue(businessDefaults);
+      } else {
+        // Clear business fields for personal accounts
+        const clearBusiness: DataSet<string> = {
+          taxId: '',
+          companyName: '',
+          businessType: ''
+        };
+        structure.patchValue(clearBusiness);
+      }
+    }
+  }
+);
+```
+
+### Default Values
+
+```typescript
+import { FormStructure, DataSet, Input, Dropdown } from 'mat-dynamic-form';
+
+// Define default values
+const defaultValues: DataSet<any> = {
+  country: 'us',
+  language: 'en',
+  currency: 'usd',
+  notifications: true,
+  theme: 'light'
+};
+
+const structure = new FormStructure(
+  'Settings',
+  [
+    new Dropdown('country', 'Country', countryOptions),
+    new Dropdown('language', 'Language', languageOptions),
+    new Dropdown('currency', 'Currency', currencyOptions),
+    new Checkbox('notifications', 'Enable notifications'),
+    new Dropdown('theme', 'Theme', themeOptions)
+  ]
+);
+
+// Apply defaults after form initialization
+setTimeout(() => {
+  structure.patchValue(defaultValues);
+}, 0);
+```
+
+### Getting Values with Type Inference
+
+```typescript
+import { FormStructure, DataSet } from 'mat-dynamic-form';
+
+interface ContactForm {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  priority: 'low' | 'medium' | 'high';
+}
+
+const structure = new FormStructure(/* ... */);
+
+// TypeScript infers the return type
+const values = structure.getValue<ContactForm>();
+
+// Now you have type-safe access
+const name: string = values.name;
+const priority: 'low' | 'medium' | 'high' = values.priority;
+
+// Send to API with proper typing
+function submitContact(data: ContactForm) {
+  return fetch('/api/contact', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+if (structure.isValid()) {
+  submitContact(values);
+}
+```
+
+### Comparing Form States
+
+```typescript
+import { DataSet } from 'mat-dynamic-form';
+
+class FormComponent {
+  originalValues: DataSet<any>;
+  
+  ngOnInit() {
+    // Save original values
+    this.originalValues = this.structure.getValue();
+  }
+  
+  hasChanges(): boolean {
+    const currentValues = this.structure.getValue();
+    
+    // Compare datasets
+    return JSON.stringify(this.originalValues) !== JSON.stringify(currentValues);
+  }
+  
+  getChangedFields(): DataSet<any> {
+    const currentValues = this.structure.getValue();
+    const changes: DataSet<any> = {};
+    
+    Object.keys(currentValues).forEach(key => {
+      if (currentValues[key] !== this.originalValues[key]) {
+        changes[key] = currentValues[key];
+      }
+    });
+    
+    return changes;
+  }
+}
+```
+
+### Batch Operations
+
+```typescript
+import { DataSet } from 'mat-dynamic-form';
+
+// Clear all text fields
+function clearTextFields(structure: FormStructure) {
+  const clearData: DataSet<string> = {};
+  
+  structure.nodes.forEach(node => {
+    if (node instanceof Input || node instanceof TextArea) {
+      clearData[node.id] = '';
+    }
+  });
+  
+  structure.patchValue(clearData);
+}
+
+// Disable all fields
+function disableAllFields(structure: FormStructure) {
+  structure.nodes.forEach(node => {
+    const control = structure.getControlById(node.id);
+    control?.disable();
+  });
+}
+
+// Reset to defaults
+function resetToDefaults(structure: FormStructure, defaults: DataSet<any>) {
+  structure.reset();
+  structure.patchValue(defaults);
+}
+```
+
+## Error Handling
+
+```typescript
+import { DataSet } from 'mat-dynamic-form';
+import { ReferenceException } from 'mat-dynamic-form';
+
+try {
+  const data: DataSet<string> = {
+    nonExistentField: 'value',  // This field doesn't exist in the form
+    existingField: 'value'
+  };
+  
+  structure.patchValue(data);
+} catch (error) {
+  if (error instanceof ReferenceException) {
+    console.error('Field not found:', error.message);
+  }
+}
+```
+
+## Best Practices
+
+### 1. Use Type Safety
+
+```typescript
+// Define explicit interfaces for your form data
+interface RegistrationData {
+  username: string;
+  email: string;
+  age: number;
+}
+
+// Use the interface with DataSet
+const data: DataSet<RegistrationData[keyof RegistrationData]> = {
+  username: 'johndoe',
+  email: 'john@example.com',
+  age: 25
+};
+```
+
+### 2. Validate Before Patching
+
+```typescript
+function safePatchValue(structure: FormStructure, data: DataSet<any>) {
+  // Only patch fields that exist
+  const safeData: DataSet<any> = {};
+  
+  Object.keys(data).forEach(key => {
+    if (structure.getControlById(key)) {
+      safeData[key] = data[key];
+    } else {
+      console.warn(`Field '${key}' not found in form`);
+    }
+  });
+  
+  structure.patchValue(safeData);
+}
+```
+
+### 3. Handle Null/Undefined Values
+
+```typescript
+function patchWithDefaults(
+  structure: FormStructure, 
+  data: DataSet<any>,
+  defaults: DataSet<any>
+) {
+  const mergedData: DataSet<any> = { ...defaults };
+  
+  Object.keys(data).forEach(key => {
+    if (data[key] !== null && data[key] !== undefined) {
+      mergedData[key] = data[key];
+    }
+  });
+  
+  structure.patchValue(mergedData);
+}
+```
+
+## Related Classes
+
+- [FormStructure](/api/form-structure) - Uses DataSet for value management
+- [Node](/api/node) - Form fields that hold values
+
+## TypeScript Tips
+
+```typescript
+// Generic helper for creating typed DataSets
+function createDataSet<T>(): DataSet<T> {
+  return {};
+}
+
+// Usage
+const stringData = createDataSet<string>();
+stringData.field1 = 'value';
+
+const numberData = createDataSet<number>();
+numberData.age = 25;
+
+// Utility type for partial form data
+type PartialFormData<T> = Partial<DataSet<T>>;
+
+// Use with form updates
+function updateForm(partialData: PartialFormData<string>) {
+  structure.patchValue(partialData);
+}
+```

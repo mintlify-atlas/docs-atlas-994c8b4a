@@ -1,0 +1,380 @@
+---
+title: 'Form Structure'
+description: 'Learn about the FormStructure class and how it manages your dynamic forms'
+---
+
+## Overview
+
+The `FormStructure` class is the core container for your dynamic form. It manages nodes, handles validation, provides form data access, and controls the overall form behavior.
+
+## Creating a Form Structure
+
+```typescript
+import { FormStructure, Input, Button } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const formStructure = new FormStructure(
+  'Sign Up',  // title
+  [],         // nodes (can be added later)
+  []          // validate actions (optional)
+);
+```
+
+## Core Properties
+
+<ParamField path="title" type="string">
+  The title displayed at the top of the form
+</ParamField>
+
+<ParamField path="nodes" type="Node[]">
+  Array of form nodes (inputs, dropdowns, checkboxes, etc.) - see [Nodes](/concepts/nodes)
+</ParamField>
+
+<ParamField path="validateActions" type="Button[]">
+  Action buttons displayed at the bottom of the form (max 4 allowed)
+</ParamField>
+
+<ParamField path="nodeGrid" type="number" default="2">
+  Number of columns in the grid layout (1-4). Controls how nodes are arranged horizontally.
+</ParamField>
+
+<ParamField path="appearance" type="MatFormFieldAppearance" default="'standard'">
+  Material Design appearance style: `'standard'`, `'fill'`, or `'outline'`
+</ParamField>
+
+<ParamField path="showTitle" type="boolean" default="true">
+  Whether to display the form title
+</ParamField>
+
+<ParamField path="globalValidators" type="ValidatorFn | ValidatorFn[] | null">
+  Validators applied to all form fields - see [Validators](/concepts/validators)
+</ParamField>
+
+<ParamField path="validateEvenDisabled" type="boolean" default="false">
+  Whether to validate disabled fields
+</ParamField>
+
+<ParamField path="maxParentHeight" type="string" default="'100vh'">
+  Maximum height of the form container
+</ParamField>
+
+<ParamField path="onlyScrollContent" type="boolean" default="false">
+  When true, only the form content scrolls while title and actions remain fixed
+</ParamField>
+
+## Getting Form Values
+
+### getValue()
+
+Returns the current form values as a typed object. Disabled fields are excluded.
+
+```typescript
+interface UserData {
+  name: string;
+  email: string;
+  subscribe: boolean;
+}
+
+const data = formStructure.getValue<UserData>();
+console.log(data);
+// { name: 'John Doe', email: 'john@example.com', subscribe: true }
+```
+
+### getRawValue()
+
+Returns form values including disabled fields.
+
+```typescript
+const allData = formStructure.getRawValue<UserData>();
+// Includes values from disabled fields
+```
+
+<Note>
+  Use `getRawValue()` when you need to access values from disabled fields, such as when pre-populating forms in edit mode.
+</Note>
+
+## Updating Form Values
+
+### patchValue()
+
+Updates specific form field values without affecting other fields.
+
+```typescript
+formStructure.patchValue({
+  name: 'Jane Smith',
+  email: 'jane@example.com'
+});
+```
+
+<Tip>
+  `patchValue()` throws a `ReferenceException` if you try to set a value for a non-existent control ID.
+</Tip>
+
+### reset()
+
+Resets all form fields to their initial values.
+
+```typescript
+formStructure.reset();
+```
+
+### remapValues()
+
+Resets all fields to their default values as defined in the node configuration.
+
+```typescript
+formStructure.reset();
+formStructure.remapValues(); // Restore original default values
+```
+
+## Validation
+
+### isValid()
+
+Checks if the entire form is valid.
+
+```typescript
+if (formStructure.isValid()) {
+  console.log('Form is valid!');
+}
+```
+
+### isInvalid()
+
+Checks if the form has any validation errors.
+
+```typescript
+if (formStructure.isInvalid()) {
+  console.log('Please fix form errors');
+}
+```
+
+## Dynamic Node Management
+
+### createNodes()
+
+Adds nodes dynamically at a specific position.
+
+```typescript
+const newNodes = [
+  new Input('address', 'Address'),
+  new Input('city', 'City')
+];
+
+// Insert at position 5
+formStructure.createNodes(5, newNodes);
+```
+
+### removeNodes()
+
+Removes nodes from the form.
+
+```typescript
+formStructure.removeNodes(newNodes);
+```
+
+<Note>
+  When removing nodes, their form controls are automatically removed from the underlying FormGroup.
+</Note>
+
+### Practical Example: Conditional Fields
+
+```typescript
+const hasPetRadio = new RadioGroup('hasPet', 'Do you have a pet?', [
+  new OptionChild('Yes', 'yes'),
+  new OptionChild('No', 'no')
+]).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param: ActionEvent) => {
+      const petDetailsNodes = [
+        new Input('petName', 'Pet Name'),
+        new Dropdown('petType', 'Pet Type', [
+          new OptionChild('Dog', 'dog'),
+          new OptionChild('Cat', 'cat')
+        ])
+      ];
+      
+      if (param.event === 'yes') {
+        param.structure.createNodes(5, petDetailsNodes);
+      } else {
+        param.structure.removeNodes(petDetailsNodes);
+      }
+    }
+  }
+});
+```
+
+## Accessing Form Controls
+
+### getControlById()
+
+Accesses the underlying Angular `AbstractControl` for a field.
+
+```typescript
+const nameControl = formStructure.getControlById('name');
+
+if (nameControl) {
+  nameControl.setValue('New Value');
+  nameControl.setErrors({ custom: 'Custom error' });
+  console.log(nameControl.valid);
+}
+```
+
+### getNodeById()
+
+Retrieves a node instance by its ID.
+
+```typescript
+const dateNode = formStructure.getNodeById<DatePicker>('startDate');
+dateNode.minDate = new Date();
+```
+
+### getActionById()
+
+Retrieves a validate action button by its ID.
+
+```typescript
+const saveButton = formStructure.getActionById('save');
+console.log(saveButton.placeholder); // 'Save'
+```
+
+## Working with FormGroup
+
+### getFormGroup()
+
+Accesses the underlying Angular `FormGroup` instance.
+
+```typescript
+const formGroup = formStructure.getFormGroup();
+
+if (formGroup) {
+  formGroup.valueChanges.subscribe(values => {
+    console.log('Form changed:', values);
+  });
+}
+```
+
+### setFromGroup()
+
+Replaces the internal FormGroup with a new instance (advanced usage).
+
+```typescript
+import { FormGroup } from '@angular/forms';
+
+const customFormGroup = new FormGroup({});
+formStructure.setFromGroup(customFormGroup);
+```
+
+<Note>
+  This is an advanced method. In most cases, you won't need to manually set the FormGroup.
+</Note>
+
+## Dynamic Validators
+
+Add or update validators at runtime. See [Validators](/concepts/validators) for details.
+
+### addValidators()
+
+```typescript
+formStructure.addValidators('email', Validators.email);
+```
+
+### setValidator()
+
+Replaces existing validators.
+
+```typescript
+formStructure.setValidator('phone', [
+  Validators.required,
+  Validators.pattern(/^\d{10}$/)
+]);
+```
+
+### addAsyncValidators()
+
+```typescript
+formStructure.addAsyncValidators('username', usernameAsyncValidator);
+```
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import {
+  FormStructure,
+  Input,
+  Checkbox,
+  Dropdown,
+  Button,
+  OptionChild
+} from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-user-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class UserFormComponent {
+  formStructure: FormStructure;
+
+  constructor() {
+    this.formStructure = new FormStructure('User Registration');
+    
+    // Configure appearance
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    this.formStructure.globalValidators = Validators.required;
+    this.formStructure.onlyScrollContent = true;
+    
+    // Add form nodes
+    this.formStructure.nodes = [
+      new Input('name', 'Full Name').apply({
+        icon: 'person',
+        maxCharCount: 100
+      }),
+      new Input('email', 'Email').apply({
+        icon: 'email',
+        validator: [Validators.required, Validators.email]
+      }),
+      new Dropdown('country', 'Country', [
+        new OptionChild('United States', 'us'),
+        new OptionChild('United Kingdom', 'uk'),
+        new OptionChild('Canada', 'ca')
+      ]),
+      new Checkbox('subscribe', 'Subscribe to newsletter', false)
+    ];
+    
+    // Add action buttons
+    this.formStructure.validateActions = [
+      new Button('reset', 'Reset', {
+        style: 'warn',
+        onEvent: (param) => {
+          param.structure.reset();
+          param.structure.remapValues();
+        }
+      }).apply({ icon: 'refresh' }),
+      
+      new Button('submit', 'Submit', {
+        style: 'primary',
+        onEvent: (param) => {
+          if (param.structure.isValid()) {
+            const data = param.structure.getValue();
+            console.log('Submitting:', data);
+            // Call API here
+          }
+        }
+      }).apply({
+        validateForm: true,
+        icon: 'check'
+      })
+    ];
+  }
+}
+```
+
+## Related Concepts
+
+- [Nodes](/concepts/nodes) - Learn about different form field types
+- [Actions](/concepts/actions) - Handle form events and interactions
+- [Validators](/concepts/validators) - Add validation rules to your forms

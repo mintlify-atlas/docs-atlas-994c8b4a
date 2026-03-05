@@ -1,0 +1,509 @@
+---
+title: 'Action'
+description: 'Event action configuration for node interactions'
+icon: 'square-code'
+---
+
+## Overview
+
+The `Action` interface defines event handlers and styling for interactive nodes in Mat Dynamic Form. Actions can be attached to form controls to respond to user interactions like clicks, value changes, and other DOM events.
+
+**Source:** `projects/mat-dynamic-form/src/lib/models/Action.ts:5`
+
+## Action Interface
+
+```typescript
+interface Action {
+  type?: ActionType;
+  style?: ActionStyle;
+  callback?: FormListener;  // Deprecated
+  onEvent?: (param: ActionEvent) => void;
+}
+```
+
+### Properties
+
+<ParamField path="type" type="ActionType" optional>
+  The type of event to listen for. Can be `'valueChange'` for form value changes, or any standard DOM event type like `'click'`, `'focus'`, `'blur'`, `'input'`, `'change'`, etc.
+</ParamField>
+
+<ParamField path="style" type="ActionStyle" optional>
+  Visual style for button actions: `'accent'` | `'warn'` | `'primary'` | `'secondary'`
+</ParamField>
+
+<ParamField path="callback" type="FormListener" optional>
+  <Warning>
+    **Deprecated since v1.4.0.** Will be removed in v2.0.0. Use `onEvent` instead.
+  </Warning>
+  Legacy callback interface for event handling
+</ParamField>
+
+<ParamField path="onEvent" type="(param: ActionEvent) => void" optional>
+  Modern callback function executed when the event occurs. Receives an [ActionEvent](#actionevent) object with event details and form structure reference.
+</ParamField>
+
+## ActionEvent Interface
+
+```typescript
+interface ActionEvent {
+  event: Event | any;
+  structure: FormStructure;
+}
+```
+
+**Source:** `Action.ts:15`
+
+### Properties
+
+<ResponseField name="event" type="Event | any">
+  The triggering event. For `'valueChange'` events, this is the new value. For DOM events, this is the native Event object.
+</ResponseField>
+
+<ResponseField name="structure" type="FormStructure">
+  Reference to the [FormStructure](/api/form-structure) instance, allowing access to form state, controls, and methods.
+</ResponseField>
+
+## Type Definitions
+
+### ActionType
+
+```typescript
+type ActionType = 'valueChange' | string
+```
+
+**Source:** `lib/types/ActionEnums.ts:1`
+
+The type of event to listen for:
+- `'valueChange'` - Special type that listens to form control value changes (via Angular's `valueChanges` observable)
+- Any other string - Treated as a standard DOM event name (e.g., `'click'`, `'focus'`, `'blur'`, `'input'`)
+
+### ActionStyle
+
+```typescript
+type ActionStyle = 'accent' | 'warn' | 'primary' | 'secondary'
+```
+
+**Source:** `lib/types/ActionEnums.ts:2`
+
+Button color themes from Angular Material:
+- `'primary'` - Primary theme color (typically blue)
+- `'accent'` - Accent theme color (typically pink/purple)
+- `'warn'` - Warning color (typically red)
+- `'secondary'` - Secondary theme color
+
+## Usage Examples
+
+### Button Click Action
+
+```typescript
+import { Button, ActionEvent } from 'mat-dynamic-form';
+
+const submitButton = new Button(
+  'submit',
+  'Submit Form',
+  {
+    type: 'click',
+    style: 'primary',
+    onEvent: ({ event, structure }: ActionEvent) => {
+      console.log('Button clicked');
+      
+      if (structure.isValid()) {
+        const formData = structure.getValue();
+        console.log('Form data:', formData);
+        // Submit to API
+        submitToAPI(formData);
+      } else {
+        console.error('Form has validation errors');
+      }
+    }
+  },
+  false,      // singleLine
+  'send',     // icon
+  false,      // disabled
+  true        // validateForm
+);
+```
+
+### Value Change Action
+
+```typescript
+import { Input, ActionEvent } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const emailInput = new Input(
+  'email',
+  'Email Address',
+  '',
+  null,
+  false,
+  'email',
+  'Invalid email',
+  false,
+  false,
+  [Validators.required, Validators.email],
+  null,
+  {
+    type: 'valueChange',
+    onEvent: ({ event, structure }: ActionEvent) => {
+      const newValue = event; // event is the new email value
+      console.log('Email changed to:', newValue);
+      
+      // Perform side effects
+      if (newValue.includes('@company.com')) {
+        console.log('Company email detected');
+        // Maybe add a company field
+      }
+    }
+  }
+);
+```
+
+### Multiple Actions on One Node
+
+```typescript
+import { Input, Action } from 'mat-dynamic-form';
+
+const searchInput = new Input(
+  'search',
+  'Search',
+  '',
+  null,
+  false,
+  'search',
+  null,
+  false,
+  false,
+  null,
+  null,
+  [ // Array of actions
+    {
+      type: 'focus',
+      onEvent: ({ structure }) => {
+        console.log('Search input focused');
+      }
+    },
+    {
+      type: 'blur',
+      onEvent: ({ structure }) => {
+        console.log('Search input lost focus');
+      }
+    },
+    {
+      type: 'valueChange',
+      onEvent: ({ event, structure }) => {
+        console.log('Search query:', event);
+        // Trigger search API call
+        performSearch(event);
+      }
+    }
+  ]
+);
+```
+
+### Conditional Form Logic
+
+```typescript
+import { Dropdown, Input, OptionChild, ActionEvent } from 'mat-dynamic-form';
+
+const paymentMethodDropdown = new Dropdown(
+  'paymentMethod',
+  'Payment Method',
+  [
+    new OptionChild('Credit Card', 'card'),
+    new OptionChild('Bank Transfer', 'bank'),
+    new OptionChild('PayPal', 'paypal')
+  ],
+  'card',
+  false,
+  false,
+  'payment',
+  null,
+  false,
+  null,
+  null,
+  {
+    type: 'valueChange',
+    onEvent: ({ event, structure }: ActionEvent) => {
+      // Remove existing payment-specific fields
+      const existingFields = ['cardNumber', 'bankAccount', 'paypalEmail'];
+      existingFields.forEach(fieldId => {
+        const node = structure.getNodeById(fieldId);
+        if (node) {
+          structure.removeNodes([node]);
+        }
+      });
+      
+      // Add appropriate fields based on selection
+      switch (event) {
+        case 'card':
+          structure.createNodes(2, [
+            new Input('cardNumber', 'Card Number', '', 16, false, 'credit_card')
+          ]);
+          break;
+        case 'bank':
+          structure.createNodes(2, [
+            new Input('bankAccount', 'Bank Account', '', null, false, 'account_balance')
+          ]);
+          break;
+        case 'paypal':
+          structure.createNodes(2, [
+            new Input('paypalEmail', 'PayPal Email', '', null, false, 'email')
+          ]);
+          break;
+      }
+    }
+  }
+);
+```
+
+### Form Validation on Action
+
+```typescript
+import { Button, ActionEvent } from 'mat-dynamic-form';
+
+const saveButton = new Button(
+  'save',
+  'Save Draft',
+  {
+    type: 'click',
+    style: 'secondary',
+    onEvent: ({ structure }: ActionEvent) => {
+      // Get values even if form is invalid (for draft)
+      const draftData = structure.getRawValue();
+      
+      // Save draft
+      saveDraft(draftData);
+      
+      // Show notification
+      showNotification('Draft saved successfully');
+    }
+  },
+  false,
+  'save',
+  false,
+  false // validateForm = false (don't validate for draft)
+);
+
+const publishButton = new Button(
+  'publish',
+  'Publish',
+  {
+    type: 'click',
+    style: 'primary',
+    onEvent: ({ structure }: ActionEvent) => {
+      if (structure.isValid()) {
+        const publishData = structure.getValue();
+        publishContent(publishData);
+      } else {
+        showNotification('Please fix validation errors', 'error');
+      }
+    }
+  },
+  false,
+  'publish',
+  false,
+  true, // validateForm = true (validate before publishing)
+  ({ structure }) => {
+    // Custom validation: check if title is unique
+    return structure.isValid() && isTitleUnique(structure.getValue().title);
+  }
+);
+```
+
+### Accessing Other Form Controls
+
+```typescript
+import { Checkbox, Input, ActionEvent } from 'mat-dynamic-form';
+
+const sameAsShippingCheckbox = new Checkbox(
+  'sameAsShipping',
+  'Billing address same as shipping',
+  false,
+  false,
+  'check_box',
+  null,
+  false,
+  null,
+  null,
+  {
+    type: 'valueChange',
+    onEvent: ({ event, structure }: ActionEvent) => {
+      const checked = event;
+      
+      // Get billing address fields
+      const billingStreet = structure.getControlById('billingStreet');
+      const billingCity = structure.getControlById('billingCity');
+      const billingZip = structure.getControlById('billingZip');
+      
+      if (checked) {
+        // Copy shipping address to billing
+        const shippingStreet = structure.getControlById('shippingStreet')?.value;
+        const shippingCity = structure.getControlById('shippingCity')?.value;
+        const shippingZip = structure.getControlById('shippingZip')?.value;
+        
+        billingStreet?.setValue(shippingStreet);
+        billingCity?.setValue(shippingCity);
+        billingZip?.setValue(shippingZip);
+        
+        // Disable billing fields
+        billingStreet?.disable();
+        billingCity?.disable();
+        billingZip?.disable();
+      } else {
+        // Enable billing fields for manual entry
+        billingStreet?.enable();
+        billingCity?.enable();
+        billingZip?.enable();
+      }
+    }
+  }
+);
+```
+
+### Button Styles
+
+```typescript
+import { Button } from 'mat-dynamic-form';
+
+const buttons = [
+  new Button('primary', 'Primary', {
+    type: 'click',
+    style: 'primary',
+    onEvent: () => console.log('Primary clicked')
+  }),
+  
+  new Button('accent', 'Accent', {
+    type: 'click',
+    style: 'accent',
+    onEvent: () => console.log('Accent clicked')
+  }),
+  
+  new Button('warn', 'Delete', {
+    type: 'click',
+    style: 'warn',
+    onEvent: ({ structure }) => {
+      if (confirm('Are you sure you want to delete?')) {
+        performDelete();
+      }
+    }
+  }),
+  
+  new Button('secondary', 'Secondary', {
+    type: 'click',
+    style: 'secondary',
+    onEvent: () => console.log('Secondary clicked')
+  })
+];
+```
+
+### Async Operations in Actions
+
+```typescript
+import { Button, ActionEvent } from 'mat-dynamic-form';
+
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    type: 'click',
+    style: 'primary',
+    onEvent: async ({ structure }: ActionEvent) => {
+      if (!structure.isValid()) {
+        return;
+      }
+      
+      // Disable submit button
+      const submitBtn = structure.getActionById('submit');
+      submitBtn.disabled = true;
+      
+      try {
+        const formData = structure.getValue();
+        
+        // Async API call
+        const response = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+          console.log('Submitted successfully');
+          structure.reset();
+        } else {
+          console.error('Submission failed');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+      }
+    }
+  },
+  false,
+  'send',
+  false,
+  true
+);
+```
+
+## Common DOM Event Types
+
+When using actions with form controls, you can listen to any standard DOM event:
+
+- **Mouse events:** `'click'`, `'dblclick'`, `'mouseenter'`, `'mouseleave'`, `'mousedown'`, `'mouseup'`
+- **Keyboard events:** `'keydown'`, `'keyup'`, `'keypress'`
+- **Focus events:** `'focus'`, `'blur'`, `'focusin'`, `'focusout'`
+- **Form events:** `'input'`, `'change'`, `'submit'`
+- **Special:** `'valueChange'` - Mat Dynamic Form specific event for Angular form value changes
+
+## Related Types
+
+- [FormStructure](/api/form-structure) - Form management class
+- [Node](/api/node) - Form field nodes that can have actions
+- [Button](/api/node#button) - Button node specifically designed for actions
+
+## Deprecated API
+
+### FormListener Interface
+
+<Warning>
+  **Deprecated since v1.4.0.** Will be removed in v2.0.0. Use `onEvent` callback instead.
+</Warning>
+
+```typescript
+interface FormListener {
+  onEvent(id: string, value: any): void;
+  onClick(actionId: string): void;
+}
+```
+
+Old callback interface that required implementing both methods. The modern `onEvent` callback is more flexible and provides direct access to the FormStructure.
+
+**Old way (deprecated):**
+```typescript
+const listener: FormListener = {
+  onEvent: (id, value) => {
+    console.log(`${id} changed to ${value}`);
+  },
+  onClick: (actionId) => {
+    console.log(`${actionId} clicked`);
+  }
+};
+
+const action: Action = {
+  type: 'click',
+  callback: listener
+};
+```
+
+**New way:**
+```typescript
+const action: Action = {
+  type: 'click',
+  onEvent: ({ event, structure }) => {
+    console.log('Clicked', event);
+    console.log('Form valid:', structure.isValid());
+  }
+};
+```

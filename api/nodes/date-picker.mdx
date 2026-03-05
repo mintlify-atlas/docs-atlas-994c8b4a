@@ -1,0 +1,246 @@
+---
+title: 'DatePicker'
+description: 'API reference for the DatePicker node class'
+---
+
+## Overview
+
+The `DatePicker` class provides a date selection interface with calendar popup functionality. It supports date constraints through minimum and maximum date boundaries.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → InputBaseNode → DatePicker
+```
+
+## Constructor
+
+```typescript
+new DatePicker(
+  id: string,
+  placeholder?: string,
+  value?: any,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator | AbstractControlOptions,
+  asyncValidator?: AsyncValidatorFn,
+  action?: Action | Action[],
+  minDate?: Date,
+  maxDate?: Date
+)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the date picker node in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text to display when no date is selected.
+</ParamField>
+
+<ParamField path="value" type="any">
+  The initial date value. Can be a Date object, string, or timestamp.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether to display the node in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display in the date picker field.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the date picker is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator | AbstractControlOptions">
+  Synchronous validator function(s) or control options.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidatorFn">
+  Asynchronous validator function(s) for the date picker.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when a date is selected.
+</ParamField>
+
+<ParamField path="minDate" type="Date">
+  The minimum selectable date. Dates before this will be disabled.
+</ParamField>
+
+<ParamField path="maxDate" type="Date">
+  The maximum selectable date. Dates after this will be disabled.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the node |
+| `placeholder` | `string` | The placeholder text |
+| `type` | `'date'` | The node type (read-only) |
+| `value` | `any` | The selected date value |
+| `readOnly` | `boolean` | Whether the input field is read-only |
+| `minDate` | `Date` | Minimum selectable date |
+| `maxDate` | `Date` | Maximum selectable date |
+| `singleLine` | `boolean` | Whether displayed in single line layout |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Whether the node is disabled |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validators |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text to display |
+| `autoFocus` | `boolean` | Whether to auto-focus on load |
+
+## Methods
+
+### getNativeElement()
+
+Returns the native DOM element for this node.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Example
+
+```typescript
+import { DatePicker, Action } from '@ng-mdf/core';
+import { Validators } from '@angular/forms';
+
+// Simple date picker
+const birthDatePicker = new DatePicker(
+  'birthDate',
+  'Select your birth date',
+  new Date('1990-01-01'),
+  false,
+  'calendar_today',
+  'Please select a valid birth date',
+  false,
+  Validators.required
+);
+
+// Date picker with min/max constraints
+const appointmentDatePicker = new DatePicker(
+  'appointmentDate',
+  'Choose appointment date',
+  undefined,
+  false,
+  'event',
+  'Please select a date within the available range',
+  false,
+  Validators.required,
+  undefined,
+  undefined,
+  new Date(),  // minDate: today
+  new Date(new Date().setMonth(new Date().getMonth() + 3))  // maxDate: 3 months from now
+);
+
+// Date picker with action
+const eventDatePicker = new DatePicker(
+  'eventDate',
+  'Event date',
+  undefined,
+  false,
+  'event_available',
+  undefined,
+  false,
+  Validators.required,
+  undefined,
+  new Action('change', (event) => {
+    console.log('Selected date:', event.value);
+    // Load available time slots for the selected date
+    loadTimeSlots(event.value);
+  }),
+  new Date(),
+  new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+);
+
+// Date picker for past dates only (e.g., historical events)
+const historicalDatePicker = new DatePicker(
+  'historicalDate',
+  'Select historical date',
+  undefined,
+  false,
+  'history',
+  'Please select a date in the past',
+  false,
+  undefined,
+  undefined,
+  undefined,
+  new Date('1900-01-01'),  // minDate
+  new Date()  // maxDate: today
+);
+```
+
+## Date Constraints
+
+### Minimum Date
+
+Set `minDate` to prevent users from selecting dates before a certain point:
+
+```typescript
+// Only allow future dates
+const futureDatePicker = new DatePicker(
+  'futureDate',
+  'Select a future date',
+  undefined,
+  false,
+  'calendar_today',
+  undefined,
+  false,
+  undefined,
+  undefined,
+  undefined,
+  new Date()  // minDate is today
+);
+```
+
+### Maximum Date
+
+Set `maxDate` to prevent users from selecting dates after a certain point:
+
+```typescript
+// Only allow dates up to end of year
+const yearEndDate = new Date(new Date().getFullYear(), 11, 31);
+const limitedDatePicker = new DatePicker(
+  'limitedDate',
+  'Select date (this year only)',
+  undefined,
+  false,
+  'calendar_today',
+  undefined,
+  false,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  yearEndDate
+);
+```
+
+## Date Formats
+
+The date picker uses the locale-aware date format provided by Angular Material. The displayed format automatically adapts to the user's locale settings.
+
+## Validation
+
+In addition to custom validators, the date picker automatically validates that selected dates fall within the `minDate` and `maxDate` range if specified.
+
+## Related Node Types
+
+- [DateTimePicker](/api/nodes/date-time-picker) - For selecting both date and time
+- [TimePicker](/api/nodes/time-picker) - For selecting time only
+- [DateRangePicker](/api/nodes/date-range-picker) - For selecting a date range
+- [Input](/api/nodes/input) - Base input node for text values

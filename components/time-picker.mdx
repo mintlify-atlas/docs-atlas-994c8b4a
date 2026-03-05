@@ -1,0 +1,505 @@
+---
+title: 'Time Picker'
+description: 'Time-only selection component with clock picker interface'
+---
+
+## Overview
+
+The `TimePicker` component provides a focused interface for selecting time without a date. It inherits from `DateTimePicker` but is optimized for time-only scenarios, perfect for recurring events, business hours, or any situation where the date is already known or not relevant.
+
+## When to Use
+
+Use the TimePicker component when you need to:
+
+- Set business hours or opening times
+- Configure recurring event times (e.g., daily standup at 9:00 AM)
+- Select time for an alarm or reminder
+- Input time independently from date
+
+<Note>
+  For date and time together, use [DateTimePicker](/components/date-time-picker). For date only, use [DatePicker](/components/date-picker).
+</Note>
+
+## Basic Usage
+
+```typescript
+import { TimePicker } from 'mat-dynamic-form';
+
+const timePicker = new TimePicker(
+  'meetingTime',
+  'Meeting Time'
+);
+```
+
+## Common Patterns
+
+### Time Picker with 12-Hour Format
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const timePicker = new TimePicker(
+  'startTime',
+  'Start Time',
+  null,
+  'hh:mm a' // Format: 02:30 PM
+).apply({
+  icon: 'schedule',
+  validator: Validators.required,
+  hint: 'When does the event start?'
+});
+```
+
+### Time Picker with 24-Hour Format
+
+```typescript
+const timePicker = new TimePicker(
+  'departureTime',
+  'Departure Time',
+  null,
+  'HH:mm' // Format: 14:30
+).apply({
+  icon: 'flight_takeoff',
+  validator: Validators.required
+});
+```
+
+### Time Picker with Clock Interface
+
+```typescript
+const timePicker = new TimePicker(
+  'alarmTime',
+  'Alarm Time',
+  new Date(), // Default to current time
+  'hh:mm a'
+).apply({
+  showClockPicker: true, // Enable visual clock picker
+  icon: 'alarm',
+  validator: Validators.required,
+  hint: 'Set your wake-up time'
+});
+```
+
+### Time Picker with Custom Labels
+
+```typescript
+const timePicker = new TimePicker(
+  'reminderTime',
+  'Reminder Time',
+  null,
+  'hh:mm a'
+).apply({
+  acceptLabel: 'Set Time',
+  cancelLabel: 'Cancel',
+  showClockPicker: true,
+  icon: 'notifications'
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the time picker.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Label text for the time picker.
+</ParamField>
+
+<ParamField path="value" type="Date | string">
+  Initial time value. If using Date, only the time portion is used.
+</ParamField>
+
+<ParamField path="dateFormat" type="string" default="'hh:mm a'">
+  Display format for the time. Common formats:
+  - `'hh:mm a'` → 02:30 PM (12-hour with AM/PM)
+  - `'HH:mm'` → 14:30 (24-hour)
+  - `'hh:mm:ss a'` → 02:30:45 PM (with seconds)
+</ParamField>
+
+<ParamField path="acceptLabel" type="string" default="'OK'">
+  Label for the confirm button.
+</ParamField>
+
+<ParamField path="cancelLabel" type="string" default="'Cancel'">
+  Label for the cancel button.
+</ParamField>
+
+<ParamField path="showClockPicker" type="boolean" default="false">
+  Whether to show the visual clock picker interface.
+</ParamField>
+
+<ParamField path="orientation" type="'portrait' | 'landscape'" default="'portrait'">
+  Picker dialog orientation.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display (e.g., `'schedule'`, `'alarm'`, `'access_time'`).
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Angular validators to apply.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message shown when validation fails.
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the picker.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the picker is disabled.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the picker takes up a full row in the form grid.
+</ParamField>
+
+## Time Format Patterns
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| `HH` | 14 | Hour (00-23) |
+| `hh` | 02 | Hour (01-12) |
+| `H` | 14 | Hour (0-23) |
+| `h` | 2 | Hour (1-12) |
+| `mm` | 30 | Minutes (00-59) |
+| `ss` | 45 | Seconds (00-59) |
+| `a` | PM | AM/PM marker |
+
+### Common Format Examples
+
+```typescript
+// 12-hour with AM/PM: 2:30 PM
+new TimePicker('time', 'Time', null, 'h:mm a')
+
+// 12-hour with AM/PM (padded): 02:30 PM
+new TimePicker('time', 'Time', null, 'hh:mm a')
+
+// 24-hour: 14:30
+new TimePicker('time', 'Time', null, 'HH:mm')
+
+// 24-hour (unpadded): 14:30
+new TimePicker('time', 'Time', null, 'H:mm')
+
+// With seconds: 02:30:45 PM
+new TimePicker('time', 'Time', null, 'hh:mm:ss a')
+```
+
+## Validation Examples
+
+### Required Time
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const timePicker = new TimePicker('time', 'Select Time', null, 'hh:mm a').apply({
+  validator: Validators.required,
+  errorMessage: 'Time is required'
+});
+```
+
+### Business Hours Validator
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+function businessHoursValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  
+  const time = new Date(control.value);
+  const hour = time.getHours();
+  
+  // Business hours: 9 AM (9) to 5 PM (17)
+  if (hour < 9 || hour >= 17) {
+    return { outsideBusinessHours: true };
+  }
+  
+  return null;
+}
+
+const timePicker = new TimePicker('meetingTime', 'Meeting Time', null, 'hh:mm a').apply({
+  validator: [Validators.required, businessHoursValidator],
+  errorMessage: 'Please select a time between 9 AM and 5 PM',
+  hint: 'Business hours: 9 AM - 5 PM'
+});
+```
+
+### Time Range Validator
+
+```typescript
+function afterTimeValidator(minHour: number, minMinute: number = 0) {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    
+    const time = new Date(control.value);
+    const hour = time.getHours();
+    const minute = time.getMinutes();
+    
+    if (hour < minHour || (hour === minHour && minute < minMinute)) {
+      return { tooEarly: true };
+    }
+    
+    return null;
+  };
+}
+
+const timePicker = new TimePicker('startTime', 'Start Time', null, 'hh:mm a').apply({
+  validator: [Validators.required, afterTimeValidator(9, 0)], // Must be after 9:00 AM
+  errorMessage: 'Start time must be after 9:00 AM'
+});
+```
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { FormStructure, Input, TimePicker, Checkbox, Button } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-schedule-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class ScheduleFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Daily Schedule');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new Input('eventName', 'Event Name').apply({
+        icon: 'event',
+        validator: Validators.required,
+        singleLine: true
+      }),
+      
+      new TimePicker(
+        'startTime',
+        'Start Time',
+        null,
+        'hh:mm a'
+      ).apply({
+        icon: 'schedule',
+        validator: Validators.required,
+        showClockPicker: true,
+        hint: 'When does it start?'
+      }),
+      
+      new TimePicker(
+        'endTime',
+        'End Time',
+        null,
+        'hh:mm a'
+      ).apply({
+        icon: 'schedule',
+        validator: Validators.required,
+        showClockPicker: true,
+        hint: 'When does it end?'
+      }),
+      
+      new Checkbox(
+        'recurring',
+        'Repeat daily'
+      ).apply({
+        icon: 'repeat',
+        singleLine: true
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('submit', 'Save Schedule', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'check'
+      })
+    ];
+  }
+  
+  onSubmit(structure: FormStructure) {
+    const data = structure.getValue();
+    console.log('Schedule:', data);
+    
+    // Extract time components
+    const startTime = new Date(data.startTime);
+    const endTime = new Date(data.endTime);
+    
+    console.log('Starts at:', startTime.toLocaleTimeString());
+    console.log('Ends at:', endTime.toLocaleTimeString());
+  }
+}
+```
+
+## Working with Time Values
+
+### Getting Time Value
+
+```typescript
+const formData = formStructure.getValue();
+const timeValue = formData.meetingTime;
+
+// Convert to Date object
+const time = new Date(timeValue);
+
+// Extract time components
+const hours = time.getHours(); // 0-23
+const minutes = time.getMinutes(); // 0-59
+const seconds = time.getSeconds(); // 0-59
+
+console.log('Time:', time.toLocaleTimeString());
+console.log(`${hours}:${minutes}`);
+```
+
+### Setting Time Programmatically
+
+```typescript
+// Set to current time
+formStructure.patchValue({
+  alarmTime: new Date()
+});
+
+// Set specific time (9:30 AM)
+const time9_30 = new Date();
+time9_30.setHours(9, 30, 0, 0);
+formStructure.patchValue({
+  meetingTime: time9_30
+});
+
+// Set time from hours and minutes
+function setTime(hours: number, minutes: number): Date {
+  const time = new Date();
+  time.setHours(hours, minutes, 0, 0);
+  return time;
+}
+
+formStructure.patchValue({
+  startTime: setTime(14, 30) // 2:30 PM
+});
+```
+
+### Comparing Times
+
+```typescript
+const data = formStructure.getValue();
+const startTime = new Date(data.startTime);
+const endTime = new Date(data.endTime);
+
+if (endTime <= startTime) {
+  console.error('End time must be after start time');
+}
+
+// Calculate duration
+const durationMs = endTime.getTime() - startTime.getTime();
+const durationMinutes = durationMs / (1000 * 60);
+console.log(`Duration: ${durationMinutes} minutes`);
+```
+
+## Best Practices
+
+<Tip>
+  **Choose the right time format for your audience**:
+  - US: Use 12-hour format with AM/PM (`hh:mm a`)
+  - International: Use 24-hour format (`HH:mm`)
+</Tip>
+
+<Tip>
+  **Enable clock picker for better UX** - The visual clock interface is more intuitive:
+  ```typescript
+  showClockPicker: true
+  ```
+</Tip>
+
+<Warning>
+  **Remember: TimePicker returns a Date object** - Even though you're only selecting time, the value is still a Date object. Only use the time components.
+</Warning>
+
+<Tip>
+  **Validate time ranges** - If you have start/end times, validate that end > start:
+  ```typescript
+  // Add custom validator to check end time is after start time
+  ```
+</Tip>
+
+<Tip>
+  **Provide clear context with hints**:
+  ```typescript
+  hint: 'Business hours: 9 AM - 5 PM'
+  hint: 'Store opens at 8:00 AM'
+  ```
+</Tip>
+
+<Tip>
+  **Use appropriate icons**:
+  - `'schedule'` - General time
+  - `'alarm'` - Alarms/reminders
+  - `'access_time'` - Duration/time periods
+  - `'timer'` - Countdowns
+</Tip>
+
+## Use Cases
+
+### Business Hours Configuration
+
+```typescript
+const openingTime = new TimePicker('openingTime', 'Opening Time', null, 'hh:mm a').apply({
+  icon: 'store',
+  validator: Validators.required,
+  hint: 'When do you open?'
+});
+
+const closingTime = new TimePicker('closingTime', 'Closing Time', null, 'hh:mm a').apply({
+  icon: 'store',
+  validator: Validators.required,
+  hint: 'When do you close?'
+});
+```
+
+### Alarm/Reminder Settings
+
+```typescript
+const alarmTime = new TimePicker('alarm', 'Wake-up Time', null, 'hh:mm a').apply({
+  icon: 'alarm',
+  showClockPicker: true,
+  validator: Validators.required,
+  hint: 'Set your daily alarm'
+});
+```
+
+### Event Scheduling
+
+```typescript
+const eventTime = new TimePicker('eventTime', 'Event Time', null, 'hh:mm a').apply({
+  icon: 'event',
+  showClockPicker: true,
+  validator: Validators.required,
+  hint: 'What time does the event start?'
+});
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Date Time Picker" icon="calendar-clock" href="/components/date-time-picker">
+    Select both date and time together
+  </Card>
+  
+  <Card title="Date Picker" icon="calendar" href="/components/date-picker">
+    Select date only
+  </Card>
+  
+  <Card title="Input" icon="input-text" href="/components/input">
+    Manual text input (less user-friendly for time)
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [Validators](/concepts/validators) - Learn about validation
+- [Actions](/concepts/actions) - Handle time selection changes
+- [Form Structure](/concepts/form-structure) - Form layout and configuration

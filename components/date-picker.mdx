@@ -1,0 +1,485 @@
+---
+title: 'Date Picker'
+description: 'Date selection component with Material Design calendar picker'
+---
+
+## Overview
+
+The `DatePicker` component provides a user-friendly calendar interface for selecting dates. It includes built-in support for minimum and maximum date constraints, making it perfect for birthdays, appointments, and any date-based input.
+
+## When to Use
+
+Use the DatePicker component when you need to:
+
+- Select a specific date (birthdays, appointments, deadlines)
+- Enforce date ranges (no dates in the past, or within a specific window)
+- Provide an intuitive calendar interface instead of manual date entry
+- Ensure consistent date format across your application
+
+<Note>
+  For date and time together, use [DateTimePicker](/components/date-time-picker). For time only, use [TimePicker](/components/time-picker). For date ranges, use [DateRangePicker](/api/nodes/date-range-picker).
+</Note>
+
+## Basic Usage
+
+```typescript
+import { DatePicker } from 'mat-dynamic-form';
+
+const birthdayPicker = new DatePicker(
+  'birthday',
+  'Date of Birth'
+);
+```
+
+## Common Patterns
+
+### Date Picker with Initial Value
+
+```typescript
+const appointmentPicker = new DatePicker(
+  'appointment',
+  'Appointment Date',
+  new Date() // Today's date
+).apply({
+  icon: 'event',
+  validator: Validators.required
+});
+```
+
+### Date Picker with Date Range Constraints
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const birthdayPicker = new DatePicker(
+  'birthday',
+  'Date of Birth'
+).apply({
+  minDate: new Date(1900, 0, 1), // January 1, 1900
+  maxDate: new Date(), // Today (can't be in the future)
+  icon: 'cake',
+  validator: Validators.required,
+  hint: 'You must be 18 or older'
+});
+```
+
+### Future Dates Only
+
+```typescript
+const eventPicker = new DatePicker(
+  'eventDate',
+  'Event Date'
+).apply({
+  minDate: new Date(), // Today or later
+  maxDate: new Date(new Date().setFullYear(new Date().getFullYear() + 2)), // Up to 2 years ahead
+  icon: 'event',
+  validator: Validators.required,
+  hint: 'Select a date within the next 2 years'
+});
+```
+
+### Past Dates Only
+
+```typescript
+const lastVisitPicker = new DatePicker(
+  'lastVisit',
+  'Last Visit Date'
+).apply({
+  maxDate: new Date(), // Today or earlier
+  icon: 'history',
+  hint: 'When did you last visit?'
+});
+```
+
+### Date Picker with Value Change Handler
+
+```typescript
+const startDatePicker = new DatePicker(
+  'startDate',
+  'Start Date'
+).apply({
+  icon: 'event',
+  validator: Validators.required,
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const selectedDate = param.event;
+      console.log('Start date selected:', selectedDate);
+      
+      // Update end date picker constraints
+      const endDatePicker = this.formStructure.getNodeById<DatePicker>('endDate');
+      if (endDatePicker) {
+        endDatePicker.minDate = new Date(selectedDate);
+      }
+    }
+  }
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the date picker.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Label text for the date picker.
+</ParamField>
+
+<ParamField path="value" type="Date | string">
+  Initial selected date. Can be a Date object or date string.
+</ParamField>
+
+<ParamField path="minDate" type="Date">
+  Minimum selectable date. Dates before this are disabled.
+</ParamField>
+
+<ParamField path="maxDate" type="Date">
+  Maximum selectable date. Dates after this are disabled.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display (e.g., `'event'`, `'calendar_today'`, `'cake'`).
+</ParamField>
+
+<ParamField path="readOnly" type="boolean" default="false">
+  Whether the date picker is read-only.
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Angular validators to apply.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message shown when validation fails.
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the date picker.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the date picker is disabled.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the date picker takes up a full row in the form grid.
+</ParamField>
+
+## Methods
+
+### apply()
+
+Applies multiple properties at once.
+
+```typescript
+datePicker.apply({
+  minDate: new Date(),
+  maxDate: new Date(2025, 11, 31),
+  icon: 'event',
+  validator: Validators.required
+});
+```
+
+### getNativeElement()
+
+Returns the native DOM element.
+
+```typescript
+const element = datePicker.getNativeElement();
+if (element) {
+  element.focus();
+}
+```
+
+## Validation Examples
+
+### Required Date
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const datePicker = new DatePicker('date', 'Select Date').apply({
+  validator: Validators.required,
+  errorMessage: 'Date is required'
+});
+```
+
+### Custom Date Validator
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+// Must be at least 18 years ago
+function ageValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  
+  const birthDate = new Date(control.value);
+  const today = new Date();
+  const age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  if (age < 18) {
+    return { underAge: true };
+  }
+  
+  return null;
+}
+
+const birthdayPicker = new DatePicker('birthday', 'Date of Birth').apply({
+  validator: [Validators.required, ageValidator],
+  errorMessage: 'You must be at least 18 years old',
+  maxDate: new Date()
+});
+```
+
+### Weekday Only Validator
+
+```typescript
+function weekdayValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  
+  const date = new Date(control.value);
+  const day = date.getDay();
+  
+  // 0 = Sunday, 6 = Saturday
+  if (day === 0 || day === 6) {
+    return { weekendDate: true };
+  }
+  
+  return null;
+}
+
+const appointmentPicker = new DatePicker('appointment', 'Appointment').apply({
+  validator: [Validators.required, weekdayValidator],
+  errorMessage: 'Appointments are only available on weekdays',
+  minDate: new Date()
+});
+```
+
+## Working with Dates
+
+### Getting Selected Date
+
+```typescript
+// Get the date value from form
+const formData = formStructure.getValue();
+const selectedDate = formData.birthday; // Date object or string
+
+// Convert to Date object if needed
+const date = new Date(selectedDate);
+console.log('Year:', date.getFullYear());
+console.log('Month:', date.getMonth() + 1); // Months are 0-indexed
+console.log('Day:', date.getDate());
+```
+
+### Setting Date Programmatically
+
+```typescript
+// Set specific date
+formStructure.patchValue({
+  birthday: new Date(1990, 0, 15) // January 15, 1990
+});
+
+// Set to today
+formStructure.patchValue({
+  appointment: new Date()
+});
+
+// Set to 30 days from now
+const futureDate = new Date();
+futureDate.setDate(futureDate.getDate() + 30);
+formStructure.patchValue({
+  deadline: futureDate
+});
+```
+
+## Date Constraints Example
+
+### Dependent Date Pickers (Start/End Date)
+
+```typescript
+import { Component } from '@angular/core';
+import { FormStructure, DatePicker, ActionEvent } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-booking-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class BookingFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Book Your Stay');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new DatePicker('checkIn', 'Check-in Date').apply({
+        minDate: new Date(), // Can't book in the past
+        maxDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+        icon: 'login',
+        validator: Validators.required,
+        action: {
+          type: 'valueChange',
+          onEvent: (param) => this.onCheckInChange(param)
+        }
+      }),
+      
+      new DatePicker('checkOut', 'Check-out Date').apply({
+        minDate: new Date(),
+        maxDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+        icon: 'logout',
+        validator: Validators.required,
+        disabled: true // Enabled after check-in is selected
+      })
+    ];
+  }
+  
+  onCheckInChange(param: ActionEvent) {
+    const checkInDate = new Date(param.event);
+    const checkOutPicker = this.formStructure.getNodeById<DatePicker>('checkOut');
+    
+    if (checkOutPicker) {
+      // Check-out must be at least 1 day after check-in
+      const minCheckOut = new Date(checkInDate);
+      minCheckOut.setDate(minCheckOut.getDate() + 1);
+      
+      checkOutPicker.minDate = minCheckOut;
+      checkOutPicker.disabled = false;
+      
+      // Reset check-out if it's now invalid
+      const currentCheckOut = this.formStructure.getControlById('checkOut')?.value;
+      if (currentCheckOut && new Date(currentCheckOut) <= checkInDate) {
+        this.formStructure.patchValue({ checkOut: null });
+      }
+    }
+  }
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Always set appropriate min/max dates** - This prevents invalid selections and guides users:
+  ```typescript
+  minDate: new Date() // For future events
+  maxDate: new Date() // For past dates (like birthdays)
+  ```
+</Tip>
+
+<Tip>
+  **Use descriptive icons** - Choose icons that match the context:
+  - `'cake'` for birthdays
+  - `'event'` for general dates
+  - `'calendar_today'` for appointments
+  - `'schedule'` for deadlines
+</Tip>
+
+<Warning>
+  **Handle timezone considerations** - JavaScript Date objects use the local timezone. For server communication, consider converting to UTC or ISO strings.
+</Warning>
+
+<Tip>
+  **Provide helpful hints** - Tell users what date format or constraints apply:
+  ```typescript
+  hint: 'Must be at least 18 years old'
+  hint: 'Select any weekday in the next 3 months'
+  ```
+</Tip>
+
+<Tip>
+  **Consider default values** - For appointments, default to today. For deadlines, consider a reasonable future date.
+</Tip>
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { FormStructure, Input, DatePicker, Button } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-event-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class EventFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Schedule Event');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    // Date constraints
+    const today = new Date();
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+    
+    this.formStructure.nodes = [
+      new Input('eventName', 'Event Name').apply({
+        icon: 'event_note',
+        validator: Validators.required,
+        singleLine: true
+      }),
+      
+      new DatePicker('eventDate', 'Event Date').apply({
+        minDate: today,
+        maxDate: oneYearFromNow,
+        icon: 'event',
+        validator: Validators.required,
+        hint: 'Select a date within the next year'
+      }),
+      
+      new DatePicker('registrationDeadline', 'Registration Deadline').apply({
+        minDate: today,
+        icon: 'alarm',
+        hint: 'Last day to register (optional)'
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('submit', 'Create Event', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'check'
+      })
+    ];
+  }
+  
+  onSubmit(structure: FormStructure) {
+    const data = structure.getValue();
+    console.log('Event data:', data);
+    // data.eventDate is a Date object
+  }
+}
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Date Time Picker" icon="calendar-clock" href="/components/date-time-picker">
+    Select both date and time
+  </Card>
+  
+  <Card title="Time Picker" icon="clock" href="/components/time-picker">
+    Select time only
+  </Card>
+  
+  <Card title="Date Range Picker" icon="calendar-range" href="/api/nodes/date-range-picker">
+    Select start and end dates
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [Validators](/concepts/validators) - Learn about validation
+- [Actions](/concepts/actions) - Handle date selection changes
+- [Form Structure](/concepts/form-structure) - Form layout and configuration

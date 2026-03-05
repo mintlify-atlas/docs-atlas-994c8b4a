@@ -1,0 +1,232 @@
+---
+title: Conditional Fields
+description: Create dynamic forms that show or hide fields based on user input
+---
+
+This example demonstrates how to dynamically add or remove fields based on user input. This is useful for creating adaptive forms that only show relevant fields.
+
+## What This Example Demonstrates
+
+- Dynamic field creation based on user selection
+- Removing fields when no longer needed
+- Using RadioGroup with value change actions
+- Inserting fields at specific positions
+- Managing form state dynamically
+
+## Complete Example
+
+### Component Code
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { 
+  ActionEvent, 
+  Button,
+  Dropdown, 
+  FormStructure, 
+  Input, 
+  OptionChild, 
+  RadioGroup 
+} from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-conditional-form',
+  templateUrl: './conditional-form.component.html',
+  styleUrls: ['./conditional-form.component.scss']
+})
+export class ConditionalFormComponent implements OnInit {
+
+  formStructure: FormStructure;
+
+  constructor() {
+    this.formStructure = new FormStructure();
+
+    this.formStructure.title = 'Pet Owner Registration';
+    this.formStructure.appearance = 'outline';
+    this.formStructure.globalValidators = Validators.required;
+    this.formStructure.nodes = [
+      new Input('ownerName', 'Your Name').apply({
+        icon: 'person',
+        hint: 'Enter your full name'
+      }),
+      new Input('email', 'Email Address').apply({
+        icon: 'email',
+        validator: Validators.email
+      }),
+      new RadioGroup('hasPet', 'Do you have a pet?', [
+        new OptionChild('Yes', 'y'),
+        new OptionChild('No', 'n'),
+      ]).apply({
+        selectedValue: 'n',
+        action: { 
+          type: 'valueChange', 
+          onEvent: (param) => this.onHasPetValueChange(param) 
+        },
+        hint: 'Select whether you currently own a pet'
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('submit', 'Submit', {
+        onEvent: (param) => {
+          console.log('Form submitted:', param.structure?.getValue());
+        },
+        style: 'primary'
+      }).apply({
+        validateForm: true,
+        icon: 'send'
+      })
+    ];
+  }
+
+  ngOnInit(): void {}
+
+  onHasPetValueChange(param: ActionEvent) {
+    // Define the pet-related fields to add
+    const petFields = [
+      new Dropdown('petType', 'Pet Type', [
+        new OptionChild('Dog', 'PD'),
+        new OptionChild('Cat', 'PC'),
+        new OptionChild('Bird', 'PB'),
+        new OptionChild('Other', 'PO')
+      ]).apply({
+        hint: 'Select your pet type',
+        multiple: true
+      }),
+      new Input('breed', 'Pet Breed').apply({
+        hint: 'Enter the breed of your pet'
+      }),
+      new Input('petName', 'Pet Name').apply({
+        hint: 'What is your pet\'s name?'
+      })
+    ];
+
+    if (param.event === 'y') {
+      // User selected 'Yes' - add pet fields after the hasPet field (position 3)
+      this.formStructure.createNodes(3, petFields);
+    } else {
+      // User selected 'No' - remove pet fields
+      this.formStructure.removeNodes(petFields);
+    }
+  }
+}
+```
+
+### Template Code
+
+```html
+<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>
+```
+
+## How It Works
+
+### 1. Setting Up the Trigger Field
+
+The RadioGroup field is configured with a value change action:
+
+```typescript
+new RadioGroup('hasPet', 'Do you have a pet?', [
+  new OptionChild('Yes', 'y'),
+  new OptionChild('No', 'n'),
+]).apply({
+  selectedValue: 'n',
+  action: { 
+    type: 'valueChange', 
+    onEvent: (param) => this.onHasPetValueChange(param) 
+  }
+})
+```
+
+The `valueChange` action type ensures the callback is triggered whenever the user changes their selection.
+
+### 2. Creating Conditional Fields
+
+When the user selects "Yes", new fields are dynamically added:
+
+```typescript
+if (param.event === 'y') {
+  // Insert fields at position 3 (after the hasPet field)
+  this.formStructure.createNodes(3, petFields);
+}
+```
+
+The `createNodes(position, nodes)` method:
+- First parameter: Index position where fields should be inserted
+- Second parameter: Array of field nodes to insert
+
+### 3. Removing Conditional Fields
+
+When the user selects "No", the fields are removed:
+
+```typescript
+else {
+  this.formStructure.removeNodes(petFields);
+}
+```
+
+The `removeNodes(nodes)` method removes the specified fields and cleans up their form controls.
+
+## Advanced Patterns
+
+### Multiple Levels of Conditional Fields
+
+You can create nested conditional logic by adding actions to the dynamically created fields:
+
+```typescript
+const petFields = [
+  new Dropdown('petType', 'Pet Type', [
+    new OptionChild('Dog', 'PD'),
+    new OptionChild('Cat', 'PC'),
+    new OptionChild('Other', 'PO')
+  ]).apply({
+    action: {
+      type: 'valueChange',
+      onEvent: (param) => this.onPetTypeChange(param)
+    }
+  })
+];
+
+onPetTypeChange(param: ActionEvent) {
+  if (param.event === 'PO') {
+    // Add "Other pet type" text field
+    const otherField = [
+      new Input('otherPetType', 'Specify Pet Type')
+    ];
+    this.formStructure.createNodes(4, otherField);
+  }
+}
+```
+
+### Conditional Validation
+
+You can also conditionally apply validators:
+
+```typescript
+if (param.event === 'y') {
+  const petNameField = new Input('petName', 'Pet Name').apply({
+    validator: Validators.compose([
+      Validators.required,
+      Validators.minLength(2)
+    ])
+  });
+  this.formStructure.createNodes(3, [petNameField]);
+}
+```
+
+## Tips and Best Practices
+
+1. **Position Management**: Keep track of field positions carefully when inserting multiple conditional field groups
+
+2. **Field Cleanup**: Always remove fields when conditions are no longer met to avoid stale data
+
+3. **Default Values**: Set appropriate default values for trigger fields to ensure predictable initial state
+
+4. **Validation**: Consider that removed fields won't block form submission, even if they had validators
+
+5. **User Experience**: Provide hints to explain why fields appear or disappear
+
+## Related Examples
+
+- [Sign-Up Form](/examples/sign-up-form) - See conditional fields in a complete form
+- [Form Structure API](/api/form-structure) - Learn about `createNodes()` and `removeNodes()` methods

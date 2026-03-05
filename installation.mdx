@@ -1,0 +1,303 @@
+---
+title: Installation
+description: Install and configure Mat Dynamic Form in your Angular project
+---
+
+# Installation
+
+This guide walks you through installing Mat Dynamic Form and setting up all required dependencies in your Angular project.
+
+## Prerequisites
+
+<Warning>
+Before installing Mat Dynamic Form, ensure your project meets these requirements:
+</Warning>
+
+### Angular Version
+
+Mat Dynamic Form supports Angular versions **11.x through 16.x**:
+
+```json package.json
+{
+  "dependencies": {
+    "@angular/core": ">=11.0.0 <17.0.0"
+  }
+}
+```
+
+<Note>
+If you're starting a new project, we recommend using Angular 15 or 16 for the best compatibility and features.
+</Note>
+
+### Angular Material
+
+Mat Dynamic Form requires Angular Material to be installed and configured in your project. If you haven't already set up Angular Material, install it first:
+
+<CodeGroup>
+```bash npm
+ng add @angular/material
+```
+
+```bash yarn
+ng add @angular/material
+```
+
+```bash pnpm
+ng add @angular/material
+```
+</CodeGroup>
+
+During installation, you'll be prompted to:
+
+1. **Choose a theme** - Select any Material theme (Indigo/Pink, Purple/Green, etc.)
+2. **Set up typography** - Choose 'Yes' for Material typography
+3. **Enable animations** - Choose 'Yes' to include Angular animations
+
+<Tip>
+For more details on Angular Material setup, see the [official Angular Material documentation](https://material.angular.io/guide/getting-started).
+</Tip>
+
+### Peer Dependencies
+
+The following packages are required as peer dependencies:
+
+- `@angular/animations` (version 11.0.0 to 16.x.x)
+- `@angular/cdk` (version 11.0.0 to 16.x.x)
+- `@angular/common` (version 11.0.0 to 16.x.x)
+- `@angular/material` (version 11.0.0 to 16.x.x)
+
+These are typically installed automatically with Angular Material.
+
+## Install Mat Dynamic Form
+
+Once prerequisites are met, install the Mat Dynamic Form package:
+
+<CodeGroup>
+```bash npm
+npm install mat-dynamic-form
+```
+
+```bash yarn
+yarn add mat-dynamic-form
+```
+
+```bash pnpm
+pnpm add mat-dynamic-form
+```
+</CodeGroup>
+
+This will install the latest stable version of Mat Dynamic Form along with its required dependencies.
+
+## Module Setup
+
+After installation, import and configure the `MatDynamicFormModule` in your Angular module.
+
+### App Module (Standalone Modules)
+
+If you're using traditional NgModules, add `MatDynamicFormModule` to your `AppModule`:
+
+```typescript app.module.ts
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatDynamicFormModule } from 'mat-dynamic-form';
+
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    BrowserAnimationsModule,
+    MatDynamicFormModule  // Add this line
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
+### Feature Module
+
+If you're organizing your application into feature modules, import `MatDynamicFormModule` in each feature module that uses dynamic forms:
+
+```typescript feature.module.ts
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatDynamicFormModule } from 'mat-dynamic-form';
+
+import { UserFormComponent } from './user-form.component';
+
+@NgModule({
+  declarations: [
+    UserFormComponent
+  ],
+  imports: [
+    CommonModule,
+    MatDynamicFormModule  // Import in each feature module
+  ]
+})
+export class FeatureModule { }
+```
+
+<Note>
+`MatDynamicFormModule` can be imported in multiple modules - there's no need to create a shared module for it.
+</Note>
+
+### Standalone Components (Angular 14+)
+
+If you're using Angular's standalone components feature, import `MatDynamicFormModule` directly in your component:
+
+```typescript user-form.component.ts
+import { Component } from '@angular/core';
+import { MatDynamicFormModule } from 'mat-dynamic-form';
+import { FormStructure, Input, Button } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-user-form',
+  standalone: true,
+  imports: [MatDynamicFormModule],
+  template: `
+    <mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>
+  `
+})
+export class UserFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    // Form configuration...
+  }
+}
+```
+
+## Verify Installation
+
+To verify that Mat Dynamic Form is installed correctly, create a simple test component:
+
+<Steps>
+  <Step title="Create a test component">
+    Generate a new component or use an existing one:
+    
+    ```bash
+    ng generate component test-form
+    ```
+  </Step>
+  
+  <Step title="Add the form structure">
+    Update your component TypeScript file:
+    
+    ```typescript test-form.component.ts
+    import { Component } from '@angular/core';
+    import { FormStructure, Input } from 'mat-dynamic-form';
+    
+    @Component({
+      selector: 'app-test-form',
+      templateUrl: './test-form.component.html',
+      styleUrls: ['./test-form.component.scss']
+    })
+    export class TestFormComponent {
+      formStructure: FormStructure;
+      
+      constructor() {
+        this.formStructure = new FormStructure();
+        this.formStructure.title = 'Test Form';
+        this.formStructure.nodes = [
+          new Input('testField', 'Test Field')
+        ];
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Add the template">
+    Update your component HTML:
+    
+    ```html test-form.component.html
+    <mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>
+    ```
+  </Step>
+  
+  <Step title="Run your application">
+    Start the development server:
+    
+    ```bash
+    ng serve
+    ```
+    
+    Navigate to `http://localhost:4200` and you should see your test form rendered with Material Design styling.
+  </Step>
+</Steps>
+
+<Check>
+If you see a Material Design form with a title "Test Form" and one input field labeled "Test Field", your installation is successful!
+</Check>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Module not found error">
+    If you see `Cannot find module 'mat-dynamic-form'`, try:
+    
+    1. Delete `node_modules` and `package-lock.json`
+    2. Run `npm install` again
+    3. Restart your IDE/development server
+    
+    ```bash
+    rm -rf node_modules package-lock.json
+    npm install
+    ```
+  </Accordion>
+  
+  <Accordion title="Peer dependency warnings">
+    If you see warnings about peer dependencies, ensure your Angular version is between 11.x and 16.x:
+    
+    ```bash
+    ng version
+    ```
+    
+    If your Angular version is incompatible, you may need to upgrade or downgrade:
+    
+    ```bash
+    # Upgrade to Angular 16
+    ng update @angular/core@16 @angular/cli@16
+    ```
+  </Accordion>
+  
+  <Accordion title="Angular Material not configured">
+    If you see errors about missing Material components, Angular Material may not be properly configured:
+    
+    1. Ensure `@angular/material` is installed
+    2. Check that `BrowserAnimationsModule` is imported in your root module
+    3. Verify a Material theme is included in `styles.scss`:
+    
+    ```scss styles.scss
+    @import '@angular/material/prebuilt-themes/indigo-pink.css';
+    ```
+  </Accordion>
+  
+  <Accordion title="Bootstrap conflicts">
+    Mat Dynamic Form includes Bootstrap 4.6.0 as a dependency for grid layout. If you're already using Bootstrap in your project, you may see style conflicts.
+    
+    To resolve this:
+    
+    1. Ensure only one Bootstrap version is loaded
+    2. Check your `angular.json` styles array
+    3. Consider using Angular Material's layout system instead
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that Mat Dynamic Form is installed and configured, you're ready to build your first dynamic form!
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Follow our step-by-step guide to create your first dynamic form
+  </Card>
+  
+  <Card title="Core Concepts" icon="book" href="/core-concepts">
+    Learn about FormStructure, Nodes, and Actions
+  </Card>
+</CardGroup>

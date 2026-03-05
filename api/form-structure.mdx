@@ -1,0 +1,677 @@
+---
+title: 'FormStructure'
+description: 'Main class for managing dynamic form configuration, validation, and state'
+icon: 'square-code'
+---
+
+## Overview
+
+The `FormStructure` class is the core class for creating and managing dynamic forms in Mat Dynamic Form. It extends `ObjectBase` and provides comprehensive methods for form control management, validation, and value handling.
+
+**Source:** `projects/mat-dynamic-form/src/lib/models/FormStructure.ts:12`
+
+## Constructor
+
+```typescript
+constructor(title?: string, nodes?: Node[], validateActions?: Button[])
+```
+
+Creates a new FormStructure instance.
+
+<ParamField path="title" type="string" optional>
+  The title displayed at the top of the form
+</ParamField>
+
+<ParamField path="nodes" type="Node[]" optional>
+  Array of form nodes (inputs, dropdowns, etc.) to render. See [Node](/api/node)
+</ParamField>
+
+<ParamField path="validateActions" type="Button[]" optional>
+  Array of action buttons (max 4 allowed). See [Button](/api/node#button)
+</ParamField>
+
+<Note>
+  The constructor throws an error if more than 4 validate actions are provided.
+</Note>
+
+## Properties
+
+### Public Properties
+
+<ResponseField name="title" type="string">
+  The form title text
+</ResponseField>
+
+<ResponseField name="nodes" type="Node[]">
+  Array of form nodes that define the form fields
+</ResponseField>
+
+<ResponseField name="validateActions" type="Button[]">
+  Array of action buttons displayed at the bottom of the form
+</ResponseField>
+
+<ResponseField name="nodeGrid" type="number" default="2">
+  Number of columns for form layout (min: 1, max: 4)
+</ResponseField>
+
+<ResponseField name="maxParentHeight" type="string" default="100vh">
+  Maximum height of the form container
+</ResponseField>
+
+<ResponseField name="onlyScrollContent" type="boolean" default="false">
+  If true, only the form content scrolls (not the entire container)
+</ResponseField>
+
+<ResponseField name="appearance" type="MatFormFieldAppearance" default="'standard'">
+  Material form field appearance: `'standard'` | `'fill'` | `'outline'`
+</ResponseField>
+
+<ResponseField name="showTitle" type="boolean" default="true">
+  Whether to display the form title
+</ResponseField>
+
+<ResponseField name="globalValidators" type="ValidatorFn | ValidatorFn[] | null" optional>
+  Global validators applied to all form controls
+</ResponseField>
+
+<ResponseField name="validateEvenDisabled" type="boolean" default="false">
+  Whether to validate disabled controls
+</ResponseField>
+
+## Methods
+
+### Form Group Management
+
+#### setFromGroup
+
+```typescript
+setFromGroup(formGroup: FormGroup): void
+```
+
+Sets the internal FormGroup instance.
+
+<ParamField path="formGroup" type="FormGroup" required>
+  The Angular FormGroup instance to manage
+</ParamField>
+
+#### getFormGroup
+
+```typescript
+getFormGroup(): FormGroup
+```
+
+Returns the internal FormGroup instance.
+
+<ResponseField name="returns" type="FormGroup">
+  The managed Angular FormGroup
+</ResponseField>
+
+### Control and Node Access
+
+#### getControlById
+
+```typescript
+getControlById(controlId: string): AbstractControl | null
+```
+
+Retrieves a form control by its ID.
+
+**Source:** `FormStructure.ts:80`
+
+<ParamField path="controlId" type="string" required>
+  The unique identifier of the control
+</ParamField>
+
+<ResponseField name="returns" type="AbstractControl | null">
+  The control instance, or null if not found
+</ResponseField>
+
+#### getNodeById
+
+```typescript
+getNodeById<T extends Node>(nodeId: string): T
+```
+
+Retrieves a node by its ID and updates its value from the form control.
+
+**Source:** `FormStructure.ts:91`
+
+<ParamField path="nodeId" type="string" required>
+  The unique identifier of the node
+</ParamField>
+
+<ResponseField name="returns" type="T extends Node">
+  The node instance with updated value
+</ResponseField>
+
+#### getActionById
+
+```typescript
+getActionById<T extends Node>(nodeId: string): Button
+```
+
+Retrieves a validate action button by its ID.
+
+**Source:** `FormStructure.ts:108`
+
+<ParamField path="nodeId" type="string" required>
+  The unique identifier of the action button
+</ParamField>
+
+<ResponseField name="returns" type="Button">
+  The button instance
+</ResponseField>
+
+### Value Management
+
+#### getValue
+
+```typescript
+getValue<T>(): T
+```
+
+Returns the current form values (excluding disabled controls).
+
+**Source:** `FormStructure.ts:139`
+
+<ResponseField name="returns" type="T">
+  Object containing form values by control ID
+</ResponseField>
+
+#### getRawValue
+
+```typescript
+RawValue<T>(): T
+```
+
+Returns all form values including disabled controls.
+
+**Source:** `FormStructure.ts:149`
+
+<ResponseField name="returns" type="T">
+  Object containing all form values by control ID
+</ResponseField>
+
+#### patchValue
+
+```typescript
+patchValue<T>(newValue: DataSet<T>): boolean
+```
+
+Updates form control values from a DataSet object.
+
+**Source:** `FormStructure.ts:179`
+
+<ParamField path="newValue" type="DataSet<T>" required>
+  Object mapping control IDs to new values. See [DataSet](/api/dataset)
+</ParamField>
+
+<ResponseField name="returns" type="boolean">
+  True if successful, false if formGroup is not initialized
+</ResponseField>
+
+<Warning>
+  Throws `ReferenceException` if a control ID in newValue doesn't exist in the form.
+</Warning>
+
+#### reset
+
+```typescript
+reset(): boolean
+```
+
+Resets all form controls to their initial values.
+
+**Source:** `FormStructure.ts:115`
+
+<ResponseField name="returns" type="boolean">
+  True if successful, false otherwise
+</ResponseField>
+
+#### remapValues
+
+```typescript
+remapValues(): void
+```
+
+Re-applies default values from node definitions to form controls.
+
+**Source:** `FormStructure.ts:127`
+
+### Validation
+
+#### isValid
+
+```typescript
+isValid(): boolean
+```
+
+Checks if the entire form is valid.
+
+**Source:** `FormStructure.ts:197`
+
+<ResponseField name="returns" type="boolean">
+  True if all validations pass
+</ResponseField>
+
+#### isInvalid
+
+```typescript
+isInvalid(): boolean
+```
+
+Checks if the form has any validation errors.
+
+**Source:** `FormStructure.ts:222`
+
+<ResponseField name="returns" type="boolean">
+  True if any validation fails
+</ResponseField>
+
+#### addValidators
+
+```typescript
+addValidators(id: string, validators: Validator): void
+```
+
+Adds synchronous validators to a specific control without replacing existing ones.
+
+**Source:** `FormStructure.ts:332`
+
+<ParamField path="id" type="string" required>
+  The control ID to add validators to
+</ParamField>
+
+<ParamField path="validators" type="Validator" required>
+  ValidatorFn, ValidatorFn[], or null
+</ParamField>
+
+#### addAsyncValidators
+
+```typescript
+addAsyncValidators(id: string, validators: AsyncValidator): void
+```
+
+Adds asynchronous validators to a specific control.
+
+**Source:** `FormStructure.ts:344`
+
+<ParamField path="id" type="string" required>
+  The control ID to add validators to
+</ParamField>
+
+<ParamField path="validators" type="AsyncValidator" required>
+  AsyncValidatorFn, AsyncValidatorFn[], or null
+</ParamField>
+
+#### setValidator
+
+```typescript
+setValidator(id: string, validators: Validator): void
+```
+
+Replaces all synchronous validators on a control.
+
+**Source:** `FormStructure.ts:356`
+
+<ParamField path="id" type="string" required>
+  The control ID to set validators for
+</ParamField>
+
+<ParamField path="validators" type="Validator" required>
+  ValidatorFn, ValidatorFn[], or null
+</ParamField>
+
+#### setAsyncValidator
+
+```typescript
+setAsyncValidator(id: string, validators: AsyncValidator): void
+```
+
+Replaces all asynchronous validators on a control.
+
+**Source:** `FormStructure.ts:370`
+
+<ParamField path="id" type="string" required>
+  The control ID to set validators for
+</ParamField>
+
+<ParamField path="validators" type="AsyncValidator" required>
+  AsyncValidatorFn, AsyncValidatorFn[], or null
+</ParamField>
+
+### Dynamic Node Management
+
+#### createNodes
+
+```typescript
+createNodes(from: number, nodes: Node[]): void
+```
+
+Inserts multiple nodes into the form at a specific position.
+
+**Source:** `FormStructure.ts:232`
+
+<ParamField path="from" type="number" required>
+  The index position to insert nodes at
+</ParamField>
+
+<ParamField path="nodes" type="Node[]" required>
+  Array of nodes to insert
+</ParamField>
+
+#### removeNodes
+
+```typescript
+removeNodes(nodes: Node[]): void
+```
+
+Removes multiple nodes from the form.
+
+**Source:** `FormStructure.ts:243`
+
+<ParamField path="nodes" type="Node[]" required>
+  Array of nodes to remove
+</ParamField>
+
+#### createFormControl
+
+```typescript
+createFormControl(node: Node): void
+```
+
+Creates or updates a form control for a given node.
+
+**Source:** `FormStructure.ts:293`
+
+<ParamField path="node" type="Node" required>
+  The node to create a control for
+</ParamField>
+
+#### removeFormControl
+
+```typescript
+removeFormControl(node: Node): void
+```
+
+Removes a form control from the FormGroup.
+
+**Source:** `FormStructure.ts:284`
+
+<ParamField path="node" type="Node" required>
+  The node whose control should be removed
+</ParamField>
+
+#### createValidateActions
+
+```typescript
+createValidateActions(from: number, nodes: Button[]): void
+```
+
+Inserts multiple action buttons at a specific position.
+
+**Source:** `FormStructure.ts:255`
+
+<ParamField path="from" type="number" required>
+  The index position to insert buttons at
+</ParamField>
+
+<ParamField path="nodes" type="Button[]" required>
+  Array of button nodes to insert
+</ParamField>
+
+#### removeValidateActions
+
+```typescript
+removeValidateActions(nodes: Button[]): void
+```
+
+Removes multiple action buttons from the form.
+
+**Source:** `FormStructure.ts:266`
+
+<ParamField path="nodes" type="Button[]" required>
+  Array of button nodes to remove
+</ParamField>
+
+### Utility Methods
+
+#### fromGroupSize
+
+```typescript
+fromGroupSize(): number
+```
+
+Counts the total number of controls in the FormGroup.
+
+**Source:** `FormStructure.ts:275`
+
+<ResponseField name="returns" type="number">
+  Total count of form controls (recursively counts nested groups/arrays)
+</ResponseField>
+
+#### addNodeEvent
+
+```typescript
+addNodeEvent(node: Node): void
+```
+
+Attaches event listeners to a node based on its action configuration.
+
+**Source:** `FormStructure.ts:383`
+
+<ParamField path="node" type="Node" required>
+  The node to attach events to
+</ParamField>
+
+## Usage Examples
+
+### Basic Form Creation
+
+```typescript
+import { FormStructure, Input, Button, Dropdown, OptionChild } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const structure = new FormStructure(
+  'User Registration',
+  [
+    new Input('username', 'Username', '', null, false, 'person', 'Username is required', false, false, Validators.required),
+    new Input('email', 'Email', '', null, false, 'email', 'Email is required', false, false, [Validators.required, Validators.email]),
+    new Dropdown(
+      'country',
+      'Country',
+      [
+        new OptionChild('United States', 'us'),
+        new OptionChild('Canada', 'ca'),
+        new OptionChild('Mexico', 'mx')
+      ],
+      'us'
+    )
+  ],
+  [
+    new Button('submit', 'Submit', {
+      type: 'click',
+      style: 'primary',
+      onEvent: ({ structure }) => {
+        if (structure.isValid()) {
+          const values = structure.getValue();
+          console.log('Form submitted:', values);
+        }
+      }
+    }, false, 'send', false, true)
+  ]
+);
+
+// Configure appearance
+structure.appearance = 'outline';
+structure.nodeGrid = 2;
+structure.maxParentHeight = '80vh';
+```
+
+### Accessing and Updating Values
+
+```typescript
+// Get specific node
+const usernameNode = structure.getNodeById<Input>('username');
+console.log('Username:', usernameNode.value);
+
+// Get specific control
+const emailControl = structure.getControlById('email');
+emailControl.setValue('user@example.com');
+
+// Patch multiple values
+structure.patchValue({
+  username: 'johndoe',
+  email: 'john@example.com',
+  country: 'ca'
+});
+
+// Get all values
+const formData = structure.getValue<{
+  username: string;
+  email: string;
+  country: string;
+}>();
+
+// Reset form
+structure.reset();
+```
+
+### Dynamic Form Manipulation
+
+```typescript
+import { Input, Checkbox } from 'mat-dynamic-form';
+
+// Add new fields dynamically
+const newFields = [
+  new Input('phone', 'Phone Number', '', null, false, 'phone'),
+  new Checkbox('newsletter', 'Subscribe to newsletter', false)
+];
+
+structure.createNodes(2, newFields); // Insert at position 2
+
+// Remove fields
+structure.removeNodes(newFields);
+```
+
+### Validation Management
+
+```typescript
+import { Validators } from '@angular/forms';
+
+// Add validators to existing control
+structure.addValidators('username', Validators.minLength(3));
+
+// Replace validators
+structure.setValidator('email', [
+  Validators.required,
+  Validators.email,
+  Validators.pattern(/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/)
+]);
+
+// Add async validator
+structure.addAsyncValidators('username', (control) => {
+  return checkUsernameAvailability(control.value).pipe(
+    map(available => available ? null : { usernameTaken: true })
+  );
+});
+
+// Check validation status
+if (structure.isValid()) {
+  console.log('Form is valid');
+} else {
+  console.log('Form has errors');
+}
+```
+
+### Global Validators
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+// Custom global validator
+function noSpecialCharsValidator(control: AbstractControl): ValidationErrors | null {
+  const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(control.value);
+  return hasSpecialChars ? { specialChars: true } : null;
+}
+
+structure.globalValidators = noSpecialCharsValidator;
+```
+
+### Working with Actions
+
+```typescript
+import { Button, ActionEvent } from 'mat-dynamic-form';
+
+const submitButton = new Button(
+  'submit',
+  'Submit Form',
+  {
+    type: 'click',
+    style: 'primary',
+    onEvent: ({ event, structure }: ActionEvent) => {
+      if (structure.isValid()) {
+        const data = structure.getRawValue();
+        submitToAPI(data);
+      } else {
+        console.error('Form is invalid');
+      }
+    }
+  },
+  false,
+  'send',
+  false,
+  true, // validateForm
+  ({ structure }) => {
+    // Custom validation logic
+    return structure.isValid() && structure.getValue().terms === true;
+  }
+);
+
+const resetButton = new Button(
+  'reset',
+  'Reset',
+  {
+    type: 'click',
+    style: 'warn',
+    onEvent: ({ structure }) => {
+      structure.reset();
+    }
+  }
+);
+
+structure.validateActions = [submitButton, resetButton];
+```
+
+## Related Classes
+
+- [Node](/api/node) - Form field nodes
+- [Action](/api/action) - Event action configuration
+- [DataSet](/api/dataset) - Key-value data structure
+- [OptionChild](/api/option-child) - Dropdown/select options
+
+## Deprecated Methods
+
+<Warning>
+  The following methods are deprecated and will be removed in future versions:
+</Warning>
+
+### pathValue (Deprecated)
+
+```typescript
+pathValue<T>(newValue: DataSet<T>): boolean
+```
+
+**Deprecated since:** v1.4.0  
+**Removed in:** v1.5.0  
+**Use instead:** [`patchValue`](#patchvalue)
+
+### isInalid (Deprecated)
+
+```typescript
+isInalid(): boolean
+```
+
+**Deprecated since:** v1.4.0  
+**Removed in:** v1.5.0  
+**Use instead:** [`isInvalid`](#isinvalid)

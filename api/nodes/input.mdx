@@ -1,0 +1,212 @@
+---
+title: Input
+description: Basic text input field for single-line text entry
+---
+
+The `Input` class creates a basic text input field for capturing single-line text from users. It extends `InputBaseNode` and provides character count validation and read-only mode support.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → InputBaseNode → Input
+```
+
+## Constructor
+
+```typescript
+new Input(
+  id: string,
+  placeholder?: string,
+  value?: any,
+  maxCharCount?: number,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  readOnly?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+## Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the input field in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text displayed when the input is empty.
+</ParamField>
+
+<ParamField path="value" type="any">
+  The initial value of the input field.
+</ParamField>
+
+<ParamField path="maxCharCount" type="number">
+  Maximum number of characters allowed in the input.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the input should be displayed in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the input.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the input is disabled.
+</ParamField>
+
+<ParamField path="readOnly" type="boolean" default="false">
+  Whether the input is read-only.
+</ParamField>
+
+<ParamField path="validator" type="Validator">
+  Synchronous validator(s) to apply to the input. Can be a single `ValidatorFn`, an array of `ValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidator">
+  Asynchronous validator(s) to apply to the input. Can be a single `AsyncValidatorFn`, an array of `AsyncValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when specific events occur on the input.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the input field |
+| `placeholder` | `string` | The placeholder text |
+| `type` | `NodeType` | The type of node (set to `'input'`) |
+| `value` | `any` | The current value of the input |
+| `maxCharCount` | `number` | Maximum character count |
+| `minCharCount` | `number` | Minimum character count |
+| `readOnly` | `boolean` | Whether the input is read-only |
+| `singleLine` | `boolean` | Single line layout flag |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Disabled state |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validator |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text displayed below the input |
+| `autoFocus` | `boolean` | Whether to auto-focus the input |
+
+## Methods
+
+### editable()
+
+Makes the input field editable by setting `readOnly` to `false`.
+
+```typescript
+input.editable();
+```
+
+### readonly()
+
+Makes the input field read-only by setting `readOnly` to `true`.
+
+```typescript
+input.readonly();
+```
+
+### apply()
+
+Inherited from `ObjectBase`. Applies additional properties to the node instance.
+
+```typescript
+apply(options: Partial<Input>): this
+```
+
+### getNativeElement()
+
+Returns the native DOM element for this input.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Examples
+
+### Basic Input
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+
+const nameInput = new Input('name', 'Full Name');
+```
+
+### Input with Validation
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const emailInput = new Input('email', 'Email Address').apply({
+  icon: 'email',
+  validator: [Validators.required, Validators.email],
+  errorMessage: 'Please enter a valid email address'
+});
+```
+
+### Input with Character Limit
+
+```typescript
+const bioInput = new Input('bio', 'Bio', undefined, 500).apply({
+  hint: 'Tell us about yourself (max 500 characters)',
+  icon: 'description'
+});
+```
+
+### Read-Only Input
+
+```typescript
+const usernameInput = new Input('username', 'Username', 'john_doe').apply({
+  readOnly: true,
+  icon: 'account_circle',
+  hint: 'Username cannot be changed'
+});
+```
+
+### Input with Actions
+
+```typescript
+const searchInput = new Input('search', 'Search').apply({
+  icon: 'search',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      console.log('Search query:', param.event);
+      // Perform search operation
+    }
+  }
+});
+```
+
+### Dynamic Read-Only Toggle
+
+```typescript
+const addressInput = new Input('address', 'Address', '123 Main St');
+
+// Make read-only
+addressInput.readonly();
+
+// Make editable
+addressInput.editable();
+```
+
+## Related Node Types
+
+- [InputPassword](/api/nodes/input-password) - Input field for password entry
+- [InputNumber](/api/nodes/input-number) - Input field for numeric values
+- [TextArea](/api/nodes/textarea) - Multi-line text input
+- [InputFile](/api/nodes/input-file) - File upload input

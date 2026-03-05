@@ -1,0 +1,228 @@
+---
+title: 'Components Overview'
+description: 'Complete guide to all available form components in Mat Dynamic Form'
+---
+
+## Available Components
+
+Mat Dynamic Form provides a comprehensive set of components for building dynamic forms in Angular. Each component is designed to work seamlessly with Angular's reactive forms and Material Design.
+
+## Input Components
+
+These components capture text and numeric data from users.
+
+<CardGroup cols={2}>
+  <Card title="Input" icon="input-text" href="/components/input">
+    Standard text input for single-line text entry with character limits and validation.
+  </Card>
+  
+  <Card title="Textarea" icon="align-left" href="/components/textarea">
+    Multi-line text input for longer content like comments or descriptions.
+  </Card>
+  
+  <Card title="Input File" icon="upload" href="/components/input-file">
+    File upload component with drag-and-drop support and file type validation.
+  </Card>
+</CardGroup>
+
+## Selection Components
+
+These components allow users to choose from predefined options.
+
+<CardGroup cols={2}>
+  <Card title="Dropdown" icon="chevron-down" href="/components/dropdown">
+    Single or multi-select dropdown with support for async data loading.
+  </Card>
+  
+  <Card title="Radio Group" icon="circle-dot" href="/components/radio-group">
+    Mutually exclusive radio button groups for clear choice selection.
+  </Card>
+  
+  <Card title="Checkbox" icon="square-check" href="/components/checkbox">
+    Boolean checkbox for toggleable options and agreements.
+  </Card>
+</CardGroup>
+
+## Date and Time Components
+
+These components handle date and time input with built-in pickers.
+
+<CardGroup cols={2}>
+  <Card title="Date Picker" icon="calendar" href="/components/date-picker">
+    Date selection with Material Design calendar picker.
+  </Card>
+  
+  <Card title="Date Time Picker" icon="calendar-clock" href="/components/date-time-picker">
+    Combined date and time selection with customizable formats.
+  </Card>
+  
+  <Card title="Time Picker" icon="clock" href="/components/time-picker">
+    Time-only selection with clock picker interface.
+  </Card>
+</CardGroup>
+
+## Action Components
+
+These components trigger actions and form submissions.
+
+<CardGroup cols={2}>
+  <Card title="Button" icon="hand-pointer" href="/components/button">
+    Action buttons with built-in form validation support.
+  </Card>
+  
+  <Card title="Custom Component" icon="puzzle-piece" href="/components/custom-component">
+    Embed your own Angular components within the dynamic form.
+  </Card>
+</CardGroup>
+
+## Common Features
+
+All components share these common capabilities:
+
+### Validation Support
+
+Every component supports both synchronous and asynchronous validation using Angular's built-in validators or custom validation functions.
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const field = new Input('email', 'Email').apply({
+  validator: [Validators.required, Validators.email],
+  errorMessage: 'Please enter a valid email'
+});
+```
+
+### Event Handling
+
+Attach custom actions to respond to user interactions:
+
+```typescript
+const field = new Input('search', 'Search').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      console.log('Value changed:', param.event);
+    }
+  }
+});
+```
+
+### Material Design Icons
+
+Add Material icons to enhance visual clarity:
+
+```typescript
+const field = new Input('username', 'Username').apply({
+  icon: 'person'
+});
+```
+
+### Responsive Layout
+
+Control component width with the `singleLine` property:
+
+```typescript
+// Takes full row width
+const field = new Input('description', 'Description').apply({
+  singleLine: true
+});
+```
+
+### Helper Text
+
+Provide contextual guidance with hints:
+
+```typescript
+const field = new Input('password', 'Password').apply({
+  hint: 'Must be at least 8 characters'
+});
+```
+
+## The apply() Method
+
+All components support the fluent `apply()` method for clean, readable configuration:
+
+```typescript
+const input = new Input('name', 'Full Name')
+  .apply({
+    icon: 'person',
+    validator: Validators.required,
+    hint: 'Enter your legal name',
+    maxCharCount: 100,
+    autoFocus: true
+  });
+```
+
+This is equivalent to setting properties individually but more concise and chainable.
+
+## Component Properties Reference
+
+### Common Properties
+
+These properties are available on all components:
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the component. Used to access values and controls.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Placeholder text displayed when the field is empty.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the field.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the field is disabled and non-interactive.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the field takes up a full row in the form grid.
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Synchronous validators to apply to the field.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidatorFn">
+  Asynchronous validators for server-side validation.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message displayed when validation fails.
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the field.
+</ParamField>
+
+<ParamField path="autoFocus" type="boolean" default="false">
+  Whether the field receives focus when the form loads.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Event handlers for user interactions. See [Actions](/concepts/actions).
+</ParamField>
+
+## Next Steps
+
+Explore individual component pages for detailed usage examples, properties, and best practices:
+
+<CardGroup cols={3}>
+  <Card title="Input" href="/components/input" />
+  <Card title="Dropdown" href="/components/dropdown" />
+  <Card title="Checkbox" href="/components/checkbox" />
+  <Card title="Radio Group" href="/components/radio-group" />
+  <Card title="Date Picker" href="/components/date-picker" />
+  <Card title="Date Time Picker" href="/components/date-time-picker" />
+  <Card title="Time Picker" href="/components/time-picker" />
+  <Card title="Input File" href="/components/input-file" />
+  <Card title="Textarea" href="/components/textarea" />
+  <Card title="Button" href="/components/button" />
+  <Card title="Custom Component" href="/components/custom-component" />
+</CardGroup>
+
+<Tip>
+  Looking for advanced features? Check out the [Concepts](/concepts/nodes) section to learn about node inheritance, dynamic form manipulation, and more.
+</Tip>

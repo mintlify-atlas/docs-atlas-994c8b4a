@@ -1,0 +1,478 @@
+---
+title: Styling
+description: Customize the appearance and layout of your dynamic forms
+---
+
+# Styling
+
+Mat Dynamic Form provides multiple approaches to styling your forms, from built-in appearance options to custom CSS and grid layouts.
+
+## Form Appearance
+
+The `appearance` property controls the visual style of all form fields using Angular Material's form field appearances.
+
+```typescript
+import { FormStructure } from 'mat-dynamic-form';
+
+const formStructure = new FormStructure();
+formStructure.appearance = 'outline'; // 'fill', 'outline', or 'standard'
+```
+
+See FormStructure.ts:36 and README.md:94 for configuration.
+
+### Available Appearances
+
+<Tabs>
+  <Tab title="Outline">
+    ```typescript
+    formStructure.appearance = 'outline';
+    ```
+    
+    Displays fields with a border outline (recommended for modern designs).
+  </Tab>
+  
+  <Tab title="Fill">
+    ```typescript
+    formStructure.appearance = 'fill';
+    ```
+    
+    Displays fields with a filled background (Material Design standard).
+  </Tab>
+  
+  <Tab title="Standard">
+    ```typescript
+    formStructure.appearance = 'standard';
+    ```
+    
+    Displays fields with a bottom border only (classic Material Design).
+  </Tab>
+</Tabs>
+
+<Tip>
+The `outline` appearance is generally preferred for better visual hierarchy and accessibility. It's especially useful when forms have many fields.
+</Tip>
+
+## Grid Layout (nodeGrid)
+
+Control how many columns form fields occupy using the `nodeGrid` property.
+
+```typescript
+formStructure.nodeGrid = 2; // 2 columns (default)
+```
+
+### Grid Values
+
+- **1** - Single column (full width)
+- **2** - Two columns (default, 50% width each)
+- **3** - Three columns (33% width each)
+- **4** - Four columns (25% width each)
+
+See FormStructure.ts:17-33 for implementation.
+
+### Examples
+
+<Steps>
+  <Step title="Single Column Layout">
+    ```typescript
+    formStructure.nodeGrid = 1;
+    
+    // All fields will be full width, stacked vertically
+    formStructure.nodes = [
+      new Input('name', 'Full Name'),
+      new Input('email', 'Email Address'),
+      new TextArea('bio', 'Biography')
+    ];
+    ```
+  </Step>
+  
+  <Step title="Two Column Layout">
+    ```typescript
+    formStructure.nodeGrid = 2;
+    
+    // Fields arranged in 2 columns
+    formStructure.nodes = [
+      new Input('firstName', 'First Name'),  // Left column
+      new Input('lastName', 'Last Name'),     // Right column
+      new Input('email', 'Email'),            // Left column
+      new Input('phone', 'Phone')             // Right column
+    ];
+    ```
+  </Step>
+  
+  <Step title="Mixed Layout with singleLine">
+    ```typescript
+    formStructure.nodeGrid = 2;
+    
+    formStructure.nodes = [
+      new Input('firstName', 'First Name'),  // Left column
+      new Input('lastName', 'Last Name'),     // Right column
+      new TextArea('address', 'Address').apply({
+        singleLine: true  // Takes full width despite nodeGrid
+      }),
+      new Input('city', 'City'),              // Left column
+      new Input('state', 'State')             // Right column
+    ];
+    ```
+  </Step>
+</Steps>
+
+## Single Line Fields
+
+The `singleLine` property forces a field to take up the full width regardless of the `nodeGrid` setting.
+
+```typescript
+new TextArea('comments', 'Comments').apply({
+  singleLine: true,  // Takes full width
+  maxCharCount: 100
+})
+```
+
+See Node.ts:24 and README.md:130 for usage.
+
+### When to Use singleLine
+
+- **Text areas** - Usually need more horizontal space
+- **Long text inputs** - Email addresses, URLs, descriptions
+- **Section headers** - Visual separation between form sections
+- **Checkboxes with long labels** - Multi-line agreement text
+- **File uploads** - Need space for file name display
+
+**Example:**
+
+```typescript
+formStructure.nodeGrid = 2;
+formStructure.nodes = [
+  new Input('firstName', 'First Name'),
+  new Input('lastName', 'Last Name'),
+  
+  // Email needs more space for visibility
+  new Input('email', 'Email Address').apply({
+    singleLine: true
+  }),
+  
+  new Input('city', 'City'),
+  new Input('zipCode', 'ZIP Code'),
+  
+  // Agreements typically need full width
+  new Checkbox('terms', 'I agree to the Terms and Conditions...').apply({
+    singleLine: true,
+    validator: Validators.requiredTrue
+  })
+];
+```
+
+See app.component.ts:117 and app.component.ts:127 for examples.
+
+## Icons
+
+Add Material Icons to form fields for better visual communication.
+
+```typescript
+import { Input, InputPassword, DatePicker } from 'mat-dynamic-form';
+
+new Input('name', 'Name').apply({
+  icon: 'person'
+}),
+new Input('email', 'Email').apply({
+  icon: 'email'
+}),
+new Input('phone', 'Phone Number').apply({
+  icon: 'phone'
+}),
+new InputPassword('password', 'Password').apply({
+  icon: 'lock'
+}),
+new DatePicker('birthdate', 'Birth Date').apply({
+  icon: 'cake'
+})
+```
+
+See README.md:98-99 and app.component.ts:29-32 for examples.
+
+<Tip>
+Use icons from the [Material Icons library](https://fonts.google.com/icons). Common icons: person, email, phone, lock, home, work, event, search, save, delete, edit.
+</Tip>
+
+## Button Styling
+
+Buttons support both color styles and icons.
+
+### Button Styles
+
+```typescript
+import { Button } from 'mat-dynamic-form';
+
+// Primary action (blue)
+new Button('save', 'Save', {
+  onEvent: (param) => this.save(param),
+  style: 'primary'
+}).apply({
+  icon: 'save'
+})
+
+// Warning/destructive action (red)
+new Button('delete', 'Delete', {
+  onEvent: (param) => this.delete(param),
+  style: 'warn'
+}).apply({
+  icon: 'delete'
+})
+
+// Secondary action (default)
+new Button('cancel', 'Cancel', {
+  onEvent: (param) => this.cancel(param),
+  style: 'secondary'
+}).apply({
+  icon: 'close'
+})
+
+// Accent color
+new Button('help', 'Help', {
+  onEvent: (param) => this.showHelp(param),
+  style: 'accent'
+}).apply({
+  icon: 'help'
+})
+```
+
+See app.component.ts:132-161 for button examples.
+
+### Action Button Layout
+
+Validate actions (buttons at the bottom of the form) support up to 4 buttons:
+
+```typescript
+formStructure.validateActions = [
+  new Button('delete', 'Delete', { style: 'warn' }),
+  new Button('cancel', 'Cancel', { style: 'secondary' }),
+  new Button('preview', 'Preview', { style: 'accent' }),
+  new Button('save', 'Save', { style: 'primary' })
+];
+```
+
+See FormStructure.ts:45-46 for the 4-button limit.
+
+## Form Container Styling
+
+### Title Display
+
+Show or hide the form title:
+
+```typescript
+formStructure.title = 'User Registration';
+formStructure.showTitle = true; // or false to hide
+```
+
+See FormStructure.ts:15 and FormStructure.ts:48 for title configuration.
+
+### Scroll Behavior
+
+Control scrolling for forms with many fields:
+
+```typescript
+formStructure.maxParentHeight = '80vh';  // Maximum form height
+formStructure.onlyScrollContent = true;   // Only scroll form content, not actions
+```
+
+See FormStructure.ts:13-14 and app.component.ts:26 for scroll configuration.
+
+**Example:**
+
+```typescript
+const formStructure = new FormStructure();
+formStructure.title = 'Long Form';
+formStructure.maxParentHeight = '600px';  // Limit height
+formStructure.onlyScrollContent = true;   // Keep buttons visible while scrolling
+```
+
+<Tip>
+Set `onlyScrollContent: true` for long forms to keep action buttons visible while users scroll through fields. This improves UX by always showing submit/cancel buttons.
+</Tip>
+
+## Custom CSS Styling
+
+Apply custom styles to the form component using CSS classes and Angular Material theming.
+
+### Component-level Styling
+
+```typescript
+// app.component.ts
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
+})
+export class AppComponent {
+  formStructure: FormStructure;
+}
+```
+
+```scss
+// app.component.scss
+
+// Target the form container
+::ng-deep mat-dynamic-form {
+  .form-container {
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+  }
+}
+
+// Style specific field types
+::ng-deep mat-form-field {
+  &.mat-form-field-appearance-outline {
+    .mat-form-field-outline {
+      color: #3f51b5;
+    }
+  }
+}
+
+// Customize button spacing
+::ng-deep .validate-actions {
+  gap: 12px;
+  margin-top: 24px;
+}
+```
+
+<Warning>
+Using `::ng-deep` is necessary to pierce Angular's view encapsulation, but it's deprecated. Consider using `:host ::ng-deep` to scope styles to your component or apply global styles in `styles.scss`.
+</Warning>
+
+### Global Theming
+
+Customize Material Design theme colors:
+
+```scss
+// styles.scss
+@use '@angular/material' as mat;
+
+$my-primary: mat.define-palette(mat.$indigo-palette);
+$my-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+$my-warn: mat.define-palette(mat.$red-palette);
+
+$my-theme: mat.define-light-theme((
+  color: (
+    primary: $my-primary,
+    accent: $my-accent,
+    warn: $my-warn,
+  )
+));
+
+@include mat.all-component-themes($my-theme);
+```
+
+### Node-specific Styling
+
+Target specific nodes by their ID:
+
+```scss
+// Target a specific field by ID
+::ng-deep #email {
+  .mat-form-field-wrapper {
+    padding-bottom: 0;
+  }
+}
+
+// Style all required fields
+::ng-deep mat-form-field.mat-form-field-required {
+  .mat-form-field-label {
+    color: #d32f2f;
+  }
+}
+```
+
+## Hints and Error Messages
+
+Display helpful text below form fields:
+
+```typescript
+// Hint text
+new Input('username', 'Username').apply({
+  hint: 'Must be at least 3 characters',
+  validator: Validators.minLength(3)
+})
+
+// Error message
+new Input('email', 'Email Address').apply({
+  hint: 'We will never share your email',
+  errorMessage: 'Please enter a valid email address',
+  validator: [Validators.required, Validators.email]
+})
+```
+
+See Node.ts:30 for hint property and app.component.ts:31-32 for examples.
+
+## Responsive Design
+
+Mat Dynamic Form uses Angular Material's responsive grid system. Consider these patterns:
+
+```typescript
+// Desktop: 3 columns, Tablet: 2 columns, Mobile: 1 column
+// Implement using CSS media queries
+
+export class ResponsiveFormComponent implements OnInit {
+  formStructure: FormStructure;
+
+  ngOnInit() {
+    this.formStructure = new FormStructure();
+    
+    // Adjust grid based on screen size
+    if (window.innerWidth > 1200) {
+      this.formStructure.nodeGrid = 3;
+    } else if (window.innerWidth > 768) {
+      this.formStructure.nodeGrid = 2;
+    } else {
+      this.formStructure.nodeGrid = 1;
+    }
+    
+    // Listen for resize
+    window.addEventListener('resize', () => this.updateGrid());
+  }
+  
+  updateGrid() {
+    if (window.innerWidth > 1200) {
+      this.formStructure.nodeGrid = 3;
+    } else if (window.innerWidth > 768) {
+      this.formStructure.nodeGrid = 2;
+    } else {
+      this.formStructure.nodeGrid = 1;
+    }
+  }
+}
+```
+
+## Disabled Fields
+
+Style disabled fields differently:
+
+```typescript
+// Disabled field
+new Input('readonly', 'Read-only Field').apply({
+  disabled: true,
+  value: 'Cannot be edited'
+})
+
+// Conditionally disable
+const emailField = new Input('email', 'Email Address').apply({
+  disabled: !this.allowEmailEdit
+});
+```
+
+See Node.ts:27 and app.component.ts:68 for disabled usage.
+
+## Best Practices
+
+- **Use appropriate appearance** - `outline` for forms, `fill` for search/filters
+- **Consistent iconography** - Use icons that match your app's design language
+- **Responsive grids** - Adjust `nodeGrid` based on screen size
+- **Single line for emphasis** - Use `singleLine` for important fields
+- **Color meaning** - Use `primary` for main actions, `warn` for destructive actions
+- **Accessibility** - Ensure sufficient color contrast and label clarity
+- **Mobile-first** - Design for single column on mobile, expand for larger screens
+
+## Related Resources
+
+- [Form Structure](/core-concepts/form-structure) - Core form configuration
+- [Button Component](/components/button) - Button styling options
+- [Node Types](/core-concepts/node-types) - All available form fields

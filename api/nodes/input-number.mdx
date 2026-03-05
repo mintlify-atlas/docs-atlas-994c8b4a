@@ -1,0 +1,336 @@
+---
+title: InputNumber
+description: Numeric input field with min/max constraints and decimal support
+---
+
+The `InputNumber` class creates a numeric input field specifically designed for number entry. It extends the `Input` class and adds support for minimum/maximum values and decimal precision.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → InputBaseNode → Input → InputNumber
+```
+
+## Constructor
+
+```typescript
+new InputNumber(
+  id: string,
+  placeholder?: string,
+  value?: any,
+  maxCharCount?: number,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  readOnly?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+## Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the numeric input field in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text displayed when the field is empty.
+</ParamField>
+
+<ParamField path="value" type="any">
+  The initial numeric value of the input field.
+</ParamField>
+
+<ParamField path="maxCharCount" type="number">
+  Maximum number of characters allowed in the input.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the input should be displayed in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the input.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the input is disabled.
+</ParamField>
+
+<ParamField path="readOnly" type="boolean" default="false">
+  Whether the input is read-only.
+</ParamField>
+
+<ParamField path="validator" type="Validator">
+  Synchronous validator(s) to apply to the input. Can be a single `ValidatorFn`, an array of `ValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidator">
+  Asynchronous validator(s) to apply to the input. Can be a single `AsyncValidatorFn`, an array of `AsyncValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when specific events occur on the input.
+</ParamField>
+
+## Properties
+
+Inherits all properties from [Input](/api/nodes/input), with the following additions:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `NodeType` | Automatically set to `'number'` |
+| `min` | `number` | Minimum allowed value |
+| `max` | `number` | Maximum allowed value |
+| `decimalCount` | `number` | Number of decimal places allowed |
+
+## Methods
+
+Inherits all methods from [Input](/api/nodes/input):
+
+- `editable()` - Makes the input field editable
+- `readonly()` - Makes the input field read-only
+- `apply()` - Applies additional properties to the node
+- `getNativeElement()` - Returns the native DOM element
+
+## Usage Examples
+
+### Basic Number Input
+
+```typescript
+import { InputNumber } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const ageInput = new InputNumber('age', 'Age').apply({
+  icon: 'calendar_today',
+  validator: Validators.required
+});
+```
+
+### Number Input with Min/Max Range
+
+```typescript
+const quantityInput = new InputNumber('quantity', 'Quantity').apply({
+  min: 1,
+  max: 100,
+  value: 1,
+  icon: 'shopping_cart',
+  validator: [Validators.required, Validators.min(1), Validators.max(100)],
+  hint: 'Enter a quantity between 1 and 100'
+});
+```
+
+### Decimal Number Input
+
+```typescript
+const priceInput = new InputNumber('price', 'Price (USD)').apply({
+  decimalCount: 2,
+  min: 0,
+  icon: 'attach_money',
+  validator: [Validators.required, Validators.min(0)],
+  hint: 'Enter price with up to 2 decimal places'
+});
+```
+
+### Percentage Input
+
+```typescript
+const discountInput = new InputNumber('discount', 'Discount Percentage').apply({
+  min: 0,
+  max: 100,
+  decimalCount: 1,
+  icon: 'percent',
+  validator: [Validators.required, Validators.min(0), Validators.max(100)],
+  hint: 'Enter discount percentage (0-100)'
+});
+```
+
+### Integer-Only Input
+
+```typescript
+const participantsInput = new InputNumber('participants', 'Number of Participants').apply({
+  min: 1,
+  decimalCount: 0,
+  icon: 'people',
+  validator: [Validators.required, Validators.min(1)],
+  hint: 'Whole numbers only'
+});
+```
+
+### Read-Only Number Display
+
+```typescript
+const totalInput = new InputNumber('total', 'Total Amount', 0).apply({
+  readOnly: true,
+  decimalCount: 2,
+  icon: 'calculate',
+  hint: 'Calculated automatically'
+});
+```
+
+### Number Input with Value Change Action
+
+```typescript
+const priceInput = new InputNumber('price', 'Unit Price').apply({
+  decimalCount: 2,
+  min: 0,
+  icon: 'attach_money',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const quantity = param.structure.getNodeById('quantity')?.value || 1;
+      const total = param.event * quantity;
+      
+      // Update total field
+      const totalNode = param.structure.getNodeById('total');
+      if (totalNode) {
+        totalNode.value = total.toFixed(2);
+      }
+    }
+  }
+});
+```
+
+### Currency Input
+
+```typescript
+const salaryInput = new InputNumber('salary', 'Annual Salary').apply({
+  min: 0,
+  decimalCount: 2,
+  icon: 'payments',
+  validator: [Validators.required, Validators.min(0)],
+  hint: 'Enter your annual salary',
+  action: {
+    type: 'blur',
+    onEvent: (param) => {
+      // Format with thousand separators on blur
+      const value = parseFloat(param.event);
+      if (!isNaN(value)) {
+        console.log('Formatted:', value.toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD'
+        }));
+      }
+    }
+  }
+});
+```
+
+### Dynamic Calculation Example
+
+```typescript
+import { FormStructure, InputNumber } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const formStructure = new FormStructure();
+formStructure.nodes = [
+  new InputNumber('quantity', 'Quantity').apply({
+    min: 1,
+    value: 1,
+    validator: [Validators.required, Validators.min(1)],
+    action: {
+      type: 'valueChange',
+      onEvent: (param) => calculateTotal(param.structure)
+    }
+  }),
+  
+  new InputNumber('unitPrice', 'Unit Price').apply({
+    min: 0,
+    decimalCount: 2,
+    validator: [Validators.required, Validators.min(0)],
+    action: {
+      type: 'valueChange',
+      onEvent: (param) => calculateTotal(param.structure)
+    }
+  }),
+  
+  new InputNumber('total', 'Total').apply({
+    readOnly: true,
+    decimalCount: 2,
+    hint: 'Calculated automatically'
+  })
+];
+
+function calculateTotal(structure: FormStructure) {
+  const quantity = structure.getNodeById('quantity')?.value || 0;
+  const unitPrice = structure.getNodeById('unitPrice')?.value || 0;
+  const total = quantity * unitPrice;
+  
+  const totalNode = structure.getNodeById('total');
+  if (totalNode) {
+    totalNode.value = total.toFixed(2);
+  }
+}
+```
+
+## Validation Examples
+
+### Range Validation
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const ratingInput = new InputNumber('rating', 'Rating (1-5)').apply({
+  min: 1,
+  max: 5,
+  validator: [
+    Validators.required,
+    Validators.min(1),
+    Validators.max(5)
+  ],
+  errorMessage: 'Rating must be between 1 and 5'
+});
+```
+
+### Custom Validator
+
+```typescript
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+
+function multipleOfValidator(multiple: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    return control.value % multiple === 0 ? null : {
+      multipleOf: { value: control.value, multiple }
+    };
+  };
+}
+
+const bulkQuantityInput = new InputNumber('bulkQuantity', 'Bulk Quantity').apply({
+  min: 10,
+  validator: [
+    Validators.required,
+    Validators.min(10),
+    multipleOfValidator(10)
+  ],
+  hint: 'Must be in multiples of 10',
+  errorMessage: 'Quantity must be a multiple of 10'
+});
+```
+
+## Best Practices
+
+1. **Always set min/max**: Define reasonable boundaries for numeric inputs
+
+2. **Use validators**: Combine `min` and `max` properties with corresponding validators
+
+3. **Decimal precision**: Set `decimalCount` based on your use case (currency: 2, percentages: 1, whole numbers: 0)
+
+4. **Default values**: Provide sensible default values for better UX
+
+5. **Clear hints**: Use hint text to explain the expected range or format
+
+6. **Read-only for calculations**: Use `readOnly: true` for calculated fields
+
+## Related Node Types
+
+- [Input](/api/nodes/input) - Parent class for basic text input
+- [InputPassword](/api/nodes/input-password) - Password input field
+- [TextArea](/api/nodes/textarea) - Multi-line text input

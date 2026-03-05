@@ -1,0 +1,395 @@
+---
+title: Custom Validators
+description: Add validation logic to form fields using Angular's built-in validators and custom validation functions
+---
+
+# Custom Validators
+
+Mat Dynamic Form supports Angular's full validation system, including built-in validators, custom synchronous validators, and asynchronous validators.
+
+## Angular Built-in Validators
+
+You can use any validator from `@angular/forms` when creating nodes.
+
+```typescript
+import { Validators } from '@angular/forms';
+import { Input, TextArea } from 'mat-dynamic-form';
+
+// Single validator
+new Input('email', 'Email').apply({
+  validator: Validators.email
+})
+
+// Multiple validators
+new Input('username', 'Username').apply({
+  validator: [Validators.required, Validators.minLength(3), Validators.maxLength(20)]
+})
+
+// Required with character limit
+new TextArea('comments', 'Comments').apply({
+  validator: [Validators.required, Validators.maxLength(100)],
+  maxCharCount: 100
+})
+```
+
+See app.component.ts:118-119 for examples.
+
+### Common Validators
+
+| Validator | Description | Example |
+|-----------|-------------|----------|
+| `Validators.required` | Field must have a value | `validator: Validators.required` |
+| `Validators.requiredTrue` | Checkbox must be checked | `validator: Validators.requiredTrue` |
+| `Validators.email` | Must be valid email format | `validator: Validators.email` |
+| `Validators.min(n)` | Minimum numeric value | `validator: Validators.min(0)` |
+| `Validators.max(n)` | Maximum numeric value | `validator: Validators.max(100)` |
+| `Validators.minLength(n)` | Minimum string length | `validator: Validators.minLength(3)` |
+| `Validators.maxLength(n)` | Maximum string length | `validator: Validators.maxLength(100)` |
+| `Validators.pattern(regex)` | Must match regex pattern | `validator: Validators.pattern(/^[0-9]+$/)` |
+
+## Global Validators
+
+Apply validators to all form fields using `globalValidators`:
+
+```typescript
+import { FormStructure } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const formStructure = new FormStructure();
+formStructure.globalValidators = Validators.required;
+
+// All nodes will now be required by default
+formStructure.nodes = [
+  new Input('name', 'Name'),
+  new Input('email', 'Email').apply({
+    validator: Validators.email // Combined with global required
+  })
+];
+```
+
+See README.md:95 and FormStructure.ts:38 for implementation.
+
+<Warning>
+Global validators are combined with node-specific validators using `Validators.compose()`. Both sets of validation rules must pass for the field to be valid.
+</Warning>
+
+## Dynamic Validation
+
+Add or modify validators at runtime using FormStructure methods.
+
+### addValidators()
+
+Adds validators to an existing control without overwriting existing validators.
+
+```typescript
+addValidators(id: string, validators: ValidatorFn | ValidatorFn[]): void
+```
+
+**Example:**
+
+```typescript
+// Add additional validation to existing field
+formStructure.addValidators('email', Validators.email);
+
+// Add multiple validators
+formStructure.addValidators('password', [
+  Validators.minLength(8),
+  Validators.pattern(/^(?=.*[A-Z])(?=.*[0-9])/)
+]);
+```
+
+See FormStructure.ts:332 for implementation.
+
+### setValidator()
+
+Replaces all existing validators with new ones.
+
+```typescript
+setValidator(id: string, validators: ValidatorFn | ValidatorFn[]): void
+```
+
+**Example:**
+
+```typescript
+// Replace validation rules entirely
+formStructure.setValidator('phone', [
+  Validators.required,
+  Validators.pattern(/^\+?[1-9]\d{1,14}$/)
+]);
+
+// Remove all validators by passing null
+formStructure.setValidator('optional', null);
+```
+
+See FormStructure.ts:356 for implementation.
+
+<Tip>
+Use `addValidators()` when you want to add additional rules while preserving existing validation. Use `setValidator()` when you need to completely change the validation behavior.
+</Tip>
+
+## Custom Validator Functions
+
+Create your own validation logic using Angular's validator pattern.
+
+<Steps>
+  <Step title="Create the validator function">
+    A validator is a function that returns `null` for valid values or an error object for invalid values:
+
+    ```typescript
+    import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+
+    export function phoneValidator(): ValidatorFn {
+      return (control: AbstractControl): ValidationErrors | null => {
+        const value = control.value;
+        
+        if (!value) {
+          return null; // Don't validate empty values (use Validators.required for that)
+        }
+        
+        const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+        const valid = phoneRegex.test(value);
+        
+        return valid ? null : { invalidPhone: { value } };
+      };
+    }
+    ```
+  </Step>
+
+  <Step title="Apply to a node">
+    Use your custom validator like any built-in validator:
+
+    ```typescript
+    new Input('phone', 'Phone Number').apply({
+      validator: [Validators.required, phoneValidator()]
+    })
+    ```
+  </Step>
+
+  <Step title="Display error messages">
+    Access validation errors in your template or code:
+
+    ```typescript
+    const phoneControl = formStructure.getControlById('phone');
+    
+    if (phoneControl.hasError('invalidPhone')) {
+      console.log('Invalid phone number format');
+    }
+    ```
+  </Step>
+</Steps>
+
+### Password Matching Validator
+
+Example of a validator that compares two fields:
+
+```typescript
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+
+export function passwordMatchValidator(passwordField: string): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const password = control.parent?.get(passwordField)?.value;
+    const confirmPassword = control.value;
+    
+    if (!password || !confirmPassword) {
+      return null;
+    }
+    
+    return password === confirmPassword ? null : { passwordMismatch: true };
+  };
+}
+
+// Usage
+new InputPassword('password', 'Password'),
+new InputPassword('confirmPassword', 'Confirm Password').apply({
+  validator: passwordMatchValidator('password')
+})
+```
+
+## Async Validators
+
+Validate against remote APIs or perform time-consuming validation asynchronously.
+
+### addAsyncValidators()
+
+```typescript
+addAsyncValidators(id: string, validators: AsyncValidatorFn | AsyncValidatorFn[]): void
+```
+
+### setAsyncValidator()
+
+```typescript
+setAsyncValidator(id: string, validators: AsyncValidatorFn | AsyncValidatorFn[]): void
+```
+
+See FormStructure.ts:344 and FormStructure.ts:370 for implementations.
+
+<Steps>
+  <Step title="Create async validator">
+    Return an Observable or Promise that resolves to validation errors or null:
+
+    ```typescript
+    import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
+    import { Observable, of } from 'rxjs';
+    import { map, debounceTime, switchMap, catchError } from 'rxjs/operators';
+    import { HttpClient } from '@angular/common/http';
+
+    export function usernameAvailableValidator(http: HttpClient): AsyncValidatorFn {
+      return (control: AbstractControl): Observable<ValidationErrors | null> => {
+        if (!control.value) {
+          return of(null);
+        }
+        
+        return control.valueChanges.pipe(
+          debounceTime(500),
+          switchMap(username => 
+            http.get(`/api/check-username?username=${username}`)
+          ),
+          map((response: any) => 
+            response.available ? null : { usernameTaken: true }
+          ),
+          catchError(() => of(null))
+        );
+      };
+    }
+    ```
+  </Step>
+
+  <Step title="Apply to node">
+    Set the async validator when creating the node:
+
+    ```typescript
+    new Input('username', 'Username').apply({
+      validator: Validators.required,
+      asyncValidator: usernameAvailableValidator(this.http)
+    })
+    ```
+  </Step>
+
+  <Step title="Handle pending state">
+    Async validators set the control status to PENDING while validating:
+
+    ```typescript
+    const usernameControl = formStructure.getControlById('username');
+    
+    if (usernameControl.status === 'PENDING') {
+      console.log('Checking availability...');
+    }
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+Async validators only run after all synchronous validators pass. Make sure to include basic synchronous validation (like `Validators.required`) before expensive async checks.
+</Warning>
+
+## Validation on Specific Nodes
+
+Different node types support validation in different ways:
+
+```typescript
+// Checkbox - require it to be checked
+new Checkbox('agreement', 'I agree to terms').apply({
+  validator: Validators.requiredTrue
+})
+
+// Number input - restrict range
+new InputNumber('age', 'Age').apply({
+  validator: [Validators.required, Validators.min(18), Validators.max(100)]
+})
+
+// File input - custom file type/size validation
+new InputFile('document', 'Upload Document').apply({
+  accept: ['pdf', 'docx'],
+  maxSize: 5000, // KB
+  validator: Validators.required
+})
+
+// Dropdown - ensure selection is made
+new Dropdown('country', 'Country', countryOptions).apply({
+  validator: Validators.required
+})
+```
+
+## Error Messages
+
+Set custom error messages for validation failures:
+
+```typescript
+new Input('email', 'Email Address').apply({
+  validator: [Validators.required, Validators.email],
+  errorMessage: 'Please enter a valid email address'
+})
+```
+
+See app.component.ts:32 for example.
+
+<Tip>
+The `errorMessage` property displays when any validator fails. For more granular control, you may need to implement custom error handling in your component.
+</Tip>
+
+## Validation State Methods
+
+Check form validation status:
+
+```typescript
+// Check if entire form is valid
+if (formStructure.isValid()) {
+  const values = formStructure.getValue();
+  // Submit form
+}
+
+// Check if form is invalid
+if (formStructure.isInvalid()) {
+  console.log('Please fix validation errors');
+}
+
+// Get control to check specific field
+const emailControl = formStructure.getControlById('email');
+if (emailControl.invalid && emailControl.touched) {
+  console.log('Email is invalid');
+}
+```
+
+See FormStructure.ts:197-224 for validation methods.
+
+## Validate Form on Button Click
+
+Validate the entire form when a button is clicked:
+
+```typescript
+new Button('save', 'Save', {
+  onEvent: (param) => {
+    if (param.structure.isValid()) {
+      const values = param.structure.getValue();
+      console.log('Form is valid:', values);
+    } else {
+      console.log('Form has errors');
+    }
+  },
+  style: 'primary'
+}).apply({
+  validateForm: true, // Form will be validated before button click
+  icon: 'save'
+})
+```
+
+See app.component.ts:158-161 for example.
+
+<Warning>
+When `validateForm: true` is set on a Button, the form must be valid for the button's `onEvent` to execute. This is useful for submit buttons.
+</Warning>
+
+## Best Practices
+
+- **Use built-in validators** when possible - they're well-tested and performant
+- **Combine global and local validators** for DRY code
+- **Debounce async validators** to avoid excessive API calls
+- **Provide clear error messages** to help users fix issues
+- **Validate on blur** for better UX than validating on every keystroke
+- **Test edge cases** like empty strings, null values, and whitespace
+
+## Related Resources
+
+- [Form Events](/advanced/form-events) - Handle validation state changes
+- [Dynamic Nodes](/advanced/dynamic-nodes) - Add validators to dynamically created fields
+- [Node Types](/core-concepts/node-types) - See which nodes support validation

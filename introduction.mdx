@@ -1,0 +1,255 @@
+---
+title: Introduction
+description: Build dynamic, fully-functional forms with JSON configuration using Mat Dynamic Form
+---
+
+# Introduction to Mat Dynamic Form
+
+Mat Dynamic Form is an Angular library that simplifies form creation by allowing you to generate fully functional, Material Design forms from simple JSON configurations. Instead of writing verbose HTML templates and component logic, you define your form structure once and let the library handle the rest.
+
+## Why Mat Dynamic Form?
+
+Traditional Angular forms require writing extensive boilerplate code for every field, validator, and interaction. Mat Dynamic Form eliminates this complexity:
+
+<CardGroup cols={2}>
+  <Card title="Traditional Approach" icon="code">
+    - Write HTML for each form field
+    - Define FormControls manually
+    - Wire up validators individually
+    - Handle events with custom logic
+    - Manage complex layout markup
+  </Card>
+  <Card title="Mat Dynamic Form" icon="wand-magic-sparkles">
+    - Define form as JSON configuration
+    - Automatic FormGroup generation
+    - Built-in validation support
+    - Event handling through actions
+    - Responsive grid layout included
+  </Card>
+</CardGroup>
+
+## Key Features
+
+### JSON-Driven Configuration
+
+Define your entire form structure using TypeScript classes that serialize to clean, maintainable configurations:
+
+```typescript
+const formStructure = new FormStructure();
+formStructure.nodes = [
+  new Input('email', 'Email Address'),
+  new InputPassword('password', 'Password'),
+  new DatePicker('birthDate', 'Birth Date')
+];
+```
+
+### Rich Form Controls
+
+Mat Dynamic Form provides a comprehensive set of Material Design form controls out of the box:
+
+- **Text Inputs**: `Input`, `InputPassword`, `TextArea`, `InputNumber`
+- **Selection**: `Dropdown`, `RadioGroup`, `AutoComplete`, `Checkbox`, `Switch`
+- **Date/Time**: `DatePicker`, `DateTimePicker`, `TimePicker`, `DateRangePicker`
+- **File Upload**: `InputFile` with drag-and-drop support
+- **Custom**: `CustomNode` for integrating your own components
+- **Actions**: `Button` with built-in form validation
+
+### Built-in Validation
+
+Seamlessly integrate Angular's powerful validators:
+
+```typescript
+new Input('username', 'Username').apply({
+  validator: [Validators.required, Validators.minLength(3)],
+  errorMessage: 'Username must be at least 3 characters'
+})
+```
+
+Apply global validators to all fields at once:
+
+```typescript
+formStructure.globalValidators = Validators.required;
+```
+
+### Dynamic Form Manipulation
+
+Add or remove fields dynamically based on user input:
+
+```typescript
+if (hasPet === 'yes') {
+  formStructure.createNodes(5, [
+    new Input('petName', 'Pet Name'),
+    new Dropdown('petType', 'Pet Type', [
+      new OptionChild('Dog', 'dog'),
+      new OptionChild('Cat', 'cat')
+    ])
+  ]);
+}
+```
+
+### Reactive Programming
+
+Access the underlying Angular `FormGroup` for full reactive form capabilities:
+
+```typescript
+const formData = formStructure.getValue<MyFormModel>();
+formStructure.patchValue({ email: 'user@example.com' });
+formStructure.getControlById('email').valueChanges.subscribe(...);
+```
+
+### Material Design Theming
+
+Choose from Material Design form field appearances:
+
+```typescript
+formStructure.appearance = 'outline'; // 'fill' | 'outline' | 'standard'
+```
+
+### Event System
+
+Attach actions to any form control:
+
+```typescript
+new Input('search', 'Search').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      console.log('Search value:', param.event);
+      // param.structure provides access to entire form
+    }
+  }
+})
+```
+
+## Real-World Benefits
+
+<AccordionGroup>
+  <Accordion title="Faster Development">
+    Build complex forms in minutes instead of hours. A complete sign-up form with validation can be created in under 50 lines of code.
+  </Accordion>
+  
+  <Accordion title="Maintainable Code">
+    Form configurations are declarative and easy to understand. Changes to fields, validation, or layout require minimal code updates.
+  </Accordion>
+  
+  <Accordion title="Consistent UI">
+    All forms automatically follow Material Design guidelines with consistent spacing, validation messages, and responsive behavior.
+  </Accordion>
+  
+  <Accordion title="Type Safety">
+    Full TypeScript support with strongly-typed form values, validators, and event handlers.
+  </Accordion>
+</AccordionGroup>
+
+## Comparison: Before and After
+
+<CodeGroup>
+```html Traditional Approach (Template)
+<form [formGroup]="signupForm">
+  <mat-form-field appearance="outline">
+    <mat-label>Name</mat-label>
+    <input matInput formControlName="name" maxlength="100">
+    <mat-icon matPrefix>person</mat-icon>
+    <mat-error *ngIf="signupForm.get('name')?.hasError('required')">
+      Name is required
+    </mat-error>
+  </mat-form-field>
+  
+  <mat-form-field appearance="outline">
+    <mat-label>Email</mat-label>
+    <input matInput type="email" formControlName="email">
+    <mat-icon matPrefix>email</mat-icon>
+    <mat-error *ngIf="signupForm.get('email')?.hasError('email')">
+      Invalid email
+    </mat-error>
+  </mat-form-field>
+  
+  <!-- More fields... -->
+  
+  <button mat-raised-button color="primary" 
+          [disabled]="signupForm.invalid"
+          (click)="onSubmit()">
+    Submit
+  </button>
+</form>
+```
+
+```typescript Traditional Approach (Component)
+export class SignupComponent implements OnInit {
+  signupForm: FormGroup;
+  
+  constructor(private fb: FormBuilder) {}
+  
+  ngOnInit() {
+    this.signupForm = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(100)]],
+      email: ['', [Validators.required, Validators.email]],
+      // More fields...
+    });
+  }
+  
+  onSubmit() {
+    if (this.signupForm.valid) {
+      console.log(this.signupForm.value);
+    }
+  }
+}
+```
+
+```html Mat Dynamic Form (Template)
+<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>
+```
+
+```typescript Mat Dynamic Form (Component)
+export class SignupComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Sign Up');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodes = [
+      new Input('name', 'Name').apply({
+        icon: 'person',
+        maxCharCount: 100
+      }),
+      new Input('email', 'Email').apply({
+        icon: 'email',
+        validator: Validators.email
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('submit', 'Submit', {
+        style: 'primary',
+        onEvent: (param) => console.log(param.structure.getValue())
+      }).apply({ validateForm: true })
+    ];
+  }
+}
+```
+</CodeGroup>
+
+<Note>
+The Mat Dynamic Form approach reduces boilerplate by approximately 60% while maintaining full type safety and reactive capabilities.
+</Note>
+
+## Get Started
+
+Ready to build your first dynamic form?
+
+<Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+  Follow our step-by-step tutorial to create your first Mat Dynamic Form in under 5 minutes.
+</Card>
+
+## Browser Support
+
+Mat Dynamic Form supports all modern browsers:
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+<Warning>
+Internet Explorer 11 is not supported. The library requires Angular 11+ which dropped IE11 support.
+</Warning>

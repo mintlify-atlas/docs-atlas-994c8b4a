@@ -1,0 +1,527 @@
+---
+title: 'Radio Group'
+description: 'Mutually exclusive radio button group for selecting a single option from a list'
+---
+
+## Overview
+
+The `RadioGroup` component creates a group of radio buttons where only one option can be selected at a time. It's perfect for presenting 3-7 mutually exclusive choices in a clear, scannable format.
+
+## When to Use
+
+Use the RadioGroup component when you need to:
+
+- Present mutually exclusive options (only one can be selected)
+- Display 3-7 choices that users should see at a glance
+- Make it clear that selecting one option deselects others
+- Provide options where all choices should be visible
+
+<Note>
+  For 2 options, consider a [Checkbox](/components/checkbox) or [Switch](/api/nodes/switch). For more than 7 options, use a [Dropdown](/components/dropdown) to save space.
+</Note>
+
+## Basic Usage
+
+```typescript
+import { RadioGroup, OptionChild } from 'mat-dynamic-form';
+
+const genderRadio = new RadioGroup(
+  'gender',
+  'Gender',
+  [
+    new OptionChild('Male', 'm'),
+    new OptionChild('Female', 'f'),
+    new OptionChild('Other', 'o'),
+    new OptionChild('Prefer not to say', 'n')
+  ]
+);
+```
+
+## Common Patterns
+
+### Radio Group with Pre-Selected Value
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const deliveryRadio = new RadioGroup(
+  'delivery',
+  'Delivery Method',
+  [
+    new OptionChild('Standard Delivery (5-7 days)', 'standard'),
+    new OptionChild('Express Delivery (2-3 days)', 'express'),
+    new OptionChild('Overnight Delivery (1 day)', 'overnight')
+  ],
+  'standard' // Pre-select standard delivery
+).apply({
+  icon: 'local_shipping',
+  validator: Validators.required
+});
+```
+
+### Radio Group with Validation
+
+```typescript
+const paymentRadio = new RadioGroup(
+  'paymentMethod',
+  'Payment Method',
+  [
+    new OptionChild('Credit Card', 'credit'),
+    new OptionChild('Debit Card', 'debit'),
+    new OptionChild('PayPal', 'paypal'),
+    new OptionChild('Bank Transfer', 'bank')
+  ]
+).apply({
+  icon: 'payment',
+  validator: Validators.required,
+  errorMessage: 'Please select a payment method'
+});
+```
+
+### Radio Group with Value Change Handler
+
+```typescript
+const accountTypeRadio = new RadioGroup(
+  'accountType',
+  'Account Type',
+  [
+    new OptionChild('Personal', 'personal'),
+    new OptionChild('Business', 'business')
+  ]
+).apply({
+  icon: 'account_circle',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const accountType = param.event;
+      console.log('Account type selected:', accountType);
+      
+      // Show/hide additional fields based on selection
+      if (accountType === 'business') {
+        this.showBusinessFields();
+      } else {
+        this.hideBusinessFields();
+      }
+    }
+  }
+});
+```
+
+### Radio Group with Descriptive Options
+
+```typescript
+const planRadio = new RadioGroup(
+  'plan',
+  'Choose Your Plan',
+  [
+    new OptionChild('Free - Basic features, 5 projects', 'free'),
+    new OptionChild('Pro - Advanced features, unlimited projects - $19/mo', 'pro'),
+    new OptionChild('Enterprise - Custom solutions, priority support - Contact us', 'enterprise')
+  ],
+  'free'
+).apply({
+  icon: 'stars',
+  singleLine: true
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the radio group.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Label text for the radio group.
+</ParamField>
+
+<ParamField path="value" type="OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>" required>
+  The list of radio button options. Can be static array, Promise, or Observable.
+</ParamField>
+
+<ParamField path="selectedValue" type="string">
+  The initially selected option value (must match an option's value).
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the radio group.
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Angular validators to apply.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message shown when validation fails.
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the radio group.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the radio group is disabled.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the radio group takes up a full row in the form grid.
+</ParamField>
+
+## Methods
+
+### getOptions()
+
+Returns the current list of options.
+
+```typescript
+const radioGroup = formStructure.getNodeById<RadioGroup>('plan');
+const options = radioGroup.getOptions();
+console.log(options); // Array of OptionChild
+```
+
+### apply()
+
+Applies multiple properties at once.
+
+```typescript
+radioGroup.apply({
+  icon: 'radio_button_checked',
+  validator: Validators.required,
+  hint: 'Choose one option'
+});
+```
+
+## OptionChild Structure
+
+Options are defined using the `OptionChild` class:
+
+```typescript
+import { OptionChild } from 'mat-dynamic-form';
+
+const option = new OptionChild(
+  'Display Text', // title - shown to user
+  'value'        // value - stored in form data
+);
+```
+
+### Example with Clear Descriptions
+
+```typescript
+const supportRadio = new RadioGroup(
+  'support',
+  'Support Level',
+  [
+    new OptionChild('Community - Forum support only', 'community'),
+    new OptionChild('Standard - Email support, 48h response', 'standard'),
+    new OptionChild('Premium - Priority support, 4h response', 'premium'),
+    new OptionChild('Enterprise - Dedicated account manager', 'enterprise')
+  ]
+);
+```
+
+## Validation Examples
+
+### Required Selection
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const radioGroup = new RadioGroup(
+  'choice',
+  'Choose an option',
+  options
+).apply({
+  validator: Validators.required,
+  errorMessage: 'Please select an option'
+});
+```
+
+### Custom Validator
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+function notFreeValidator(control: AbstractControl): ValidationErrors | null {
+  if (control.value === 'free') {
+    return { notAllowed: true };
+  }
+  return null;
+}
+
+const radioGroup = new RadioGroup('plan', 'Select Plan', options).apply({
+  validator: [Validators.required, notFreeValidator],
+  errorMessage: 'Free plan is not available for this promotion'
+});
+```
+
+## Dynamic Options Example
+
+### Loading Options from API
+
+```typescript
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+
+constructor(private http: HttpClient) {
+  const shippingRadio = new RadioGroup(
+    'shipping',
+    'Shipping Options',
+    this.http.get<any[]>('/api/shipping-methods').pipe(
+      map(methods => 
+        methods.map(m => 
+          new OptionChild(
+            `${m.name} - ${m.duration} (${m.price})`,
+            m.id
+          )
+        )
+      )
+    )
+  ).apply({
+    validator: Validators.required,
+    icon: 'local_shipping'
+  });
+}
+```
+
+### Conditional Display Based on Selection
+
+```typescript
+import { Component } from '@angular/core';
+import { FormStructure, RadioGroup, Input, TextArea, OptionChild, ActionEvent } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-feedback-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class FeedbackFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Feedback');
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new RadioGroup(
+        'rating',
+        'How would you rate your experience?',
+        [
+          new OptionChild('Excellent', '5'),
+          new OptionChild('Good', '4'),
+          new OptionChild('Average', '3'),
+          new OptionChild('Poor', '2'),
+          new OptionChild('Very Poor', '1')
+        ]
+      ).apply({
+        validator: Validators.required,
+        singleLine: true,
+        action: {
+          type: 'valueChange',
+          onEvent: (param) => this.onRatingChange(param)
+        }
+      })
+    ];
+  }
+  
+  onRatingChange(param: ActionEvent) {
+    const rating = parseInt(param.event);
+    
+    // If rating is poor, ask for details
+    if (rating <= 2) {
+      const existingNode = this.formStructure.getNodeById('details');
+      if (!existingNode) {
+        this.formStructure.createNodes(1, [
+          new TextArea(
+            'details',
+            'What went wrong?',
+            '',
+            500
+          ).apply({
+            validator: Validators.required,
+            hint: 'Please help us understand what we can improve',
+            singleLine: true
+          })
+        ]);
+      }
+    } else {
+      // Remove details field if rating improves
+      const detailsNode = this.formStructure.getNodeById('details');
+      if (detailsNode) {
+        this.formStructure.removeNodes([detailsNode]);
+      }
+    }
+  }
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Keep options between 3-7** - Radio groups work best with a small, manageable number of options. For 2 options, use a checkbox or switch. For 8+ options, use a dropdown.
+</Tip>
+
+<Tip>
+  **Make options mutually exclusive** - Each option should be clearly distinct. Avoid overlapping choices like "18-25" and "25-35".
+</Tip>
+
+<Tip>
+  **Provide clear, concise labels** - Each option label should be self-explanatory. Include helpful context if needed:
+  ```typescript
+  new OptionChild('Express Shipping - 2 days ($15)', 'express')
+  ```
+</Tip>
+
+<Warning>
+  **Don't use for yes/no questions** - For binary choices, use a Checkbox or Switch instead. Radio groups should have at least 3 options.
+</Warning>
+
+<Tip>
+  **Consider pre-selecting the most common option** - This reduces friction for most users:
+  ```typescript
+  new RadioGroup('plan', 'Plan', options, 'standard')
+  ```
+</Tip>
+
+<Tip>
+  **Order options logically** - Sort by frequency of use, natural order (small to large), or chronological order.
+</Tip>
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { FormStructure, RadioGroup, Input, OptionChild, Button } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-survey-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class SurveyFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Customer Survey');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 1;
+    
+    this.formStructure.nodes = [
+      new Input('name', 'Your Name').apply({
+        icon: 'person',
+        validator: Validators.required
+      }),
+      
+      new RadioGroup(
+        'satisfaction',
+        'Overall Satisfaction',
+        [
+          new OptionChild('Very Satisfied', '5'),
+          new OptionChild('Satisfied', '4'),
+          new OptionChild('Neutral', '3'),
+          new OptionChild('Dissatisfied', '2'),
+          new OptionChild('Very Dissatisfied', '1')
+        ]
+      ).apply({
+        validator: Validators.required,
+        icon: 'sentiment_satisfied',
+        singleLine: true
+      }),
+      
+      new RadioGroup(
+        'frequency',
+        'How often do you use our product?',
+        [
+          new OptionChild('Daily', 'daily'),
+          new OptionChild('Weekly', 'weekly'),
+          new OptionChild('Monthly', 'monthly'),
+          new OptionChild('Rarely', 'rarely')
+        ]
+      ).apply({
+        validator: Validators.required,
+        icon: 'schedule',
+        singleLine: true
+      }),
+      
+      new RadioGroup(
+        'recommendation',
+        'How likely are you to recommend us?',
+        [
+          new OptionChild('Very Likely (9-10)', '10'),
+          new OptionChild('Likely (7-8)', '8'),
+          new OptionChild('Neutral (5-6)', '6'),
+          new OptionChild('Unlikely (3-4)', '4'),
+          new OptionChild('Very Unlikely (0-2)', '2')
+        ]
+      ).apply({
+        validator: Validators.required,
+        icon: 'recommend',
+        hint: 'Net Promoter Score',
+        singleLine: true
+      }),
+      
+      new RadioGroup(
+        'contact',
+        'May we contact you about your feedback?',
+        [
+          new OptionChild('Yes, please contact me', 'yes'),
+          new OptionChild('No, thanks', 'no')
+        ],
+        'no'
+      ).apply({
+        icon: 'contact_phone',
+        singleLine: true
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('submit', 'Submit Survey', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'send'
+      })
+    ];
+  }
+  
+  onSubmit(structure: FormStructure) {
+    const data = structure.getValue();
+    console.log('Survey results:', data);
+    // Send to API
+  }
+}
+```
+
+## Radio Group vs Dropdown
+
+Choose between RadioGroup and Dropdown based on these factors:
+
+| Factor | Radio Group | Dropdown |
+|--------|-------------|----------|
+| **Number of options** | 3-7 options | 8+ options |
+| **Visibility** | All options visible | Options hidden until opened |
+| **Selection speed** | Faster (one click) | Slower (click to open, then select) |
+| **Space usage** | Takes more space | Compact |
+| **Best for** | Important choices users should see | Long lists or less critical selections |
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Dropdown" icon="chevron-down" href="/components/dropdown">
+    For larger lists of options
+  </Card>
+  
+  <Card title="Checkbox" icon="square-check" href="/components/checkbox">
+    For independent yes/no toggles
+  </Card>
+  
+  <Card title="AutoComplete" icon="search" href="/api/nodes/autocomplete">
+    Searchable selection from many options
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [OptionChild](/api/option-child) - Understanding option structure
+- [Actions](/concepts/actions) - Handle selection changes
+- [Validators](/concepts/validators) - Validate selections

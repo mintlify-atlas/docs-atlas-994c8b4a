@@ -1,0 +1,492 @@
+---
+title: 'Dropdown'
+description: 'Single or multi-select dropdown component with support for async data loading'
+---
+
+## Overview
+
+The `Dropdown` component provides a Material Design dropdown for selecting one or multiple options from a list. It supports static options, promise-based loading, and observable-based dynamic data.
+
+## When to Use
+
+Use the Dropdown component when you need to:
+
+- Let users select from a predefined list of options
+- Load options from an API or async data source
+- Enable multi-select for choosing multiple values
+- Present a large list of choices in a compact space
+
+<Note>
+  For searchable dropdowns, consider using [AutoComplete](/api/nodes/autocomplete). For small sets of mutually exclusive options, use [Radio Group](/components/radio-group).
+</Note>
+
+## Basic Usage
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+
+const countryDropdown = new Dropdown(
+  'country',
+  'Country',
+  [
+    new OptionChild('United States', 'us'),
+    new OptionChild('United Kingdom', 'uk'),
+    new OptionChild('Canada', 'ca')
+  ]
+);
+```
+
+## Common Patterns
+
+### Dropdown with Pre-Selected Value
+
+```typescript
+const countryDropdown = new Dropdown(
+  'country',
+  'Select Country',
+  [
+    new OptionChild('United States', 'us'),
+    new OptionChild('United Kingdom', 'uk'),
+    new OptionChild('Canada', 'ca'),
+    new OptionChild('Australia', 'au')
+  ],
+  'us' // Pre-select United States
+).apply({
+  icon: 'public',
+  validator: Validators.required
+});
+```
+
+### Multi-Select Dropdown
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const languagesDropdown = new Dropdown(
+  'languages',
+  'Languages',
+  [
+    new OptionChild('English', 'en'),
+    new OptionChild('Spanish', 'es'),
+    new OptionChild('French', 'fr'),
+    new OptionChild('German', 'de'),
+    new OptionChild('Chinese', 'zh')
+  ],
+  null,
+  true // Enable multi-select
+).apply({
+  icon: 'language',
+  hint: 'Select all languages you speak'
+});
+```
+
+### Loading Options from Promise
+
+```typescript
+const cityDropdown = new Dropdown(
+  'city',
+  'City',
+  fetch('/api/cities').then(response => response.json())
+).apply({
+  icon: 'location_city',
+  validator: Validators.required
+});
+```
+
+### Loading Options from Observable
+
+```typescript
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+
+// In your component:
+constructor(private http: HttpClient) {
+  const countryDropdown = new Dropdown(
+    'country',
+    'Country',
+    this.http.get<any[]>('https://restcountries.com/v3.1/all').pipe(
+      map(countries => 
+        countries.map(c => new OptionChild(c.name.common, c.cca2))
+      )
+    )
+  ).apply({
+    icon: 'public',
+    validator: Validators.required
+  });
+}
+```
+
+### Dropdown with Value Change Handler
+
+```typescript
+const categoryDropdown = new Dropdown(
+  'category',
+  'Category',
+  [
+    new OptionChild('Electronics', 'electronics'),
+    new OptionChild('Clothing', 'clothing'),
+    new OptionChild('Books', 'books')
+  ]
+).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      console.log('Selected category:', param.event);
+      // Load subcategories based on selection
+      this.loadSubcategories(param.event);
+    }
+  }
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the dropdown.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Placeholder text shown when no option is selected.
+</ParamField>
+
+<ParamField path="value" type="OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>" required>
+  The list of options to display. Can be static array, Promise, or Observable.
+</ParamField>
+
+<ParamField path="selectedValue" type="string">
+  The initially selected value (must match an option's value).
+</ParamField>
+
+<ParamField path="multiple" type="boolean" default="false">
+  Whether to allow selecting multiple options.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the dropdown.
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Angular validators to apply.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message shown when validation fails.
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the dropdown.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the dropdown is disabled.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the dropdown takes up a full row in the form grid.
+</ParamField>
+
+## Methods
+
+### getOptions()
+
+Returns the current list of options.
+
+```typescript
+const dropdown = formStructure.getNodeById<Dropdown>('country');
+const options = dropdown.getOptions();
+console.log(options); // Array of OptionChild
+```
+
+### apply()
+
+Applies multiple properties at once.
+
+```typescript
+dropdown.apply({
+  icon: 'public',
+  validator: Validators.required,
+  hint: 'Select your country'
+});
+```
+
+## OptionChild Structure
+
+Options are defined using the `OptionChild` class:
+
+```typescript
+import { OptionChild } from 'mat-dynamic-form';
+
+const option = new OptionChild(
+  'Display Text', // title - shown to user
+  'value'        // value - stored in form data
+);
+```
+
+### Example with Descriptive Options
+
+```typescript
+const priorityDropdown = new Dropdown(
+  'priority',
+  'Priority Level',
+  [
+    new OptionChild('Low - Can wait', 'low'),
+    new OptionChild('Medium - Normal timeline', 'medium'),
+    new OptionChild('High - Urgent', 'high'),
+    new OptionChild('Critical - Immediate action', 'critical')
+  ]
+);
+```
+
+## Validation Examples
+
+### Required Selection
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const dropdown = new Dropdown('country', 'Country', options).apply({
+  validator: Validators.required,
+  errorMessage: 'Please select a country'
+});
+```
+
+### Custom Validator
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+function notUSValidator(control: AbstractControl): ValidationErrors | null {
+  if (control.value === 'us') {
+    return { notAllowed: true };
+  }
+  return null;
+}
+
+const dropdown = new Dropdown('country', 'Country', options).apply({
+  validator: [Validators.required, notUSValidator],
+  errorMessage: 'US is not available for this service'
+});
+```
+
+## Dynamic Options Example
+
+### Cascading Dropdowns
+
+```typescript
+import { Component } from '@angular/core';
+import { FormStructure, Dropdown, OptionChild } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-location-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class LocationFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Select Location');
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new Dropdown(
+        'country',
+        'Country',
+        [
+          new OptionChild('United States', 'us'),
+          new OptionChild('Canada', 'ca'),
+          new OptionChild('Mexico', 'mx')
+        ]
+      ).apply({
+        validator: Validators.required,
+        action: {
+          type: 'valueChange',
+          onEvent: (param) => this.onCountryChange(param.event)
+        }
+      }),
+      
+      new Dropdown('state', 'State/Province', []).apply({
+        validator: Validators.required,
+        disabled: true // Initially disabled
+      })
+    ];
+  }
+  
+  onCountryChange(countryCode: string) {
+    const stateDropdown = this.formStructure.getNodeById<Dropdown>('state');
+    
+    if (!stateDropdown) return;
+    
+    // Load states based on country
+    const states = this.getStatesForCountry(countryCode);
+    stateDropdown.value = states;
+    stateDropdown.disabled = false;
+    
+    // Reset the state selection
+    this.formStructure.getControlById('state')?.setValue(null);
+  }
+  
+  getStatesForCountry(countryCode: string): OptionChild[] {
+    const statesMap: Record<string, OptionChild[]> = {
+      'us': [
+        new OptionChild('California', 'ca'),
+        new OptionChild('New York', 'ny'),
+        new OptionChild('Texas', 'tx')
+      ],
+      'ca': [
+        new OptionChild('Ontario', 'on'),
+        new OptionChild('Quebec', 'qc'),
+        new OptionChild('British Columbia', 'bc')
+      ],
+      'mx': [
+        new OptionChild('Mexico City', 'cdmx'),
+        new OptionChild('Jalisco', 'jal'),
+        new OptionChild('Nuevo León', 'nl')
+      ]
+    };
+    
+    return statesMap[countryCode] || [];
+  }
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Use descriptive option titles** - Make it clear what each option represents. Users should understand the choice without additional context.
+</Tip>
+
+<Tip>
+  **Keep option lists manageable** - For lists with more than 10-15 items, consider using [AutoComplete](/api/nodes/autocomplete) for better user experience.
+</Tip>
+
+<Warning>
+  **Handle loading states** - When loading options from an API, the dropdown will be empty until data arrives. Consider showing a loading indicator or placeholder.
+</Warning>
+
+<Tip>
+  **Use multi-select sparingly** - Multi-select dropdowns are harder to use on mobile. If users typically select many options, consider checkboxes instead.
+</Tip>
+
+<Tip>
+  **Pre-select sensible defaults** - If one option is most common, pre-select it to save users time:
+  ```typescript
+  new Dropdown('country', 'Country', options, 'us')
+  ```
+</Tip>
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { FormStructure, Dropdown, OptionChild, Button } from 'mat-dynamic-form';
+import { map } from 'rxjs/operators';
+
+@Component({
+  selector: 'app-registration-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class RegistrationFormComponent {
+  formStructure: FormStructure;
+  
+  constructor(private http: HttpClient) {
+    this.formStructure = new FormStructure('User Registration');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      // Static options
+      new Dropdown(
+        'role',
+        'Role',
+        [
+          new OptionChild('Developer', 'developer'),
+          new OptionChild('Designer', 'designer'),
+          new OptionChild('Manager', 'manager'),
+          new OptionChild('Other', 'other')
+        ]
+      ).apply({
+        icon: 'work',
+        validator: Validators.required,
+        singleLine: false
+      }),
+      
+      // Dynamic options from API
+      new Dropdown(
+        'country',
+        'Country',
+        this.http.get<any[]>('https://restcountries.com/v3.1/all').pipe(
+          map(countries => 
+            countries
+              .map(c => new OptionChild(c.name.common, c.cca2))
+              .sort((a, b) => a.title.localeCompare(b.title))
+          )
+        )
+      ).apply({
+        icon: 'public',
+        validator: Validators.required,
+        singleLine: false
+      }),
+      
+      // Multi-select
+      new Dropdown(
+        'skills',
+        'Skills',
+        [
+          new OptionChild('JavaScript', 'js'),
+          new OptionChild('TypeScript', 'ts'),
+          new OptionChild('Python', 'python'),
+          new OptionChild('Java', 'java'),
+          new OptionChild('C#', 'csharp'),
+          new OptionChild('PHP', 'php')
+        ],
+        null,
+        true // multi-select
+      ).apply({
+        icon: 'code',
+        hint: 'Select all that apply',
+        singleLine: true
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('submit', 'Submit', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'check'
+      })
+    ];
+  }
+  
+  onSubmit(structure: FormStructure) {
+    const data = structure.getValue();
+    console.log('Form data:', data);
+    // data.skills will be an array of selected values
+  }
+}
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Radio Group" icon="circle-dot" href="/components/radio-group">
+    For 3-5 mutually exclusive options
+  </Card>
+  
+  <Card title="AutoComplete" icon="search" href="/api/nodes/autocomplete">
+    Searchable dropdown with filtering
+  </Card>
+  
+  <Card title="Checkbox" icon="square-check" href="/components/checkbox">
+    For simple yes/no or on/off toggles
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [OptionChild](/api/option-child) - Understanding option structure
+- [Actions](/concepts/actions) - Handle selection changes
+- [Validators](/concepts/validators) - Validate selections

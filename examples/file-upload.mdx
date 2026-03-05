@@ -1,0 +1,343 @@
+---
+title: File Upload
+description: Implement file uploads with validation, drag-and-drop, and file type restrictions
+---
+
+This example demonstrates how to use the `InputFile` component for file uploads with various configurations including file type restrictions, size limits, drag-and-drop support, and status tracking.
+
+## What This Example Demonstrates
+
+- File type restrictions using `accept`
+- Maximum file size validation
+- Custom drag-and-drop labels
+- File upload status tracking
+- Custom hint messages for download and remove actions
+- File upload event handling
+
+## Complete Example
+
+### Component Code
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { 
+  Button,
+  FormStructure, 
+  Input,
+  InputFile,
+  FileChange
+} from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-file-upload',
+  templateUrl: './file-upload.component.html',
+  styleUrls: ['./file-upload.component.scss']
+})
+export class FileUploadComponent implements OnInit {
+
+  formStructure: FormStructure;
+
+  constructor() {
+    this.formStructure = new FormStructure();
+
+    this.formStructure.title = 'Document Upload';
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodes = [
+      new Input('documentName', 'Document Name').apply({
+        icon: 'description',
+        validator: Validators.required,
+        hint: 'Enter a name for your document'
+      }),
+      
+      // Profile picture with image restrictions
+      new InputFile('profilePicture', 'Profile Picture').apply({
+        accept: ['png', 'jpg', 'jpeg'],
+        maxSize: 5, // 5 MB
+        filename: 'ProfilePic',
+        hint: 'Upload your profile picture (max 5 MB)',
+        errorMessage: 'Invalid file format or size',
+        dragLabel: 'Drag & drop your image here',
+        downloadHint: 'Download current picture',
+        removeHint: 'Remove picture',
+        onStatusChange: (status) => this.onFileStatusChange('profilePicture', status)
+      }),
+      
+      // PDF document upload
+      new InputFile('pdfDocument', 'PDF Document').apply({
+        accept: ['pdf'],
+        maxSize: 10, // 10 MB
+        filename: 'Document',
+        hint: 'Upload a PDF file (max 10 MB)',
+        errorMessage: 'Please upload a valid PDF file',
+        dragLabel: 'Drop your PDF here',
+        downloadHint: 'Download PDF',
+        removeHint: 'Remove PDF',
+        validator: Validators.required,
+        onStatusChange: (status) => this.onFileStatusChange('pdfDocument', status)
+      }),
+      
+      // Multiple file types allowed
+      new InputFile('attachment', 'Attachment').apply({
+        accept: ['pdf', 'doc', 'docx', 'txt', 'png', 'jpg'],
+        maxSize: 20, // 20 MB
+        filename: 'Attachment',
+        hint: 'Upload any document or image (max 20 MB)',
+        errorMessage: 'File type not supported or size exceeds limit',
+        dragLabel: 'Drag & drop your file here or click to browse',
+        downloadHint: 'Download attachment',
+        removeHint: 'Remove attachment',
+        retryHint: 'Retry upload',
+        onStatusChange: (status) => this.onFileStatusChange('attachment', status)
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('reset', 'Reset', {
+        onEvent: (param) => {
+          param.structure?.reset();
+          console.log('Form reset');
+        },
+        style: 'warn'
+      }).apply({
+        icon: 'refresh'
+      }),
+      new Button('submit', 'Upload', {
+        onEvent: (param) => {
+          const formValue = param.structure?.getValue();
+          console.log('Uploading files:', formValue);
+          // Here you would typically send the files to your backend
+          this.handleFileUpload(formValue);
+        },
+        style: 'primary'
+      }).apply({
+        validateForm: true,
+        icon: 'cloud_upload'
+      })
+    ];
+  }
+
+  ngOnInit(): void {}
+
+  onFileStatusChange(fieldId: string, status: FileChange) {
+    console.log(`File status changed for ${fieldId}:`, status);
+    
+    // Handle different file statuses
+    switch (status.status) {
+      case 'selected':
+        console.log(`File selected: ${status.file?.name}`);
+        break;
+      case 'invalid':
+        console.log(`Invalid file: ${status.error}`);
+        break;
+      case 'removed':
+        console.log('File removed');
+        break;
+      case 'downloaded':
+        console.log('File downloaded');
+        break;
+    }
+  }
+
+  handleFileUpload(formValue: any) {
+    // Example: Send files to backend
+    const formData = new FormData();
+    
+    if (formValue.profilePicture) {
+      formData.append('profilePicture', formValue.profilePicture);
+    }
+    if (formValue.pdfDocument) {
+      formData.append('pdfDocument', formValue.pdfDocument);
+    }
+    if (formValue.attachment) {
+      formData.append('attachment', formValue.attachment);
+    }
+    
+    // Send to your API
+    // this.http.post('/api/upload', formData).subscribe(...);
+  }
+}
+```
+
+### Template Code
+
+```html
+<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>
+```
+
+## InputFile Configuration Options
+
+### File Type Restrictions
+
+```typescript
+new InputFile('document', 'Document').apply({
+  accept: ['pdf', 'doc', 'docx']
+})
+```
+
+The `accept` property takes an array of file extensions (without the dot). Only files with these extensions can be selected.
+
+### File Size Limits
+
+```typescript
+new InputFile('image', 'Image').apply({
+  maxSize: 5 // Maximum size in MB
+})
+```
+
+Files larger than the specified size will be rejected with an error message.
+
+### Custom Labels
+
+```typescript
+new InputFile('file', 'File').apply({
+  dragLabel: 'Drag & drop your file here',
+  downloadHint: 'Download the file',
+  removeHint: 'Remove the file',
+  retryHint: 'Retry upload'
+})
+```
+
+Customize the text shown for different actions and states.
+
+### File Status Tracking
+
+```typescript
+new InputFile('upload', 'Upload').apply({
+  onStatusChange: (status: FileChange) => {
+    console.log('Status:', status.status);
+    console.log('File:', status.file);
+    console.log('Error:', status.error);
+  }
+})
+```
+
+The `onStatusChange` callback provides real-time updates about file operations:
+
+- `status.status`: Current status ('selected', 'invalid', 'removed', 'downloaded')
+- `status.file`: The File object (when available)
+- `status.error`: Error message (when status is 'invalid')
+
+### Default Filename
+
+```typescript
+new InputFile('document', 'Document').apply({
+  filename: 'MyDocument'
+})
+```
+
+Set a default filename that will be used when downloading or processing the file.
+
+## Advanced Usage
+
+### Image Upload with Preview
+
+```typescript
+new InputFile('avatar', 'Avatar').apply({
+  accept: ['png', 'jpg', 'jpeg', 'gif'],
+  maxSize: 2,
+  hint: 'Square images work best (max 2 MB)',
+  errorMessage: 'Please upload a valid image file',
+  onStatusChange: (status) => {
+    if (status.status === 'selected' && status.file) {
+      // Create image preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        console.log('Image data URL:', e.target?.result);
+      };
+      reader.readAsDataURL(status.file);
+    }
+  }
+})
+```
+
+### Conditional File Upload
+
+```typescript
+new RadioGroup('documentType', 'Document Type', [
+  new OptionChild('ID Card', 'id'),
+  new OptionChild('Passport', 'passport')
+]).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const acceptTypes = param.event === 'id' 
+        ? ['png', 'jpg', 'jpeg'] 
+        : ['pdf'];
+      
+      const uploadField = new InputFile('document', 'Upload Document').apply({
+        accept: acceptTypes,
+        hint: `Upload your ${param.event === 'id' ? 'ID card image' : 'passport PDF'}`
+      });
+      
+      // Update or add the upload field
+      param.structure.createNodes(2, [uploadField]);
+    }
+  }
+})
+```
+
+### Multiple File Validation
+
+```typescript
+new InputFile('documents', 'Documents').apply({
+  accept: ['pdf', 'doc', 'docx'],
+  maxSize: 10,
+  validator: Validators.required,
+  onStatusChange: (status) => {
+    if (status.status === 'invalid') {
+      // Show custom error notification
+      alert(`File validation failed: ${status.error}`);
+    }
+  }
+})
+```
+
+## Common File Types
+
+### Images
+```typescript
+accept: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']
+```
+
+### Documents
+```typescript
+accept: ['pdf', 'doc', 'docx', 'txt', 'rtf']
+```
+
+### Spreadsheets
+```typescript
+accept: ['xls', 'xlsx', 'csv']
+```
+
+### Archives
+```typescript
+accept: ['zip', 'rar', '7z', 'tar', 'gz']
+```
+
+### Media
+```typescript
+accept: ['mp4', 'avi', 'mov', 'mp3', 'wav']
+```
+
+## Tips and Best Practices
+
+1. **Size Limits**: Always set reasonable `maxSize` limits to prevent users from uploading very large files
+
+2. **File Types**: Be specific with `accept` types to improve user experience and security
+
+3. **Error Messages**: Provide clear `errorMessage` text that explains what went wrong
+
+4. **Validation**: Use `Validators.required` when file upload is mandatory
+
+5. **Status Tracking**: Use `onStatusChange` to provide feedback and handle errors gracefully
+
+6. **User Guidance**: Use `hint` and `dragLabel` to guide users on what files are acceptable
+
+7. **Backend Integration**: Remember to handle file uploads on your backend with proper validation and security measures
+
+## Related Documentation
+
+- [Sign-Up Form](/examples/sign-up-form) - See file upload in a complete form
+- [InputFile API](/api/nodes/input-file) - Full API reference for InputFile
+- [Validation](/guides/validation) - Learn about form validation

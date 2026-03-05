@@ -1,0 +1,201 @@
+---
+title: 'RadioGroup'
+description: 'API reference for the RadioGroup node class'
+---
+
+## Overview
+
+The `RadioGroup` class creates a group of radio buttons where only one option can be selected at a time. It provides a clear visual representation of all available options and is ideal for mutually exclusive choices.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → SelectableNode → RadioGroup
+```
+
+## Constructor
+
+```typescript
+new RadioGroup(
+  id: string,
+  placeholder?: string,
+  value?: OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>,
+  selected?: string,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator | AbstractControlOptions,
+  asyncValidator?: AsyncValidatorFn,
+  action?: Action | Action[]
+)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the radio group node in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The label text to display for the radio group.
+</ParamField>
+
+<ParamField path="value" type="OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>">
+  The radio button options to display. Can be an array, Promise, or Observable of OptionChild objects.
+</ParamField>
+
+<ParamField path="selected" type="string">
+  The initial selected value of the radio group.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether to display the node in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display with the radio group.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the radio group is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator | AbstractControlOptions">
+  Synchronous validator function(s) or control options.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidatorFn">
+  Asynchronous validator function(s) for the radio group.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when the selection changes.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the node |
+| `placeholder` | `string` | The label text for the radio group |
+| `type` | `'radiogroup'` | The node type (read-only) |
+| `value` | `OptionChild[]` | The radio button options |
+| `selectedValue` | `string` | The currently selected value |
+| `singleLine` | `boolean` | Whether displayed in single line layout |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Whether the node is disabled |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validators |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text to display |
+| `autoFocus` | `boolean` | Whether to auto-focus on load |
+
+## Methods
+
+### getOptions()
+
+Returns the current list of radio button options.
+
+```typescript
+getOptions(): OptionChild[]
+```
+
+### getNativeElement()
+
+Returns the native DOM element for this node.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Example
+
+```typescript
+import { RadioGroup, OptionChild } from '@ng-mdf/core';
+import { Validators } from '@angular/forms';
+
+// Simple radio group with static options
+const genderRadioGroup = new RadioGroup(
+  'gender',
+  'Select your gender',
+  [
+    new OptionChild('male', 'Male'),
+    new OptionChild('female', 'Female'),
+    new OptionChild('other', 'Other'),
+    new OptionChild('prefer-not', 'Prefer not to say')
+  ],
+  'prefer-not',  // preselected value
+  false,
+  undefined,
+  'Please select a gender',
+  false,
+  Validators.required
+);
+
+// Radio group with action
+import { Action } from '@ng-mdf/core';
+
+const subscriptionRadioGroup = new RadioGroup(
+  'subscription',
+  'Choose your plan',
+  [
+    new OptionChild('free', 'Free - $0/month'),
+    new OptionChild('basic', 'Basic - $9.99/month'),
+    new OptionChild('pro', 'Pro - $19.99/month'),
+    new OptionChild('enterprise', 'Enterprise - Contact us')
+  ],
+  'free',
+  false,
+  'payment',
+  undefined,
+  false,
+  Validators.required,
+  undefined,
+  new Action('change', (event) => {
+    console.log('Selected plan:', event.value);
+    // Update pricing display or load additional options
+  })
+);
+
+// Radio group with async options from API
+const categoryRadioGroup = new RadioGroup(
+  'category',
+  'Select a category',
+  fetch('/api/categories').then(res => res.json()),
+  undefined,
+  false,
+  'category'
+);
+```
+
+## Best Practices
+
+### When to Use RadioGroup
+
+- **2-5 options**: Radio groups work best with a small number of visible options
+- **Mutually exclusive**: When only one choice should be selected
+- **Important choices**: When you want all options visible at once
+- **Quick selection**: When users should see and compare all options immediately
+
+### When to Use Alternatives
+
+- **Many options (6+)**: Use [Dropdown](/api/nodes/dropdown) instead
+- **Multiple selections**: Use [Checkbox](/api/nodes/checkbox) or [Dropdown](/api/nodes/dropdown) with `multiple: true`
+- **Searchable options**: Use [AutoComplete](/api/nodes/autocomplete) for better user experience
+
+## Accessibility
+
+RadioGroup nodes are rendered as native radio button groups with proper ARIA attributes and keyboard navigation support. Users can navigate options using arrow keys and select with Enter/Space.
+
+## Related Node Types
+
+- [Dropdown](/api/nodes/dropdown) - For many options in a compact format
+- [AutoComplete](/api/nodes/autocomplete) - For searchable single selection
+- [Checkbox](/api/nodes/checkbox) - For independent yes/no choices
+- [SelectableNode](/api/nodes/selectable-node) - Base class for all selection nodes

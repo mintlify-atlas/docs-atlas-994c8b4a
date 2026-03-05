@@ -1,0 +1,487 @@
+---
+title: Form Events
+description: Handle user interactions, value changes, and form lifecycle events
+---
+
+# Form Events
+
+Mat Dynamic Form provides a robust event system for handling user interactions, monitoring value changes, and managing the form lifecycle.
+
+## Action Events
+
+Actions are events attached to nodes that trigger callbacks when user interactions occur.
+
+### Action Interface
+
+```typescript
+interface Action {
+  type?: ActionType;        // Event type: 'valueChange', 'click', 'change', 'blur', etc.
+  style?: ActionStyle;      // Visual style: 'accent', 'warn', 'primary', 'secondary'
+  onEvent?: (param: ActionEvent) => void;  // Event handler
+}
+
+interface ActionEvent {
+  event: Event | any;       // The browser event or changed value
+  structure: FormStructure; // Reference to the form structure
+}
+```
+
+See Action.ts:5-18 for the interface definition.
+
+### Event Types
+
+The `type` property accepts standard DOM events or the special `'valueChange'` event:
+
+- **`'valueChange'`** - Triggers when the control's value changes (uses Angular's valueChanges Observable)
+- **`'click'`** - User clicks the element
+- **`'change'`** - Value changes and element loses focus
+- **`'blur'`** - Element loses focus
+- **`'focus'`** - Element receives focus
+- Any other valid DOM event name
+
+See ActionEnums.ts:1 for type definitions.
+
+## Value Change Events
+
+The most common event type, `valueChange`, triggers whenever a field's value changes.
+
+### Basic Usage
+
+```typescript
+import { Input, ActionEvent } from 'mat-dynamic-form';
+
+new Input('email', 'Email Address').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param: ActionEvent) => {
+      console.log('New email value:', param.event);
+      console.log('Form structure:', param.structure);
+    }
+  }
+})
+```
+
+See app.component.ts:89 for a real example.
+
+### Accessing Form Data in Events
+
+Use the `structure` reference to interact with the form:
+
+```typescript
+new Input('quantity', 'Quantity').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param: ActionEvent) => {
+      const quantity = param.event;
+      const price = param.structure.getControlById('price')?.value;
+      const total = quantity * price;
+      
+      // Update another field
+      param.structure.patchValue({ total: total });
+    }
+  }
+})
+```
+
+See FormStructure.ts:399-407 for valueChange implementation.
+
+### Conditional Field Display
+
+Show/hide fields based on another field's value:
+
+```typescript
+new RadioGroup('hasPet', 'Has Pet', [
+  new OptionChild('Yes', 'y'),
+  new OptionChild('No', 'n'),
+]).apply({
+  selectedValue: 'n',
+  action: { 
+    type: 'valueChange', 
+    onEvent: (param: ActionEvent) => this.onHasPetValueChange(param) 
+  }
+})
+
+onHasPetValueChange(param: ActionEvent) {
+  const petNodes = [
+    new Dropdown('petType', 'Pet Type', [
+      new OptionChild('Dog', 'PD'),
+      new OptionChild('Cat', 'PC')
+    ]),
+    new Input('breed', 'Pet Breed'),
+    new Input('petName', 'Pet Name')
+  ];
+
+  if (param.event === 'y') {
+    param.structure.createNodes(7, petNodes);
+  } else {
+    param.structure.removeNodes(petNodes);
+  }
+}
+```
+
+See app.component.ts:168-181 and README.md:166-178 for complete example.
+
+## Button Events
+
+Buttons execute actions when clicked.
+
+### Basic Button Click
+
+```typescript
+import { Button } from 'mat-dynamic-form';
+
+new Button('save', 'Save', {
+  onEvent: (param: ActionEvent) => {
+    const formValues = param.structure.getValue();
+    console.log('Saving:', formValues);
+    
+    // Call your API
+    this.api.save(formValues).subscribe(response => {
+      console.log('Saved successfully');
+    });
+  },
+  style: 'primary'
+}).apply({
+  validateForm: true,  // Only trigger if form is valid
+  icon: 'save'
+})
+```
+
+See app.component.ts:158-161 for example.
+
+### Button Validation
+
+Buttons can validate the form before executing:
+
+```typescript
+new Button('submit', 'Submit', {
+  onEvent: (param: ActionEvent) => {
+    // This only runs if form is valid (when validateForm: true)
+    console.log('Form is valid, submitting...');
+  },
+  style: 'primary'
+}).apply({
+  validateForm: true,  // Prevents execution if form is invalid
+  validation: (param: ActionEvent) => {
+    // Additional custom validation logic
+    const name = param.structure.getControlById('name')?.value;
+    return name?.length > 0;
+  }
+})
+```
+
+See Node.ts:335-342 and app.component.ts:42-44 for validation properties.
+
+### Reset and Cancel Buttons
+
+```typescript
+new Button('cancel', 'Cancel', {
+  onEvent: (param: ActionEvent) => {
+    param.structure.reset();      // Clear all values
+    param.structure.remapValues(); // Restore default values
+  },
+  style: 'warn'
+}).apply({
+  icon: 'close'
+})
+```
+
+See app.component.ts:140-147 for example.
+
+## Multiple Actions Per Node
+
+Attach multiple event handlers to a single node:
+
+```typescript
+new Input('username', 'Username').apply({
+  action: [
+    {
+      type: 'valueChange',
+      onEvent: (param: ActionEvent) => {
+        console.log('Value changed:', param.event);
+      }
+    },
+    {
+      type: 'blur',
+      onEvent: (param: ActionEvent) => {
+        console.log('Field lost focus');
+      }
+    },
+    {
+      type: 'focus',
+      onEvent: (param: ActionEvent) => {
+        console.log('Field received focus');
+      }
+    }
+  ]
+})
+```
+
+See FormStructure.ts:386-418 for multiple action handling.
+
+## Date Picker Events
+
+Handle date selection and create date range constraints:
+
+```typescript
+new DatePicker('start', 'Start Date').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param: ActionEvent) => {
+      const startDate = param.event;
+      
+      // Update end date's minimum to be after start date
+      const endDateNode = param.structure.getNodeById<DatePicker>('end');
+      endDateNode.minDate = startDate;
+    }
+  }
+}),
+new DatePicker('end', 'End Date').apply({
+  action: { 
+    type: 'change',
+    onEvent: (param: ActionEvent) => {
+      console.log('Date range selected');
+    }
+  }
+})
+```
+
+See app.component.ts:52-62 for example.
+
+## Form Lifecycle Methods
+
+Manage form state throughout its lifecycle.
+
+### getValue()
+
+Get current form values:
+
+```typescript
+interface FormData {
+  name: string;
+  email: string;
+  age: number;
+}
+
+const values = formStructure.getValue<FormData>();
+console.log(values.name);  // Typed access
+```
+
+See FormStructure.ts:139 for implementation.
+
+### getRawValue()
+
+Get values including disabled fields:
+
+```typescript
+// Gets all values, even from disabled controls
+const allValues = formStructure.getRawValue<FormData>();
+```
+
+See FormStructure.ts:149 for implementation.
+
+### patchValue()
+
+Update specific form fields:
+
+```typescript
+import { DataSet } from 'mat-dynamic-form';
+
+// Update multiple fields at once
+formStructure.patchValue({
+  name: 'John Doe',
+  email: 'john@example.com',
+  age: 30
+});
+
+// Update single field
+formStructure.patchValue({ email: 'newemail@example.com' });
+```
+
+See FormStructure.ts:179 and app.component.ts:155 for examples.
+
+### reset()
+
+Clear all form values:
+
+```typescript
+// Reset entire form
+formStructure.reset();
+
+// Typically combined with remapValues to restore defaults
+formStructure.reset();
+formStructure.remapValues();
+```
+
+See FormStructure.ts:115 for implementation.
+
+### remapValues()
+
+Restore default values defined in node configuration:
+
+```typescript
+// Resets to initial values from node definitions
+formStructure.remapValues();
+```
+
+See FormStructure.ts:127 for implementation.
+
+<Tip>
+Use `reset()` followed by `remapValues()` to clear user input and restore default values. Use `reset()` alone to completely clear the form.
+</Tip>
+
+## Advanced Event Patterns
+
+### Debouncing Value Changes
+
+Prevent excessive event firing during rapid input:
+
+```typescript
+import { debounceTime } from 'rxjs/operators';
+
+ngOnInit() {
+  // Access the FormControl directly for advanced RxJS operations
+  const searchControl = this.formStructure.getControlById('search');
+  
+  searchControl.valueChanges.pipe(
+    debounceTime(300)
+  ).subscribe(value => {
+    console.log('Search query:', value);
+    this.performSearch(value);
+  });
+}
+```
+
+### Cross-field Validation
+
+Validate based on relationships between fields:
+
+```typescript
+new DatePicker('checkout', 'Checkout Date').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param: ActionEvent) => {
+      const checkinDate = param.structure.getControlById('checkin')?.value;
+      const checkoutDate = param.event;
+      
+      if (checkinDate && checkoutDate && checkoutDate <= checkinDate) {
+        const control = param.structure.getControlById('checkout');
+        control?.setErrors({ invalidRange: 'Checkout must be after checkin' });
+      }
+    }
+  }
+})
+```
+
+See app.component.ts:151 for setting custom errors.
+
+### Calculating Totals
+
+Automatically calculate derived values:
+
+```typescript
+const updateTotal = (param: ActionEvent) => {
+  const quantity = param.structure.getControlById('quantity')?.value || 0;
+  const price = param.structure.getControlById('price')?.value || 0;
+  const tax = param.structure.getControlById('tax')?.value || 0;
+  
+  const subtotal = quantity * price;
+  const total = subtotal + (subtotal * tax / 100);
+  
+  param.structure.patchValue({ 
+    subtotal: subtotal,
+    total: total 
+  });
+};
+
+formStructure.nodes = [
+  new InputNumber('quantity', 'Quantity').apply({
+    action: { type: 'valueChange', onEvent: updateTotal }
+  }),
+  new InputNumber('price', 'Price').apply({
+    action: { type: 'valueChange', onEvent: updateTotal }
+  }),
+  new InputNumber('tax', 'Tax %').apply({
+    action: { type: 'valueChange', onEvent: updateTotal }
+  }),
+  new Input('subtotal', 'Subtotal').apply({ disabled: true }),
+  new Input('total', 'Total').apply({ disabled: true })
+];
+```
+
+## Event Handler Context
+
+When using class methods as event handlers, preserve context:
+
+```typescript
+export class MyComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure();
+    this.formStructure.nodes = [
+      new Input('email', 'Email').apply({
+        action: {
+          type: 'valueChange',
+          // Option 1: Arrow function (recommended)
+          onEvent: (param) => this.handleEmailChange(param)
+        }
+      }),
+      new Input('phone', 'Phone').apply({
+        action: {
+          type: 'valueChange',
+          // Option 2: Bind this context
+          onEvent: this.handlePhoneChange.bind(this)
+        }
+      })
+    ];
+  }
+  
+  handleEmailChange(param: ActionEvent) {
+    // 'this' refers to MyComponent
+    console.log('Email changed:', param.event);
+  }
+  
+  handlePhoneChange(param: ActionEvent) {
+    console.log('Phone changed:', param.event);
+  }
+}
+```
+
+<Warning>
+When using class methods as event handlers, make sure to bind the context or use arrow functions. Otherwise, `this` will be undefined inside the handler.
+</Warning>
+
+## File Upload Events
+
+Monitor file upload status:
+
+```typescript
+import { FileChange } from 'mat-dynamic-form';
+
+new InputFile('document', 'Upload Document').apply({
+  accept: ['pdf', 'docx'],
+  maxSize: 5000,
+  onStatusChange: (fileChange: FileChange) => {
+    console.log('File status:', fileChange.status);
+    console.log('File data:', fileChange.file);
+  }
+})
+```
+
+See app.component.ts:75 and Node.ts:196 for file change events.
+
+## Best Practices
+
+- **Use valueChange for real-time updates** - Better than 'change' for immediate feedback
+- **Validate before expensive operations** - Check `validateForm: true` on buttons
+- **Avoid heavy computations in event handlers** - Debounce or use async operations
+- **Clean up subscriptions** - If manually subscribing to valueChanges, unsubscribe on destroy
+- **Preserve context** - Use arrow functions or .bind() for class methods
+- **Handle errors gracefully** - Wrap event handlers in try-catch blocks
+
+## Related Resources
+
+- [Dynamic Nodes](/advanced/dynamic-nodes) - Create/remove nodes in event handlers
+- [Custom Validators](/advanced/custom-validators) - Set validation in event handlers
+- [Button Component](/components/button) - Button-specific event configuration

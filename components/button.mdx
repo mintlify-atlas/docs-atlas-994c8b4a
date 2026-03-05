@@ -1,0 +1,624 @@
+---
+title: 'Button'
+description: 'Action button component with built-in form validation support'
+---
+
+## Overview
+
+The `Button` component creates action buttons that can trigger custom logic, with optional automatic form validation. Buttons are typically used in the `validateActions` array to provide form submission, reset, and other actions.
+
+## When to Use
+
+Use the Button component when you need to:
+
+- Submit form data
+- Reset or clear form values
+- Trigger custom actions
+- Navigate to different pages
+- Validate the form before executing an action
+
+<Note>
+  Buttons are added to the `validateActions` array, not the `nodes` array. The form supports a maximum of 4 buttons.
+</Note>
+
+## Basic Usage
+
+```typescript
+import { Button } from 'mat-dynamic-form';
+
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    style: 'primary',
+    onEvent: (param) => {
+      console.log('Button clicked');
+    }
+  }
+);
+```
+
+## Common Patterns
+
+### Submit Button with Validation
+
+```typescript
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    style: 'primary',
+    onEvent: (param) => {
+      if (param.structure.isValid()) {
+        const data = param.structure.getValue();
+        console.log('Form data:', data);
+        // Submit to API
+      }
+    }
+  }
+).apply({
+  validateForm: true, // Button disabled if form is invalid
+  icon: 'check'
+});
+```
+
+### Reset Button
+
+```typescript
+const resetButton = new Button(
+  'reset',
+  'Reset',
+  {
+    style: 'warn',
+    onEvent: (param) => {
+      param.structure.reset();
+      param.structure.remapValues();
+    }
+  }
+).apply({
+  icon: 'refresh'
+});
+```
+
+### Cancel Button
+
+```typescript
+const cancelButton = new Button(
+  'cancel',
+  'Cancel',
+  {
+    style: 'basic',
+    onEvent: (param) => {
+      // Navigate away or close dialog
+      this.router.navigate(['/dashboard']);
+    }
+  }
+).apply({
+  icon: 'close'
+});
+```
+
+### Save Draft Button
+
+```typescript
+const saveDraftButton = new Button(
+  'saveDraft',
+  'Save Draft',
+  {
+    style: 'accent',
+    onEvent: (param) => {
+      const data = param.structure.getRawValue();
+      this.saveDraft(data);
+    }
+  }
+).apply({
+  icon: 'save',
+  validateForm: false // Don't require validation for drafts
+});
+```
+
+### Button with Custom Validation
+
+```typescript
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    style: 'primary',
+    onEvent: (param) => {
+      const data = param.structure.getValue();
+      this.submitForm(data);
+    }
+  }
+).apply({
+  validateForm: true,
+  validation: (param) => {
+    // Custom validation logic
+    const emailControl = param.structure.getControlById('email');
+    const phoneControl = param.structure.getControlById('phone');
+    
+    // Require at least one contact method
+    return !!(emailControl?.value || phoneControl?.value);
+  },
+  icon: 'send'
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the button.
+</ParamField>
+
+<ParamField path="placeholder" type="string" required>
+  The button label text shown to users.
+</ParamField>
+
+<ParamField path="action" type="Action" required>
+  Action configuration with style and event handler.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display in the button.
+</ParamField>
+
+<ParamField path="validateForm" type="boolean" default="false">
+  If `true`, the button is disabled when the form is invalid.
+</ParamField>
+
+<ParamField path="validation" type="(param: ActionEvent) => boolean">
+  Custom validation function. If it returns `false`, the button is disabled.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the button is disabled.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the button takes up a full row (rarely used for buttons).
+</ParamField>
+
+## Action Configuration
+
+The `action` parameter is an object with these properties:
+
+<ParamField path="style" type="'primary' | 'accent' | 'warn' | 'basic'" required>
+  Button color style:
+  - `'primary'` - Main action (usually blue)
+  - `'accent'` - Secondary action (usually orange/accent color)
+  - `'warn'` - Destructive action (usually red)
+  - `'basic'` - Neutral action (default styling)
+</ParamField>
+
+<ParamField path="onEvent" type="(param: ActionEvent) => void" required>
+  Function called when the button is clicked.
+</ParamField>
+
+### ActionEvent Interface
+
+The `onEvent` handler receives an `ActionEvent` object:
+
+```typescript
+interface ActionEvent {
+  event: any; // The click event
+  structure: FormStructure; // Reference to the form
+}
+```
+
+## Button Styles
+
+### Primary Button (Main Action)
+
+```typescript
+new Button('submit', 'Submit', {
+  style: 'primary',
+  onEvent: (param) => this.submit(param.structure)
+}).apply({
+  validateForm: true,
+  icon: 'check'
+});
+```
+
+Use for:
+- Form submission
+- Confirming actions
+- Primary call-to-action
+
+### Accent Button (Secondary Action)
+
+```typescript
+new Button('save', 'Save Draft', {
+  style: 'accent',
+  onEvent: (param) => this.saveDraft(param.structure)
+}).apply({
+  icon: 'save'
+});
+```
+
+Use for:
+- Alternative actions
+- Save without submit
+- Secondary features
+
+### Warn Button (Destructive Action)
+
+```typescript
+new Button('delete', 'Delete', {
+  style: 'warn',
+  onEvent: (param) => this.confirmDelete()
+}).apply({
+  icon: 'delete'
+});
+```
+
+Use for:
+- Delete operations
+- Reset forms
+- Cancellations
+- Destructive actions
+
+### Basic Button (Neutral Action)
+
+```typescript
+new Button('cancel', 'Cancel', {
+  style: 'basic',
+  onEvent: (param) => this.goBack()
+}).apply({
+  icon: 'close'
+});
+```
+
+Use for:
+- Cancel actions
+- Back navigation
+- Neutral operations
+
+## Validation Options
+
+### Automatic Form Validation
+
+```typescript
+new Button('submit', 'Submit', {
+  style: 'primary',
+  onEvent: (param) => this.submit(param.structure)
+}).apply({
+  validateForm: true // Button disabled if form is invalid
+});
+```
+
+### Custom Validation Function
+
+```typescript
+new Button('submit', 'Submit', {
+  style: 'primary',
+  onEvent: (param) => this.submit(param.structure)
+}).apply({
+  validateForm: true,
+  validation: (param) => {
+    // Custom logic: require at least 3 fields to be filled
+    const values = param.structure.getValue();
+    const filledFields = Object.values(values).filter(v => v !== null && v !== '').length;
+    return filledFields >= 3;
+  }
+});
+```
+
+### Both Form and Custom Validation
+
+```typescript
+new Button('submit', 'Submit', {
+  style: 'primary',
+  onEvent: (param) => this.submit(param.structure)
+}).apply({
+  validateForm: true, // Form must be valid AND
+  validation: (param) => {
+    // Custom condition must be true
+    const agreeControl = param.structure.getControlById('agreeToTerms');
+    return agreeControl?.value === true;
+  }
+});
+```
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { FormStructure, Input, Checkbox, Button } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-user-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class UserFormComponent {
+  formStructure: FormStructure;
+  
+  constructor(private router: Router) {
+    this.formStructure = new FormStructure('User Information');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new Input('firstName', 'First Name').apply({
+        icon: 'person',
+        validator: Validators.required
+      }),
+      
+      new Input('lastName', 'Last Name').apply({
+        validator: Validators.required
+      }),
+      
+      new Input('email', 'Email').apply({
+        icon: 'email',
+        validator: [Validators.required, Validators.email],
+        singleLine: true
+      }),
+      
+      new Checkbox(
+        'terms',
+        'I agree to the terms and conditions'
+      ).apply({
+        validator: Validators.requiredTrue,
+        singleLine: true
+      })
+    ];
+    
+    // Maximum 4 buttons allowed
+    this.formStructure.validateActions = [
+      // Cancel button - navigate away
+      new Button('cancel', 'Cancel', {
+        style: 'basic',
+        onEvent: (param) => {
+          if (confirm('Discard changes?')) {
+            this.router.navigate(['/users']);
+          }
+        }
+      }).apply({
+        icon: 'close'
+      }),
+      
+      // Reset button - clear form
+      new Button('reset', 'Reset', {
+        style: 'warn',
+        onEvent: (param) => {
+          if (confirm('Reset all fields?')) {
+            param.structure.reset();
+            param.structure.remapValues();
+          }
+        }
+      }).apply({
+        icon: 'refresh'
+      }),
+      
+      // Save draft - no validation required
+      new Button('saveDraft', 'Save Draft', {
+        style: 'accent',
+        onEvent: (param) => this.saveDraft(param.structure)
+      }).apply({
+        icon: 'save',
+        validateForm: false // Can save incomplete forms
+      }),
+      
+      // Submit button - requires validation
+      new Button('submit', 'Submit', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true, // Form must be valid
+        icon: 'check',
+        validation: (param) => {
+          // Additional check: terms must be accepted
+          const termsControl = param.structure.getControlById('terms');
+          return termsControl?.value === true;
+        }
+      })
+    ];
+  }
+  
+  saveDraft(structure: FormStructure) {
+    const data = structure.getRawValue(); // Get all values including disabled fields
+    console.log('Saving draft:', data);
+    
+    // Save to local storage or API
+    localStorage.setItem('userFormDraft', JSON.stringify(data));
+    alert('Draft saved!');
+  }
+  
+  onSubmit(structure: FormStructure) {
+    if (!structure.isValid()) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    const data = structure.getValue();
+    console.log('Submitting:', data);
+    
+    // Submit to API
+    // this.userService.create(data).subscribe(
+    //   response => {
+    //     console.log('Success:', response);
+    //     this.router.navigate(['/users']);
+    //   },
+    //   error => {
+    //     console.error('Error:', error);
+    //     alert('Submission failed');
+    //   }
+    // );
+  }
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Limit to 4 buttons** - The form supports a maximum of 4 buttons in `validateActions`. More than that clutters the UI.
+</Tip>
+
+<Tip>
+  **Use appropriate button styles**:
+  - `primary` for the main action (usually rightmost)
+  - `warn` for destructive actions (delete, reset)
+  - `accent` for secondary actions (save draft)
+  - `basic` for neutral actions (cancel, back)
+</Tip>
+
+<Tip>
+  **Add icons for clarity** - Icons help users quickly identify button purposes:
+  ```typescript
+  icon: 'check' // Submit
+  icon: 'save' // Save
+  icon: 'close' // Cancel
+  icon: 'refresh' // Reset
+  icon: 'delete' // Delete
+  ```
+</Tip>
+
+<Warning>
+  **Confirm destructive actions** - Always confirm before reset, delete, or other destructive operations:
+  ```typescript
+  if (confirm('Are you sure?')) {
+    // Perform destructive action
+  }
+  ```
+</Warning>
+
+<Tip>
+  **Use `validateForm: true` for submissions** - Prevent invalid form submissions:
+  ```typescript
+  validateForm: true // Button disabled until form is valid
+  ```
+</Tip>
+
+<Tip>
+  **Order buttons logically** - Place the primary action (submit) on the right, with cancel/secondary actions to the left.
+</Tip>
+
+<Tip>
+  **Provide feedback** - Show loading states or success messages after button clicks:
+  ```typescript
+  onEvent: async (param) => {
+    this.loading = true;
+    try {
+      await this.submit(param.structure.getValue());
+      alert('Success!');
+    } catch (error) {
+      alert('Failed!');
+    } finally {
+      this.loading = false;
+    }
+  }
+  ```
+</Tip>
+
+## Common Button Combinations
+
+### Form Submission (Submit + Reset)
+
+```typescript
+this.formStructure.validateActions = [
+  new Button('reset', 'Reset', {
+    style: 'warn',
+    onEvent: (param) => {
+      param.structure.reset();
+      param.structure.remapValues();
+    }
+  }).apply({ icon: 'refresh' }),
+  
+  new Button('submit', 'Submit', {
+    style: 'primary',
+    onEvent: (param) => this.submit(param.structure)
+  }).apply({ validateForm: true, icon: 'check' })
+];
+```
+
+### Dialog Actions (Cancel + Confirm)
+
+```typescript
+this.formStructure.validateActions = [
+  new Button('cancel', 'Cancel', {
+    style: 'basic',
+    onEvent: () => this.dialogRef.close()
+  }).apply({ icon: 'close' }),
+  
+  new Button('confirm', 'Confirm', {
+    style: 'primary',
+    onEvent: (param) => this.confirm(param.structure)
+  }).apply({ validateForm: true, icon: 'check' })
+];
+```
+
+### Multi-Step Form (Back + Next)
+
+```typescript
+this.formStructure.validateActions = [
+  new Button('back', 'Back', {
+    style: 'basic',
+    onEvent: () => this.previousStep()
+  }).apply({ icon: 'arrow_back' }),
+  
+  new Button('next', 'Next', {
+    style: 'primary',
+    onEvent: () => this.nextStep()
+  }).apply({ validateForm: true, icon: 'arrow_forward' })
+];
+```
+
+## Working with Button State
+
+### Accessing Form Data in Button Handler
+
+```typescript
+onEvent: (param) => {
+  const data = param.structure.getValue();
+  const rawData = param.structure.getRawValue();
+  const isValid = param.structure.isValid();
+  
+  console.log('Form data:', data);
+  console.log('Is valid:', isValid);
+}
+```
+
+### Programmatically Disable Button
+
+```typescript
+const submitButton = this.formStructure.validateActions.find(b => b.id === 'submit');
+if (submitButton) {
+  submitButton.disabled = true;
+}
+```
+
+### Dynamic Button Visibility
+
+Buttons in `validateActions` are always visible. For conditional buttons, modify the array:
+
+```typescript
+if (this.isEditMode) {
+  this.formStructure.validateActions.push(
+    new Button('delete', 'Delete', {
+      style: 'warn',
+      onEvent: () => this.delete()
+    }).apply({ icon: 'delete' })
+  );
+}
+```
+
+## Related Components
+
+Buttons work in conjunction with all form components to trigger actions based on form state.
+
+<CardGroup cols={2}>
+  <Card title="Form Structure" icon="diagram-project" href="/concepts/form-structure">
+    Learn about validateActions and form management
+  </Card>
+  
+  <Card title="Actions" icon="bolt" href="/concepts/actions">
+    Understanding actions and events
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [Actions](/concepts/actions) - Learn about action configuration
+- [Form Structure](/concepts/form-structure) - Understanding validateActions
+- [Validators](/concepts/validators) - Form validation

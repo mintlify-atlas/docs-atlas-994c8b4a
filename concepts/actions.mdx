@@ -1,0 +1,551 @@
+---
+title: 'Actions'
+description: 'Learn how to handle form events and user interactions'
+---
+
+## Overview
+
+Actions allow you to respond to user interactions with form nodes. They define event handlers that execute when users interact with inputs, buttons, and other form elements.
+
+## Action Interface
+
+The `Action` interface defines the structure for event handlers:
+
+```typescript
+interface Action {
+  type?: ActionType;           // Event type to listen for
+  style?: ActionStyle;         // Visual style (for buttons)
+  onEvent?: (param: ActionEvent) => void;  // Event handler
+}
+```
+
+### Action Types
+
+<ParamField path="type" type="ActionType">
+  The DOM event type to listen for. Common values:
+  - `'click'` - Mouse click
+  - `'change'` - Value change (after blur)
+  - `'valueChange'` - Real-time value updates (special case)
+  - `'focus'` - Element receives focus
+  - `'blur'` - Element loses focus
+  - Any valid DOM event name
+</ParamField>
+
+<ParamField path="style" type="ActionStyle">
+  Material Design color theme for buttons:
+  - `'primary'` - Primary theme color
+  - `'accent'` - Accent theme color
+  - `'warn'` - Warning/danger color (red)
+  - `'secondary'` - Secondary theme color
+</ParamField>
+
+<ParamField path="onEvent" type="(param: ActionEvent) => void">
+  Callback function executed when the event fires. Receives an `ActionEvent` parameter.
+</ParamField>
+
+## ActionEvent Parameter
+
+When an action is triggered, your callback receives an `ActionEvent` object:
+
+```typescript
+interface ActionEvent {
+  event: Event | any;           // The DOM event or value
+  structure: FormStructure;     // Reference to the form structure
+}
+```
+
+<ParamField path="event" type="Event | any">
+  - For standard DOM events: the native `Event` object
+  - For `valueChange` events: the new field value
+</ParamField>
+
+<ParamField path="structure" type="FormStructure">
+  Reference to the form structure, giving you access to:
+  - `getControlById()` - Access form controls
+  - `getNodeById()` - Access node instances
+  - `getValue()` - Get all form values
+  - `patchValue()` - Update form values
+  - `isValid()` - Check form validity
+  - `createNodes()` / `removeNodes()` - Dynamic form manipulation
+</ParamField>
+
+## Basic Usage
+
+### Click Event on Button
+
+```typescript
+import { Button } from 'mat-dynamic-form';
+
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    type: 'click',
+    style: 'primary',
+    onEvent: (param) => {
+      console.log('Button clicked!');
+      const formData = param.structure.getValue();
+      console.log('Form data:', formData);
+    }
+  }
+);
+```
+
+### Value Change Event
+
+The `valueChange` event fires in real-time as the user types or changes a value:
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+
+const emailInput = new Input('email', 'Email').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const newValue = param.event; // The new email value
+      console.log('Email changed to:', newValue);
+      
+      // Validate in real-time
+      if (newValue.includes('@')) {
+        console.log('Valid email format');
+      }
+    }
+  }
+});
+```
+
+<Note>
+  The `valueChange` event is special - it uses Angular's `valueChanges` observable, so `param.event` contains the new value directly, not a DOM event.
+</Note>
+
+### Standard DOM Events
+
+For other DOM events, `param.event` contains the native event object:
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+
+const searchInput = new Input('search', 'Search').apply({
+  action: {
+    type: 'blur',
+    onEvent: (param) => {
+      const event = param.event as FocusEvent;
+      const value = param.structure.getControlById('search')?.value;
+      console.log('Search input lost focus:', value);
+    }
+  }
+});
+```
+
+## Multiple Actions
+
+A node can have multiple event handlers:
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+
+const usernameInput = new Input('username', 'Username').apply({
+  action: [
+    {
+      type: 'valueChange',
+      onEvent: (param) => {
+        console.log('Value changed:', param.event);
+      }
+    },
+    {
+      type: 'blur',
+      onEvent: (param) => {
+        console.log('Field lost focus');
+        // Trigger validation or API check
+      }
+    }
+  ]
+});
+```
+
+## Common Use Cases
+
+### Form Submission
+
+```typescript
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    style: 'primary',
+    onEvent: (param) => {
+      if (param.structure.isValid()) {
+        const data = param.structure.getValue();
+        
+        // Submit to API
+        this.apiService.createUser(data).subscribe(
+          response => console.log('Success:', response),
+          error => console.error('Error:', error)
+        );
+      } else {
+        console.log('Form is invalid');
+      }
+    }
+  }
+).apply({
+  validateForm: true,  // Automatically validates before firing
+  icon: 'send'
+});
+```
+
+### Reset Form
+
+```typescript
+const resetButton = new Button(
+  'reset',
+  'Reset',
+  {
+    style: 'warn',
+    onEvent: (param) => {
+      param.structure.reset();
+      param.structure.remapValues();
+      console.log('Form reset');
+    }
+  }
+).apply({
+  icon: 'refresh'
+});
+```
+
+### Conditional Form Fields
+
+Dynamically show/hide fields based on user input:
+
+```typescript
+import { RadioGroup, Input, OptionChild } from 'mat-dynamic-form';
+
+const employmentStatus = new RadioGroup(
+  'employmentStatus',
+  'Employment Status',
+  [
+    new OptionChild('Employed', 'employed'),
+    new OptionChild('Self-Employed', 'self-employed'),
+    new OptionChild('Unemployed', 'unemployed')
+  ]
+).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const employmentNodes = [
+        new Input('companyName', 'Company Name'),
+        new Input('jobTitle', 'Job Title')
+      ];
+      
+      if (param.event === 'employed' || param.event === 'self-employed') {
+        // Add employment fields at position 5
+        param.structure.createNodes(5, employmentNodes);
+      } else {
+        // Remove employment fields
+        param.structure.removeNodes(employmentNodes);
+      }
+    }
+  }
+});
+```
+
+### Dependent Field Updates
+
+Update one field based on another field's value:
+
+```typescript
+import { DatePicker } from 'mat-dynamic-form';
+
+const startDate = new DatePicker('startDate', 'Start Date').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      // Update the end date's minimum date
+      const endDateNode = param.structure.getNodeById<DatePicker>('endDate');
+      endDateNode.minDate = param.event;
+      
+      // Clear end date if it's before start date
+      const endDateControl = param.structure.getControlById('endDate');
+      if (endDateControl?.value < param.event) {
+        endDateControl.setValue(null);
+      }
+    }
+  }
+});
+
+const endDate = new DatePicker('endDate', 'End Date');
+```
+
+### Real-time Validation Feedback
+
+```typescript
+import { Input } from 'mat-dynamic-form';
+
+const usernameInput = new Input('username', 'Username').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const username = param.event;
+      
+      if (username.length < 3) {
+        param.structure.getControlById('username')?.setErrors({
+          minLength: 'Username must be at least 3 characters'
+        });
+      } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        param.structure.getControlById('username')?.setErrors({
+          pattern: 'Username can only contain letters, numbers, and underscores'
+        });
+      } else {
+        // Clear errors
+        param.structure.getControlById('username')?.setErrors(null);
+      }
+    }
+  }
+});
+```
+
+### Loading Data from API
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+
+const countryDropdown = new Dropdown(
+  'country',
+  'Country',
+  []
+).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const countryCode = param.event;
+      
+      // Load cities for selected country
+      this.apiService.getCities(countryCode).subscribe(cities => {
+        const cityNodes = [
+          new Dropdown(
+            'city',
+            'City',
+            cities.map(c => new OptionChild(c.name, c.id))
+          )
+        ];
+        
+        param.structure.createNodes(3, cityNodes);
+      });
+    }
+  }
+});
+```
+
+### Custom Validation Logic
+
+```typescript
+const passwordConfirm = new InputPassword(
+  'passwordConfirm',
+  'Confirm Password'
+).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const password = param.structure.getControlById('password')?.value;
+      const confirm = param.event;
+      
+      if (password !== confirm) {
+        param.structure.getControlById('passwordConfirm')?.setErrors({
+          mismatch: 'Passwords do not match'
+        });
+      } else {
+        param.structure.getControlById('passwordConfirm')?.setErrors(null);
+      }
+    }
+  }
+});
+```
+
+## Button Validation
+
+Buttons support special validation options:
+
+### validateForm Property
+
+Automatically validates the form before executing the action:
+
+```typescript
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    style: 'primary',
+    onEvent: (param) => {
+      // This only runs if form is valid
+      console.log('Form is valid, submitting...');
+    }
+  }
+).apply({
+  validateForm: true  // Validates entire form first
+});
+```
+
+### validation Function
+
+Custom validation logic that determines if the button action should execute:
+
+```typescript
+const submitButton = new Button(
+  'submit',
+  'Submit',
+  {
+    style: 'primary',
+    onEvent: (param) => {
+      console.log('Submitting...');
+    }
+  }
+).apply({
+  validateForm: false,
+  validation: (param) => {
+    // Custom logic - only allow if email is filled
+    const email = param.structure.getControlById('email')?.value;
+    return email && email.length > 0;
+  }
+});
+```
+
+<Tip>
+  Use `validateForm` for standard form validation. Use `validation` function for complex custom logic like checking specific fields or business rules.
+</Tip>
+
+## Advanced Example
+
+```typescript
+import { Component } from '@angular/core';
+import {
+  FormStructure,
+  Input,
+  Dropdown,
+  DatePicker,
+  Button,
+  OptionChild,
+  ActionEvent
+} from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-booking-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class BookingFormComponent {
+  formStructure: FormStructure;
+
+  constructor(private apiService: ApiService) {
+    this.formStructure = new FormStructure('Book Appointment');
+
+    this.formStructure.nodes = [
+      // Service selection loads available dates
+      new Dropdown(
+        'service',
+        'Select Service',
+        [
+          new OptionChild('Haircut', 'haircut'),
+          new OptionChild('Coloring', 'coloring'),
+          new OptionChild('Styling', 'styling')
+        ]
+      ).apply({
+        action: {
+          type: 'valueChange',
+          onEvent: (param) => this.onServiceChange(param)
+        }
+      }),
+      
+      // Date selection loads available times
+      new DatePicker('date', 'Select Date').apply({
+        action: {
+          type: 'valueChange',
+          onEvent: (param) => this.onDateChange(param)
+        }
+      }),
+      
+      // Customer info
+      new Input('name', 'Your Name'),
+      new Input('phone', 'Phone Number')
+    ];
+
+    this.formStructure.validateActions = [
+      new Button('cancel', 'Cancel', {
+        style: 'warn',
+        onEvent: (param) => this.handleCancel(param)
+      }),
+      
+      new Button('book', 'Book Now', {
+        style: 'primary',
+        onEvent: (param) => this.handleBooking(param)
+      }).apply({
+        validateForm: true
+      })
+    ];
+  }
+
+  onServiceChange(param: ActionEvent) {
+    const service = param.event;
+    console.log('Service selected:', service);
+    
+    // Load available dates for this service
+    this.apiService.getAvailableDates(service).subscribe(dates => {
+      const dateNode = param.structure.getNodeById<DatePicker>('date');
+      dateNode.minDate = dates.minDate;
+      dateNode.maxDate = dates.maxDate;
+    });
+  }
+
+  onDateChange(param: ActionEvent) {
+    const date = param.event;
+    const service = param.structure.getControlById('service')?.value;
+    
+    // Load available time slots
+    this.apiService.getTimeSlots(service, date).subscribe(slots => {
+      const timeNodes = [
+        new Dropdown(
+          'time',
+          'Select Time',
+          slots.map(s => new OptionChild(s.label, s.value))
+        )
+      ];
+      
+      param.structure.createNodes(2, timeNodes);
+    });
+  }
+
+  handleBooking(param: ActionEvent) {
+    const bookingData = param.structure.getValue();
+    
+    this.apiService.createBooking(bookingData).subscribe(
+      response => {
+        console.log('Booking confirmed:', response);
+        param.structure.reset();
+      },
+      error => console.error('Booking failed:', error)
+    );
+  }
+
+  handleCancel(param: ActionEvent) {
+    param.structure.reset();
+    param.structure.remapValues();
+  }
+}
+```
+
+## Best Practices
+
+1. **Use valueChange for Real-time Updates**: Use `valueChange` when you need immediate feedback as users type.
+
+2. **Use blur for Validation**: Use `blur` events for validation checks that shouldn't run on every keystroke.
+
+3. **Access Form State via structure**: Always use `param.structure` to access form data and controls rather than storing separate references.
+
+4. **Clean Up Dynamic Nodes**: When removing conditional fields, make sure to properly remove them using `removeNodes()`.
+
+5. **Type Safety**: Use generics when accessing nodes: `param.structure.getNodeById<DatePicker>('date')`
+
+6. **Error Handling**: Always handle API errors gracefully in your action callbacks.
+
+## Related Concepts
+
+- [Form Structure](/concepts/form-structure) - Managing form state and data
+- [Nodes](/concepts/nodes) - Understanding form field types
+- [Validators](/concepts/validators) - Adding validation logic

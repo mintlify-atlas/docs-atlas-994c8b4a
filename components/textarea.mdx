@@ -1,0 +1,550 @@
+---
+title: 'Textarea'
+description: 'Multi-line text input component for longer content and descriptions'
+---
+
+## Overview
+
+The `Textarea` component extends the standard Input component to provide multi-line text entry. It's perfect for comments, descriptions, addresses, and any content that requires more than one line.
+
+## When to Use
+
+Use the Textarea component when you need to:
+
+- Capture comments, feedback, or descriptions
+- Enter multi-line addresses
+- Write longer text content (bio, notes, etc.)
+- Provide space for detailed explanations
+
+<Note>
+  For single-line text, use [Input](/components/input) instead. Textarea inherits all Input properties and methods.
+</Note>
+
+## Basic Usage
+
+```typescript
+import { TextArea } from 'mat-dynamic-form';
+
+const commentArea = new TextArea(
+  'comments',
+  'Comments'
+);
+```
+
+## Common Patterns
+
+### Textarea with Character Limit
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const bioArea = new TextArea(
+  'bio',
+  'Biography',
+  '',
+  500 // maxCharCount
+).apply({
+  icon: 'description',
+  validator: Validators.required,
+  hint: 'Tell us about yourself (max 500 characters)'
+});
+```
+
+The character counter appears automatically when `maxCharCount` is set.
+
+### Textarea with Validation
+
+```typescript
+const feedbackArea = new TextArea(
+  'feedback',
+  'Your Feedback',
+  '',
+  1000
+).apply({
+  icon: 'feedback',
+  validator: [Validators.required, Validators.minLength(10)],
+  errorMessage: 'Please provide at least 10 characters of feedback',
+  hint: 'We value your input'
+});
+```
+
+### Full-Width Textarea
+
+```typescript
+const descriptionArea = new TextArea(
+  'description',
+  'Product Description',
+  '',
+  2000
+).apply({
+  singleLine: true, // Takes full row width
+  icon: 'notes',
+  validator: Validators.required,
+  hint: 'Provide a detailed product description'
+});
+```
+
+### Read-Only Textarea
+
+```typescript
+const termsArea = new TextArea(
+  'terms',
+  'Terms and Conditions',
+  'These are the terms...'
+).apply({
+  readOnly: true,
+  singleLine: true,
+  hint: 'Please read carefully'
+});
+```
+
+### Textarea with Value Change Handler
+
+```typescript
+const messageArea = new TextArea(
+  'message',
+  'Message',
+  '',
+  500
+).apply({
+  icon: 'message',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const text = param.event;
+      const wordCount = text.trim().split(/\s+/).length;
+      console.log('Word count:', wordCount);
+      
+      // Show warning if too long
+      if (text.length > 450) {
+        console.warn('Approaching character limit');
+      }
+    }
+  }
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the textarea.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Placeholder text shown when the textarea is empty.
+</ParamField>
+
+<ParamField path="value" type="any">
+  Initial value of the textarea.
+</ParamField>
+
+<ParamField path="maxCharCount" type="number">
+  Maximum number of characters allowed. Shows a character counter.
+</ParamField>
+
+<ParamField path="minCharCount" type="number">
+  Minimum number of characters required.
+</ParamField>
+
+<ParamField path="readOnly" type="boolean" default="false">
+  Whether the textarea is read-only.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display (e.g., `'notes'`, `'description'`, `'message'`).
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Angular validators to apply.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message shown when validation fails.
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the textarea.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the textarea is disabled.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the textarea takes up a full row in the form grid.
+</ParamField>
+
+<ParamField path="autoFocus" type="boolean" default="false">
+  Whether the textarea receives focus when the form loads.
+</ParamField>
+
+## Methods
+
+### editable()
+
+Makes the textarea editable by setting `readOnly` to `false`.
+
+```typescript
+const textarea = new TextArea('field', 'Field').apply({ readOnly: true });
+
+// Later, make it editable
+textarea.editable();
+```
+
+### readonly()
+
+Makes the textarea read-only by setting `readOnly` to `true`.
+
+```typescript
+const textarea = new TextArea('field', 'Field');
+
+// Make it read-only
+textarea.readonly();
+```
+
+### apply()
+
+Applies multiple properties at once.
+
+```typescript
+textarea.apply({
+  icon: 'notes',
+  validator: Validators.required,
+  maxCharCount: 500,
+  hint: 'Enter your text here'
+});
+```
+
+### getNativeElement()
+
+Returns the native DOM element.
+
+```typescript
+const element = textarea.getNativeElement();
+if (element) {
+  element.focus();
+}
+```
+
+## Validation Examples
+
+### Required Textarea
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const textarea = new TextArea('comments', 'Comments', '', 500).apply({
+  validator: Validators.required,
+  errorMessage: 'Comments are required'
+});
+```
+
+### Min/Max Length Validation
+
+```typescript
+const textarea = new TextArea('description', 'Description', '', 1000).apply({
+  validator: [
+    Validators.required,
+    Validators.minLength(50),
+    Validators.maxLength(1000)
+  ],
+  errorMessage: 'Description must be between 50 and 1000 characters'
+});
+```
+
+### Pattern Validation (No Special Characters)
+
+```typescript
+const textarea = new TextArea('notes', 'Notes', '', 500).apply({
+  validator: [
+    Validators.required,
+    Validators.pattern(/^[a-zA-Z0-9\s.,!?-]*$/)
+  ],
+  errorMessage: 'Only letters, numbers, and basic punctuation allowed'
+});
+```
+
+### Word Count Validator
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+function wordCountValidator(min: number, max: number) {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    
+    const wordCount = control.value.trim().split(/\s+/).filter((w: string) => w.length > 0).length;
+    
+    if (wordCount < min) {
+      return { minWords: { required: min, actual: wordCount } };
+    }
+    
+    if (wordCount > max) {
+      return { maxWords: { required: max, actual: wordCount } };
+    }
+    
+    return null;
+  };
+}
+
+const textarea = new TextArea('essay', 'Essay', '', 5000).apply({
+  validator: [Validators.required, wordCountValidator(100, 500)],
+  errorMessage: 'Essay must be between 100 and 500 words',
+  hint: 'Write 100-500 words'
+});
+```
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { FormStructure, Input, TextArea, Dropdown, OptionChild, Button } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-feedback-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class FeedbackFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Submit Feedback');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new Input('name', 'Your Name').apply({
+        icon: 'person',
+        validator: Validators.required,
+        singleLine: true
+      }),
+      
+      new Input('email', 'Email Address').apply({
+        icon: 'email',
+        validator: [Validators.required, Validators.email],
+        singleLine: true
+      }),
+      
+      new Dropdown(
+        'category',
+        'Feedback Category',
+        [
+          new OptionChild('Bug Report', 'bug'),
+          new OptionChild('Feature Request', 'feature'),
+          new OptionChild('General Feedback', 'general'),
+          new OptionChild('Complaint', 'complaint')
+        ]
+      ).apply({
+        icon: 'category',
+        validator: Validators.required,
+        singleLine: true
+      }),
+      
+      new Input('subject', 'Subject').apply({
+        icon: 'subject',
+        validator: Validators.required,
+        maxCharCount: 100,
+        singleLine: true
+      }),
+      
+      new TextArea(
+        'message',
+        'Your Message',
+        '',
+        1000
+      ).apply({
+        icon: 'message',
+        validator: [Validators.required, Validators.minLength(20)],
+        errorMessage: 'Please provide at least 20 characters',
+        hint: 'Describe your feedback in detail (max 1000 characters)',
+        singleLine: true
+      }),
+      
+      new TextArea(
+        'steps',
+        'Steps to Reproduce (for bugs)',
+        '',
+        500
+      ).apply({
+        icon: 'list',
+        hint: 'Optional: Help us understand the issue',
+        singleLine: true
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('reset', 'Clear Form', {
+        style: 'warn',
+        onEvent: (param) => {
+          param.structure.reset();
+          param.structure.remapValues();
+        }
+      }).apply({
+        icon: 'clear'
+      }),
+      
+      new Button('submit', 'Submit Feedback', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'send'
+      })
+    ];
+  }
+  
+  onSubmit(structure: FormStructure) {
+    const data = structure.getValue();
+    console.log('Feedback:', data);
+    
+    // Submit to API
+    // this.feedbackService.submit(data).subscribe(...);
+    
+    alert('Thank you for your feedback!');
+    structure.reset();
+    structure.remapValues();
+  }
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Set appropriate character limits** - Balance between giving users enough space and preventing excessive input:
+  ```typescript
+  maxCharCount: 500 // For short descriptions
+  maxCharCount: 2000 // For longer content
+  ```
+</Tip>
+
+<Tip>
+  **Use full width for longer content** - Textareas benefit from more horizontal space:
+  ```typescript
+  singleLine: true // Takes full row width
+  ```
+</Tip>
+
+<Tip>
+  **Provide helpful hints** - Guide users on what to write:
+  ```typescript
+  hint: 'Describe the issue in detail'
+  hint: 'Include any relevant background information'
+  ```
+</Tip>
+
+<Warning>
+  **Don't set maxCharCount too low** - Users get frustrated when they can't express themselves. 500+ is a good starting point.
+</Warning>
+
+<Tip>
+  **Consider minimum length validation** - For critical fields, ensure users provide enough detail:
+  ```typescript
+  validator: [Validators.required, Validators.minLength(20)]
+  ```
+</Tip>
+
+<Tip>
+  **Use appropriate icons**:
+  - `'notes'` - General notes/text
+  - `'description'` - Descriptions
+  - `'message'` - Messages/comments
+  - `'feedback'` - Feedback
+  - `'comment'` - Comments
+</Tip>
+
+## Common Use Cases
+
+### Address Entry
+
+```typescript
+const addressArea = new TextArea(
+  'address',
+  'Address',
+  '',
+  200
+).apply({
+  icon: 'location_on',
+  validator: Validators.required,
+  hint: 'Enter your complete address',
+  singleLine: true
+});
+```
+
+### Product Description
+
+```typescript
+const descriptionArea = new TextArea(
+  'description',
+  'Product Description',
+  '',
+  2000
+).apply({
+  icon: 'inventory',
+  validator: [Validators.required, Validators.minLength(50)],
+  hint: 'Provide a detailed description (at least 50 characters)',
+  singleLine: true
+});
+```
+
+### User Bio
+
+```typescript
+const bioArea = new TextArea(
+  'bio',
+  'About Me',
+  '',
+  500
+).apply({
+  icon: 'person',
+  hint: 'Tell us about yourself (max 500 characters)'
+});
+```
+
+### Comment Section
+
+```typescript
+const commentArea = new TextArea(
+  'comment',
+  'Leave a Comment',
+  '',
+  1000
+).apply({
+  icon: 'comment',
+  validator: [Validators.required, Validators.minLength(5)],
+  hint: 'Share your thoughts',
+  singleLine: true
+});
+```
+
+## Textarea vs Input
+
+Choose between Textarea and Input based on content length:
+
+| Use Case | Component | Reason |
+|----------|-----------|--------|
+| Name, email, phone | Input | Single line is sufficient |
+| Comments, feedback | Textarea | Multi-line needed |
+| Address | Textarea | Multiple lines typical |
+| URL | Input | Single line |
+| Description | Textarea | Usually longer content |
+| Username | Input | Always single line |
+| Bio | Textarea | Multiple sentences |
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Input" icon="input-text" href="/components/input">
+    For single-line text entry
+  </Card>
+  
+  <Card title="Input File" icon="upload" href="/components/input-file">
+    For file uploads with descriptions
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [Validators](/concepts/validators) - Learn about validation
+- [Actions](/concepts/actions) - Handle text changes
+- [Form Structure](/concepts/form-structure) - Form layout and configuration

@@ -1,0 +1,552 @@
+---
+title: 'Custom Component'
+description: 'Embed your own Angular components within the dynamic form'
+---
+
+## Overview
+
+The `CustomNode` component allows you to embed your own Angular components directly into the dynamic form. This provides ultimate flexibility when you need functionality beyond the built-in components.
+
+## When to Use
+
+Use the CustomNode component when you need to:
+
+- Integrate a third-party component library
+- Create complex custom input controls
+- Display dynamic content within the form
+- Implement specialized UI elements not covered by built-in components
+- Reuse existing custom components in your dynamic forms
+
+<Warning>
+  Your custom component must be declared in the Angular module and designed to work within the form structure.
+</Warning>
+
+## Basic Usage
+
+```typescript
+import { CustomNode } from 'mat-dynamic-form';
+import { MyCustomComponent } from './my-custom.component';
+
+const customField = new CustomNode<MyCustomComponent>(
+  'customField',
+  MyCustomComponent
+);
+```
+
+## Common Patterns
+
+### Custom Component with Properties
+
+```typescript
+import { RatingComponent } from './rating.component';
+
+const ratingField = new CustomNode<RatingComponent>(
+  'rating',
+  RatingComponent,
+  {
+    // Properties passed to the component
+    maxStars: 5,
+    currentRating: 3,
+    allowHalfStars: true,
+    color: 'primary'
+  }
+).apply({
+  placeholder: 'Rate this product',
+  icon: 'star',
+  validator: Validators.required
+});
+```
+
+### Custom Component with Validation
+
+```typescript
+import { ColorPickerComponent } from './color-picker.component';
+
+const colorPicker = new CustomNode<ColorPickerComponent>(
+  'favoriteColor',
+  ColorPickerComponent,
+  {
+    defaultColor: '#3f51b5',
+    palette: ['#f44336', '#4caf50', '#2196f3', '#ff9800']
+  }
+).apply({
+  placeholder: 'Select your favorite color',
+  validator: Validators.required,
+  errorMessage: 'Please select a color'
+});
+```
+
+### Custom Component with Actions
+
+```typescript
+import { LocationSelectorComponent } from './location-selector.component';
+
+const locationSelector = new CustomNode<LocationSelectorComponent>(
+  'location',
+  LocationSelectorComponent,
+  {
+    defaultZoom: 10,
+    enableGeolocation: true
+  }
+).apply({
+  placeholder: 'Select location',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const location = param.event;
+      console.log('Location selected:', location);
+      // Update related fields
+    }
+  }
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the custom component.
+</ParamField>
+
+<ParamField path="component" type="Type<T>" required>
+  The Angular component class to embed.
+</ParamField>
+
+<ParamField path="properties" type="{ [key: string]: any }">
+  Object containing properties to pass to the component as `@Input()` bindings.
+</ParamField>
+
+<ParamField path="instance" type="T" readonly>
+  Reference to the component instance after it's created. Available after the component is rendered.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Label text for the custom component.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display.
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Angular validators to apply.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message shown when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the component is disabled.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the component takes up a full row in the form grid.
+</ParamField>
+
+## Creating a Custom Component
+
+### Basic Custom Component Structure
+
+```typescript rating.component.ts
+import { Component, Input, Output, EventEmitter, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+@Component({
+  selector: 'app-rating',
+  template: `
+    <div class="rating-container">
+      <button 
+        *ngFor="let star of stars; let i = index"
+        type="button"
+        (click)="setRating(i + 1)"
+        [disabled]="disabled">
+        <mat-icon>{{ i < rating ? 'star' : 'star_border' }}</mat-icon>
+      </button>
+    </div>
+  `,
+  styles: [`
+    .rating-container {
+      display: flex;
+      gap: 4px;
+    }
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  `],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => RatingComponent),
+      multi: true
+    }
+  ]
+})
+export class RatingComponent implements ControlValueAccessor {
+  @Input() maxStars: number = 5;
+  @Input() allowHalfStars: boolean = false;
+  @Input() color: string = 'primary';
+  
+  rating: number = 0;
+  disabled: boolean = false;
+  stars: number[] = [];
+  
+  private onChange: (value: number) => void = () => {};
+  private onTouched: () => void = () => {};
+  
+  ngOnInit() {
+    this.stars = Array(this.maxStars).fill(0).map((_, i) => i);
+  }
+  
+  setRating(value: number) {
+    if (!this.disabled) {
+      this.rating = value;
+      this.onChange(this.rating);
+      this.onTouched();
+    }
+  }
+  
+  // ControlValueAccessor implementation
+  writeValue(value: number): void {
+    this.rating = value || 0;
+  }
+  
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+  
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+  
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+  }
+}
+```
+
+### Using the Custom Component in a Form
+
+```typescript
+import { Component } from '@angular/core';
+import { FormStructure, Input, CustomNode, Button } from 'mat-dynamic-form';
+import { RatingComponent } from './rating.component';
+import { Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-review-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class ReviewFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Product Review');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new Input('productName', 'Product Name').apply({
+        icon: 'shopping_cart',
+        validator: Validators.required,
+        singleLine: true
+      }),
+      
+      // Custom rating component
+      new CustomNode<RatingComponent>(
+        'rating',
+        RatingComponent,
+        {
+          maxStars: 5,
+          color: 'accent',
+          allowHalfStars: false
+        }
+      ).apply({
+        placeholder: 'Your Rating',
+        icon: 'star',
+        validator: Validators.required,
+        errorMessage: 'Please provide a rating',
+        singleLine: false
+      }),
+      
+      new TextArea('review', 'Your Review', '', 500).apply({
+        icon: 'rate_review',
+        validator: [Validators.required, Validators.minLength(20)],
+        singleLine: true
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('submit', 'Submit Review', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'send'
+      })
+    ];
+  }
+  
+  onSubmit(structure: FormStructure) {
+    const data = structure.getValue();
+    console.log('Review submitted:', data);
+    // data.rating will contain the selected rating value
+  }
+}
+```
+
+## Advanced Examples
+
+### Custom Date Range Component
+
+```typescript date-range.component.ts
+import { Component, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+interface DateRange {
+  start: Date | null;
+  end: Date | null;
+}
+
+@Component({
+  selector: 'app-date-range',
+  template: `
+    <div class="date-range">
+      <mat-form-field>
+        <mat-label>Start Date</mat-label>
+        <input 
+          matInput 
+          [matDatepicker]="startPicker"
+          [(ngModel)]="range.start"
+          (ngModelChange)="onRangeChange()"
+          [disabled]="disabled">
+        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+      
+      <mat-form-field>
+        <mat-label>End Date</mat-label>
+        <input 
+          matInput 
+          [matDatepicker]="endPicker"
+          [(ngModel)]="range.end"
+          (ngModelChange)="onRangeChange()"
+          [min]="range.start"
+          [disabled]="disabled">
+        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+  `,
+  styles: [`
+    .date-range {
+      display: flex;
+      gap: 16px;
+    }
+  `],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => DateRangeComponent),
+      multi: true
+    }
+  ]
+})
+export class DateRangeComponent implements ControlValueAccessor {
+  range: DateRange = { start: null, end: null };
+  disabled: boolean = false;
+  
+  private onChange: (value: DateRange) => void = () => {};
+  private onTouched: () => void = () => {};
+  
+  onRangeChange() {
+    this.onChange(this.range);
+    this.onTouched();
+  }
+  
+  writeValue(value: DateRange): void {
+    if (value) {
+      this.range = value;
+    }
+  }
+  
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+  
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+  
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+  }
+}
+```
+
+### Using Date Range Component
+
+```typescript
+const dateRangeField = new CustomNode<DateRangeComponent>(
+  'projectDates',
+  DateRangeComponent
+).apply({
+  placeholder: 'Project Duration',
+  icon: 'date_range',
+  validator: Validators.required,
+  singleLine: true
+});
+```
+
+## Accessing Component Instance
+
+After the component is rendered, you can access its instance:
+
+```typescript
+const customNode = formStructure.getNodeById<CustomNode<RatingComponent>>('rating');
+
+if (customNode && customNode.instance) {
+  // Access component properties and methods
+  console.log('Current rating:', customNode.instance.rating);
+  
+  // Call component methods
+  customNode.instance.setRating(5);
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Implement ControlValueAccessor** - Your custom component should implement `ControlValueAccessor` to work seamlessly with Angular forms:
+  ```typescript
+  implements ControlValueAccessor
+  ```
+</Tip>
+
+<Warning>
+  **Declare components in module** - Custom components must be declared in your Angular module:
+  ```typescript
+  @NgModule({
+    declarations: [RatingComponent, ColorPickerComponent]
+  })
+  ```
+</Warning>
+
+<Tip>
+  **Use forwardRef for providers** - Provide `NG_VALUE_ACCESSOR` using `forwardRef`:
+  ```typescript
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => YourComponent),
+      multi: true
+    }
+  ]
+  ```
+</Tip>
+
+<Tip>
+  **Pass configuration via properties** - Use the `properties` parameter to configure your component:
+  ```typescript
+  new CustomNode(id, Component, {
+    setting1: value1,
+    setting2: value2
+  })
+  ```
+</Tip>
+
+<Warning>
+  **Handle disabled state** - Implement `setDisabledState()` to properly handle form control disabled state.
+</Warning>
+
+<Tip>
+  **Emit value changes** - Call `onChange()` whenever the component value changes to keep the form in sync.
+</Tip>
+
+## Common Use Cases
+
+### Rich Text Editor
+
+```typescript
+import { QuillEditorComponent } from './quill-editor.component';
+
+const richTextEditor = new CustomNode<QuillEditorComponent>(
+  'description',
+  QuillEditorComponent,
+  {
+    modules: {
+      toolbar: [
+        ['bold', 'italic', 'underline'],
+        ['link', 'image']
+      ]
+    }
+  }
+).apply({
+  placeholder: 'Product Description',
+  singleLine: true
+});
+```
+
+### Image Cropper
+
+```typescript
+import { ImageCropperComponent } from './image-cropper.component';
+
+const imageCropper = new CustomNode<ImageCropperComponent>(
+  'avatar',
+  ImageCropperComponent,
+  {
+    aspectRatio: 1, // Square
+    maxSize: 500 // 500x500px
+  }
+).apply({
+  placeholder: 'Profile Picture',
+  singleLine: true
+});
+```
+
+### Signature Pad
+
+```typescript
+import { SignaturePadComponent } from './signature-pad.component';
+
+const signaturePad = new CustomNode<SignaturePadComponent>(
+  'signature',
+  SignaturePadComponent,
+  {
+    width: 400,
+    height: 200,
+    backgroundColor: '#ffffff'
+  }
+).apply({
+  placeholder: 'Signature',
+  validator: Validators.required,
+  singleLine: true
+});
+```
+
+## Related Components
+
+CustomNode allows you to integrate any component when built-in components don't meet your needs.
+
+<CardGroup cols={2}>
+  <Card title="Form Structure" icon="diagram-project" href="/concepts/form-structure">
+    Learn about integrating components in forms
+  </Card>
+  
+  <Card title="Validators" icon="shield-check" href="/concepts/validators">
+    Validating custom component values
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [Actions](/concepts/actions) - Handle custom component events
+- [Validators](/concepts/validators) - Validate custom values
+- [Angular ControlValueAccessor](https://angular.io/api/forms/ControlValueAccessor) - Official Angular docs

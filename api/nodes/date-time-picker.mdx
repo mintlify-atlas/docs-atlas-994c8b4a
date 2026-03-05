@@ -1,0 +1,386 @@
+---
+title: 'DateTimePicker'
+description: 'API reference for the DateTimePicker node class'
+---
+
+## Overview
+
+The `DateTimePicker` class provides a combined date and time selection interface. It offers extensive customization options including date constraints, custom labels, display format, clock picker mode, and orientation.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → InputBaseNode → DateTimePicker
+```
+
+## Constructor
+
+```typescript
+new DateTimePicker(
+  id: string,
+  placeholder?: string,
+  value?: any,
+  dateFormat?: string,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator | AbstractControlOptions,
+  asyncValidator?: AsyncValidatorFn,
+  action?: Action | Action[],
+  minDate?: Date,
+  maxDate?: Date,
+  acceptLabel?: string,
+  cancelLabel?: string,
+  selectTimeLabel?: string,
+  enterTimeLabel?: string,
+  showClockPicker?: boolean,
+  orientation?: 'portrait' | 'landscape'
+)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the date-time picker node in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text to display when no date-time is selected.
+</ParamField>
+
+<ParamField path="value" type="any">
+  The initial date-time value. Can be a Date object, string, or timestamp.
+</ParamField>
+
+<ParamField path="dateFormat" type="string">
+  The date format to display selected dates. Example: `'dd-MM-yyyy hh:mm a'`
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether to display the node in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display in the picker field.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the date-time picker is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator | AbstractControlOptions">
+  Synchronous validator function(s) or control options.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidatorFn">
+  Asynchronous validator function(s) for the picker.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when a date-time is selected.
+</ParamField>
+
+<ParamField path="minDate" type="Date">
+  The minimum selectable date. Dates before this will be disabled.
+</ParamField>
+
+<ParamField path="maxDate" type="Date">
+  The maximum selectable date. Dates after this will be disabled.
+</ParamField>
+
+<ParamField path="acceptLabel" type="string" default="'OK'">
+  Custom label for the accept/confirm button.
+</ParamField>
+
+<ParamField path="cancelLabel" type="string" default="'Cancel'">
+  Custom label for the cancel button.
+</ParamField>
+
+<ParamField path="selectTimeLabel" type="string" default="'Select Time'">
+  Custom label for the select time action.
+</ParamField>
+
+<ParamField path="enterTimeLabel" type="string" default="'Enter Time'">
+  Custom label for the enter time action.
+</ParamField>
+
+<ParamField path="showClockPicker" type="boolean" default="false">
+  Whether to show the clock picker interface for time selection.
+</ParamField>
+
+<ParamField path="orientation" type="'portrait' | 'landscape'" default="'portrait'">
+  The orientation of the picker dialog.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the node |
+| `placeholder` | `string` | The placeholder text |
+| `type` | `'datetime'` | The node type (read-only) |
+| `value` | `any` | The selected date-time value |
+| `readOnly` | `boolean` | Whether the input field is read-only |
+| `dateFormat` | `string` | Display format for dates |
+| `minDate` | `Date` | Minimum selectable date |
+| `maxDate` | `Date` | Maximum selectable date |
+| `acceptLabel` | `string` | Label for accept button |
+| `cancelLabel` | `string` | Label for cancel button |
+| `selectTimeLabel` | `string` | Label for select time action |
+| `enterTimeLabel` | `string` | Label for enter time action |
+| `showClockPicker` | `boolean` | Whether to show clock picker |
+| `orientation` | `'portrait' \| 'landscape'` | Picker dialog orientation |
+| `singleLine` | `boolean` | Whether displayed in single line layout |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Whether the node is disabled |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validators |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text to display |
+| `autoFocus` | `boolean` | Whether to auto-focus on load |
+
+## Methods
+
+### getNativeElement()
+
+Returns the native DOM element for this node.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Example
+
+```typescript
+import { DateTimePicker, Action } from '@ng-mdf/core';
+import { Validators } from '@angular/forms';
+
+// Simple date-time picker
+const appointmentPicker = new DateTimePicker(
+  'appointment',
+  'Select appointment date and time',
+  undefined,
+  'dd/MM/yyyy hh:mm a',
+  false,
+  'schedule',
+  'Please select a valid appointment time',
+  false,
+  Validators.required
+);
+
+// Date-time picker with constraints and custom labels
+const meetingPicker = new DateTimePicker(
+  'meeting',
+  'Schedule meeting',
+  undefined,
+  'MMM dd, yyyy - hh:mm a',
+  false,
+  'event',
+  'Please select a date and time',
+  false,
+  Validators.required,
+  undefined,
+  new Action('change', (event) => {
+    console.log('Meeting scheduled for:', event.value);
+  }),
+  new Date(),  // minDate: today
+  new Date(new Date().setMonth(new Date().getMonth() + 6)),  // maxDate: 6 months from now
+  'Confirm',  // acceptLabel
+  'Cancel',   // cancelLabel
+  'Choose Time',  // selectTimeLabel
+  'Type Time'     // enterTimeLabel
+);
+
+// Date-time picker with clock picker enabled
+const clockPickerDateTime = new DateTimePicker(
+  'clockPicker',
+  'Select date and time',
+  undefined,
+  'dd-MM-yyyy HH:mm',
+  false,
+  'access_time',
+  undefined,
+  false,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  'OK',
+  'Cancel',
+  'Select Time',
+  'Enter Time',
+  true  // showClockPicker
+);
+
+// Landscape orientation picker
+const landscapePicker = new DateTimePicker(
+  'landscape',
+  'Event date and time',
+  undefined,
+  'yyyy-MM-dd HH:mm',
+  false,
+  'event_available',
+  undefined,
+  false,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  'Done',
+  'Cancel',
+  undefined,
+  undefined,
+  false,
+  'landscape'  // orientation
+);
+
+// Localized date-time picker with custom format
+const localizedPicker = new DateTimePicker(
+  'localized',
+  'Seleccionar fecha y hora',
+  undefined,
+  'dd \"de\" MMMM \"de\" yyyy - HH:mm',
+  false,
+  'calendar_today',
+  'Por favor seleccione una fecha y hora válida',
+  false,
+  Validators.required,
+  undefined,
+  undefined,
+  new Date(),
+  undefined,
+  'Aceptar',
+  'Cancelar',
+  'Seleccionar Hora',
+  'Ingresar Hora'
+);
+```
+
+## Date Format Patterns
+
+The `dateFormat` property accepts standard date format patterns:
+
+| Pattern | Description | Example |
+|---------|-------------|----------|
+| `yyyy` | 4-digit year | 2024 |
+| `yy` | 2-digit year | 24 |
+| `MM` | 2-digit month | 03 |
+| `MMM` | Short month name | Mar |
+| `MMMM` | Full month name | March |
+| `dd` | 2-digit day | 05 |
+| `d` | 1-2 digit day | 5 |
+| `HH` | 24-hour format | 14 |
+| `hh` | 12-hour format | 02 |
+| `mm` | Minutes | 30 |
+| `ss` | Seconds | 45 |
+| `a` | AM/PM marker | PM |
+
+### Example Formats
+
+```typescript
+// US Format
+'MM/dd/yyyy hh:mm a'  // 03/05/2026 02:30 PM
+
+// European Format
+'dd.MM.yyyy HH:mm'    // 05.03.2026 14:30
+
+// ISO Format
+'yyyy-MM-dd HH:mm:ss' // 2026-03-05 14:30:00
+
+// Verbose Format
+'MMMM dd, yyyy \"at\" hh:mm a'  // March 05, 2026 at 02:30 PM
+```
+
+## Clock Picker Mode
+
+When `showClockPicker` is `true`, users can select time using an analog clock interface:
+
+```typescript
+const clockPicker = new DateTimePicker(
+  'clockTime',
+  'Select time',
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  true  // enables clock picker
+);
+```
+
+## Orientation
+
+The picker dialog can be displayed in portrait or landscape mode:
+
+```typescript
+// Portrait mode (default) - better for mobile
+const portraitPicker = new DateTimePicker(
+  'portrait',
+  'Select date/time',
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  'portrait'
+);
+
+// Landscape mode - better for desktop
+const landscapePicker = new DateTimePicker(
+  'landscape',
+  'Select date/time',
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  'landscape'
+);
+```
+
+## Related Node Types
+
+- [DatePicker](/api/nodes/date-picker) - For selecting date only
+- [TimePicker](/api/nodes/time-picker) - For selecting time only
+- [DateRangePicker](/api/nodes/date-range-picker) - For selecting a date range
+- [Input](/api/nodes/input) - Base input node for text values

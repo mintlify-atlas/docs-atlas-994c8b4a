@@ -1,0 +1,197 @@
+---
+title: 'AutoComplete'
+description: 'API reference for the AutoComplete node class'
+---
+
+## Overview
+
+The `AutoComplete` class provides an autocomplete input field with filtering capabilities. It supports both single and multiple selection modes and dynamically filters options as the user types.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → SelectableNode → AutoComplete
+```
+
+## Constructor
+
+```typescript
+new AutoComplete(
+  id: string,
+  placeholder?: string,
+  value?: OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>,
+  selected?: string,
+  multiple?: boolean,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator | AbstractControlOptions,
+  asyncValidator?: AsyncValidatorFn,
+  action?: Action | Action[]
+)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the autocomplete node in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text to display when no value is selected.
+</ParamField>
+
+<ParamField path="value" type="OptionChild[] | Promise<OptionChild[]> | Observable<OptionChild[]>">
+  The options to display in the autocomplete. Can be an array, Promise, or Observable of OptionChild objects.
+</ParamField>
+
+<ParamField path="selected" type="string">
+  The initial selected value(s) of the autocomplete.
+</ParamField>
+
+<ParamField path="multiple" type="boolean" default="false">
+  Whether to allow multiple selections.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether to display the node in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display in the autocomplete field.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the autocomplete is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator | AbstractControlOptions">
+  Synchronous validator function(s) or control options.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidatorFn">
+  Asynchronous validator function(s) for the autocomplete.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when events occur on the autocomplete.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the node |
+| `placeholder` | `string` | The placeholder text |
+| `type` | `'autocomplete'` | The node type (read-only) |
+| `value` | `OptionChild[]` | The options available for selection |
+| `selectedValue` | `string` | The currently selected value(s) |
+| `multiple` | `boolean` | Whether multiple selections are allowed |
+| `filteredOptions` | `BehaviorSubject<OptionChild[]>` | Observable of filtered options based on user input |
+| `singleLine` | `boolean` | Whether displayed in single line layout |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Whether the node is disabled |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validators |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text to display |
+| `autoFocus` | `boolean` | Whether to auto-focus on load |
+
+## Methods
+
+### getOptions()
+
+Returns the current list of options.
+
+```typescript
+getOptions(): OptionChild[]
+```
+
+### getNativeElement()
+
+Returns the native DOM element for this node.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Example
+
+```typescript
+import { AutoComplete, OptionChild } from '@ng-mdf/core';
+
+// Single selection autocomplete with static options
+const countryAutocomplete = new AutoComplete(
+  'country',
+  'Select your country',
+  [
+    new OptionChild('us', 'United States'),
+    new OptionChild('ca', 'Canada'),
+    new OptionChild('mx', 'Mexico'),
+    new OptionChild('uk', 'United Kingdom'),
+    new OptionChild('de', 'Germany')
+  ],
+  'us',  // preselected value
+  false  // single selection
+);
+
+// Multiple selection autocomplete with async options
+const skillsAutocomplete = new AutoComplete(
+  'skills',
+  'Select your skills',
+  fetchSkillsFromAPI(),  // returns Promise<OptionChild[]>
+  undefined,
+  true  // multiple selection
+);
+
+// Autocomplete with Observable options
+import { of } from 'rxjs';
+
+const tagAutocomplete = new AutoComplete(
+  'tags',
+  'Add tags',
+  of([
+    new OptionChild('angular', 'Angular'),
+    new OptionChild('typescript', 'TypeScript'),
+    new OptionChild('rxjs', 'RxJS')
+  ]),
+  undefined,
+  true
+);
+```
+
+## Special Features
+
+### Filtered Options
+
+The `filteredOptions` property is a `BehaviorSubject` that automatically updates as the user types, providing real-time filtering of available options. Subscribe to this observable to react to filtered option changes:
+
+```typescript
+autocomplete.filteredOptions.subscribe(filtered => {
+  console.log('Filtered options:', filtered);
+});
+```
+
+### Async Data Loading
+
+The autocomplete supports loading options asynchronously via Promises or Observables, making it ideal for fetching data from APIs:
+
+```typescript
+const asyncAutocomplete = new AutoComplete(
+  'users',
+  'Search users',
+  fetch('/api/users').then(res => res.json())
+);
+```
+
+## Related Node Types
+
+- [Dropdown](/api/nodes/dropdown) - Similar selection interface without filtering
+- [RadioGroup](/api/nodes/radio-group) - For mutually exclusive selections with visible options
+- [SelectableNode](/api/nodes/selectable-node) - Base class for all selection nodes

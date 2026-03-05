@@ -1,0 +1,404 @@
+---
+title: InputFile
+description: File upload input with drag-and-drop, type restrictions, and status tracking
+---
+
+The `InputFile` class creates a file upload input field with support for file type restrictions, size limits, drag-and-drop functionality, and comprehensive status tracking. It extends `InputBaseNode` and provides a rich file upload experience.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → InputBaseNode → InputFile
+```
+
+## Constructor
+
+```typescript
+new InputFile(
+  id: string,
+  placeholder?: string,
+  value?: any,
+  accept?: string[],
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+## Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the file input field in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text displayed in the file input.
+</ParamField>
+
+<ParamField path="value" type="any">
+  The initial value (typically a File object or file path).
+</ParamField>
+
+<ParamField path="accept" type="string[]">
+  Array of allowed file extensions (without the dot). Example: `['pdf', 'jpg', 'png']`
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the input should be displayed in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the input.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the file input is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator">
+  Synchronous validator(s) to apply to the input. Can be a single `ValidatorFn`, an array of `ValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidator">
+  Asynchronous validator(s) to apply to the input. Can be a single `AsyncValidatorFn`, an array of `AsyncValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when specific events occur on the input.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the file input |
+| `placeholder` | `string` | The placeholder text |
+| `type` | `NodeType` | The type of node (set to `'file'`) |
+| `value` | `any` | The current file value |
+| `accept` | `string[]` | Allowed file extensions |
+| `filename` | `string` | Default filename for the uploaded file |
+| `maxSize` | `number` | Maximum file size in megabytes (MB) |
+| `dragLabel` | `string` | Text displayed in the drag-and-drop area |
+| `downloadHint` | `string` | Hint text for the download action |
+| `removeHint` | `string` | Hint text for the remove action |
+| `retryHint` | `string` | Hint text for the retry action |
+| `onStatusChange` | `(value: FileChange) => void` | Callback function triggered when file status changes |
+| `readOnly` | `boolean` | Whether the input is read-only |
+| `singleLine` | `boolean` | Single line layout flag |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Disabled state |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validator |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text displayed below the input |
+
+## Methods
+
+### executeStatusChange()
+
+Executes the `onStatusChange` callback with the provided file change information.
+
+```typescript
+executeStatusChange(value: FileChange): void
+```
+
+**Parameters:**
+- `value` - A `FileChange` object containing file status information
+
+### apply()
+
+Inherited from `ObjectBase`. Applies additional properties to the node instance.
+
+```typescript
+apply(options: Partial<InputFile>): this
+```
+
+### getNativeElement()
+
+Returns the native DOM element for this input.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## FileChange Interface
+
+The `onStatusChange` callback receives a `FileChange` object with the following structure:
+
+```typescript
+interface FileChange {
+  status: 'selected' | 'invalid' | 'removed' | 'downloaded';
+  file?: File;
+  error?: string;
+}
+```
+
+## Usage Examples
+
+### Basic File Upload
+
+```typescript
+import { InputFile } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const documentUpload = new InputFile('document', 'Upload Document').apply({
+  icon: 'upload_file',
+  validator: Validators.required
+});
+```
+
+### Image Upload with Type Restrictions
+
+```typescript
+const profilePicture = new InputFile('profilePicture', 'Profile Picture').apply({
+  accept: ['png', 'jpg', 'jpeg', 'gif'],
+  maxSize: 5, // 5 MB
+  filename: 'ProfilePic',
+  icon: 'add_photo_alternate',
+  hint: 'Upload your profile picture (max 5 MB)',
+  errorMessage: 'Invalid file format or size',
+  dragLabel: 'Drag & drop your image here'
+});
+```
+
+### PDF Upload Only
+
+```typescript
+const pdfUpload = new InputFile('pdfDocument', 'PDF Document').apply({
+  accept: ['pdf'],
+  maxSize: 10, // 10 MB
+  filename: 'Document',
+  hint: 'Upload a PDF file (max 10 MB)',
+  errorMessage: 'Please upload a valid PDF file',
+  dragLabel: 'Drop your PDF here',
+  validator: Validators.required
+});
+```
+
+### File Upload with Status Tracking
+
+```typescript
+import { FileChange } from 'mat-dynamic-form';
+
+const fileUpload = new InputFile('attachment', 'Attachment').apply({
+  accept: ['pdf', 'doc', 'docx', 'txt'],
+  maxSize: 20,
+  icon: 'attach_file',
+  onStatusChange: (status: FileChange) => {
+    console.log('File status:', status.status);
+    
+    switch (status.status) {
+      case 'selected':
+        console.log('File selected:', status.file?.name);
+        console.log('File size:', status.file?.size, 'bytes');
+        break;
+      case 'invalid':
+        console.error('Invalid file:', status.error);
+        alert(`Error: ${status.error}`);
+        break;
+      case 'removed':
+        console.log('File removed');
+        break;
+      case 'downloaded':
+        console.log('File downloaded');
+        break;
+    }
+  }
+});
+```
+
+### Custom Labels and Hints
+
+```typescript
+const resumeUpload = new InputFile('resume', 'Resume').apply({
+  accept: ['pdf', 'doc', 'docx'],
+  maxSize: 5,
+  filename: 'Resume',
+  dragLabel: 'Drag & drop your resume here or click to browse',
+  downloadHint: 'Download your resume',
+  removeHint: 'Remove resume',
+  retryHint: 'Try uploading again',
+  hint: 'Supported formats: PDF, DOC, DOCX (max 5 MB)',
+  errorMessage: 'Please upload a valid resume file'
+});
+```
+
+### Multiple File Types
+
+```typescript
+const documentUpload = new InputFile('documents', 'Documents').apply({
+  accept: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'],
+  maxSize: 25,
+  filename: 'Document',
+  icon: 'folder_open',
+  hint: 'Upload office documents (max 25 MB)',
+  dragLabel: 'Drag & drop your document here'
+});
+```
+
+### Image Upload with Preview
+
+```typescript
+const imageUpload = new InputFile('photo', 'Photo').apply({
+  accept: ['png', 'jpg', 'jpeg'],
+  maxSize: 10,
+  icon: 'image',
+  onStatusChange: (status: FileChange) => {
+    if (status.status === 'selected' && status.file) {
+      // Create image preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        console.log('Image preview URL:', imageUrl);
+        // Display preview in UI
+      };
+      reader.readAsDataURL(status.file);
+    }
+  }
+});
+```
+
+### File Upload Form Submission
+
+```typescript
+import { Component } from '@angular/core';
+import { FormStructure, InputFile, Button } from 'mat-dynamic-form';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-file-upload',
+  templateUrl: './file-upload.component.html'
+})
+export class FileUploadComponent {
+  formStructure: FormStructure;
+
+  constructor(private http: HttpClient) {
+    this.formStructure = new FormStructure();
+    this.formStructure.nodes = [
+      new InputFile('document', 'Upload File').apply({
+        accept: ['pdf', 'doc', 'docx'],
+        maxSize: 10,
+        validator: Validators.required
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('submit', 'Upload', {
+        onEvent: (param) => {
+          const formValue = param.structure?.getValue();
+          this.uploadFile(formValue.document);
+        },
+        style: 'primary'
+      }).apply({
+        validateForm: true,
+        icon: 'cloud_upload'
+      })
+    ];
+  }
+
+  uploadFile(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    this.http.post('/api/upload', formData).subscribe(
+      response => console.log('Upload successful:', response),
+      error => console.error('Upload failed:', error)
+    );
+  }
+}
+```
+
+### Conditional File Upload
+
+```typescript
+import { RadioGroup, OptionChild, InputFile } from 'mat-dynamic-form';
+
+const documentTypeSelector = new RadioGroup('docType', 'Document Type', [
+  new OptionChild('Passport', 'passport'),
+  new OptionChild('ID Card', 'id_card'),
+  new OptionChild('Driver License', 'license')
+]).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const acceptTypes = param.event === 'passport' 
+        ? ['pdf'] 
+        : ['png', 'jpg', 'jpeg'];
+      
+      const uploadField = new InputFile('documentUpload', 'Upload Document').apply({
+        accept: acceptTypes,
+        maxSize: 10,
+        hint: `Upload your ${param.event === 'passport' ? 'passport PDF' : 'ID image'}`
+      });
+      
+      // Update or add the upload field
+      param.structure.createNodes(1, [uploadField]);
+    }
+  }
+});
+```
+
+## Common File Type Groups
+
+### Images
+```typescript
+accept: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']
+```
+
+### Documents
+```typescript
+accept: ['pdf', 'doc', 'docx', 'txt', 'rtf']
+```
+
+### Spreadsheets
+```typescript
+accept: ['xls', 'xlsx', 'csv']
+```
+
+### Presentations
+```typescript
+accept: ['ppt', 'pptx', 'key']
+```
+
+### Archives
+```typescript
+accept: ['zip', 'rar', '7z', 'tar', 'gz']
+```
+
+### Media
+```typescript
+accept: ['mp4', 'avi', 'mov', 'mp3', 'wav', 'flac']
+```
+
+## Best Practices
+
+1. **File Type Restrictions**: Always specify `accept` to limit file types
+
+2. **Size Limits**: Set appropriate `maxSize` to prevent large file uploads
+
+3. **Clear Messaging**: Use `hint` and `dragLabel` to guide users
+
+4. **Error Handling**: Provide clear `errorMessage` for validation failures
+
+5. **Status Tracking**: Implement `onStatusChange` for user feedback
+
+6. **Security**: Validate file types and sizes on the backend as well
+
+7. **Accessibility**: Ensure the file input is keyboard accessible
+
+8. **Mobile Support**: Test drag-and-drop alternatives on mobile devices
+
+## Related Node Types
+
+- [Input](/api/nodes/input) - Basic text input field
+- [InputNumber](/api/nodes/input-number) - Numeric input field
+- [TextArea](/api/nodes/textarea) - Multi-line text input

@@ -1,0 +1,215 @@
+---
+title: Sign-Up Form Example
+description: Complete sign-up form with various field types including text inputs, dropdowns, file upload, and validation
+---
+
+This example demonstrates a complete sign-up form using Mat Dynamic Form. It showcases various field types, validation, custom styling, and form actions.
+
+## What This Example Demonstrates
+
+- Multiple input types (text, phone, password, file, date)
+- Dropdown selections with predefined options
+- File upload with accept types
+- Text areas with character count
+- Checkbox with HTML content
+- Form validation with global and field-specific validators
+- Action buttons with different styles
+- Icons for visual enhancement
+- Form reset and value patching
+
+## Complete Example
+
+### Component Code
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { 
+  ActionEvent, 
+  Button, 
+  Checkbox, 
+  CustomNode, 
+  DatePicker, 
+  Dropdown, 
+  FormStructure, 
+  Input, 
+  InputFile, 
+  InputPassword, 
+  OptionChild, 
+  RadioGroup, 
+  TextArea 
+} from 'mat-dynamic-form';
+import { InputComponent } from './input/input.component';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
+})
+export class AppComponent implements OnInit {
+
+  formStructure: FormStructure;
+
+  constructor() {
+    this.formStructure = new FormStructure();
+
+    this.formStructure.title = 'Sign Up';
+    this.formStructure.appearance = 'standard';
+    this.formStructure.globalValidators = Validators.required;
+    this.formStructure.nodes = [
+      new Input('name', 'Name').apply({
+        icon: 'person',
+        maxCharCount: 100
+      }),
+      new Button('find', 'Find', { style: 'primary' }).apply({
+        icon: "search",
+        singleLine: false
+      }),
+      new Input('tel', 'Phone Number').apply({
+        icon: 'phone'
+      }),
+      new DatePicker('bDate', 'BirthDate').apply({
+        action: { callback: this, type: 'change' }
+      }),
+      new Dropdown('cStatus', 'Civil Status', [
+        new OptionChild('Single', 'SI',),
+        new OptionChild('Maried', 'MR')
+      ]).apply({
+        selectedValue: 'SI',
+        disabled: true
+      }),
+      new InputFile('profPic', 'Profile Picture').apply({
+        accept: '.png, .jpg, .jpeg'
+      }),
+      new RadioGroup('hasPet', 'Has Pet', [
+        new OptionChild('Yes', 'y'),
+        new OptionChild('Not', 'n'),
+      ]).apply({
+        selectedValue: 'n',
+        action: { type: 'valueChange', onEvent: (param) => this.onHasPetValueChange(param) }
+      }),
+      new InputPassword('pass', 'Password'),
+      new TextArea('comments', 'Comments').apply({
+        singleLine: true,
+        validator: Validators.maxLength(100),
+        maxCharCount: 100
+      }),
+      new CustomNode<InputComponent>('custom1', InputComponent, { label: 'Custom 1', placeholder: 'Custom Placeholder 1' }),
+      new CustomNode<InputComponent>('custom2', InputComponent, { label: 'Custom 2', placeholder: 'Custom Placeholder 2' }),
+      new Checkbox(
+        'agreement',
+        `I have read and agree to the terms of DynamicForm License Agreement, <strong><a href='https://www.google.com'>Read the license here.<a </strong>`
+      ).apply({
+        singleLine: true,
+        validator: Validators.requiredTrue
+      }),
+      new CustomNode<InputComponent>('custom3', InputComponent, { label: 'Custom 3', placeholder: 'Custom Placeholder 2' }),
+    ];
+    this.formStructure.validateActions = [
+      new Button('cancel', 'Cancel', {
+        onEvent: (param) => {
+          param.structure?.reset();
+          param.structure?.remapValues();
+        }, style: 'warn'
+      }).apply({
+        icon: 'close'
+      }),
+      new Button('save', 'Save', {
+        onEvent: (param) => param.structure?.patchValue({ name: 'Carlos', hasPet: 'y' }), style: 'primary',
+      }).apply({
+        validateForm: true,
+        icon: 'save'
+      }),
+    ];
+  }
+
+  ngOnInit(): void {
+  }
+
+  onHasPetValueChange(param: ActionEvent) {
+    const nodes = [
+      new Dropdown('petType', 'Pet Type', [
+        new OptionChild('Dog', 'PD'),
+        new OptionChild('Cat', 'PC')
+      ]),
+      new Input('breed', 'Pet Breed'),
+      new Input('petName', 'Pet Name')
+    ]
+    if (param.event == 'y') {
+      this.formStructure.createNodes(7, nodes)
+    } else this.formStructure.removeNodes(nodes)
+  }
+}
+```
+
+### Template Code
+
+```html
+<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>
+```
+
+## Key Features Explained
+
+### Form Structure Configuration
+
+```typescript
+this.formStructure.title = 'Sign Up';
+this.formStructure.appearance = 'standard';
+this.formStructure.globalValidators = Validators.required;
+```
+
+These settings configure the overall form appearance and apply required validation to all fields by default.
+
+### Input Fields with Icons
+
+```typescript
+new Input('name', 'Name').apply({
+  icon: 'person',
+  maxCharCount: 100
+})
+```
+
+The `icon` property adds a Material icon to the field, and `maxCharCount` limits and displays character count.
+
+### File Upload
+
+```typescript
+new InputFile('profPic', 'Profile Picture').apply({
+  accept: '.png, .jpg, .jpeg'
+})
+```
+
+The `accept` property restricts file types that can be uploaded.
+
+### Conditional Logic
+
+The "Has Pet" radio group triggers dynamic field creation through the `onHasPetValueChange` method, demonstrating how forms can adapt based on user input. See the [Conditional Fields](/examples/conditional-fields) example for more details.
+
+### Action Buttons
+
+```typescript
+this.formStructure.validateActions = [
+  new Button('cancel', 'Cancel', {
+    onEvent: (param) => {
+      param.structure?.reset();
+      param.structure?.remapValues();
+    }, 
+    style: 'warn'
+  }).apply({ icon: 'close' }),
+  new Button('save', 'Save', {
+    onEvent: (param) => param.structure?.patchValue({ name: 'Carlos', hasPet: 'y' }), 
+    style: 'primary'
+  }).apply({
+    validateForm: true,
+    icon: 'save'
+  })
+];
+```
+
+The Cancel button resets the form, while the Save button validates the form before executing (due to `validateForm: true`).
+
+## Next Steps
+
+- Learn about [Conditional Fields](/examples/conditional-fields) for dynamic form behavior
+- Explore [File Upload](/examples/file-upload) for advanced file handling
+- Check the [API Reference](/api/form-structure) for all available options

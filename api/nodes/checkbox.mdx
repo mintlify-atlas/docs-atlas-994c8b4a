@@ -1,0 +1,381 @@
+---
+title: Checkbox
+description: Boolean input field for true/false selections
+---
+
+The `Checkbox` class creates a checkbox input field for capturing boolean values (true/false). It extends `NodeBase` directly and is commonly used for accepting terms, toggling options, or selecting multiple items.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → Checkbox
+```
+
+## Constructor
+
+```typescript
+new Checkbox(
+  id: string,
+  placeholder?: string,
+  value?: boolean,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+## Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the checkbox in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The label text displayed next to the checkbox.
+</ParamField>
+
+<ParamField path="value" type="boolean">
+  The initial checked state of the checkbox (`true` for checked, `false` for unchecked).
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the checkbox should be displayed in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the checkbox.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the checkbox is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator">
+  Synchronous validator(s) to apply to the checkbox. Can be a single `ValidatorFn`, an array of `ValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidator">
+  Asynchronous validator(s) to apply to the checkbox. Can be a single `AsyncValidatorFn`, an array of `AsyncValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when the checkbox state changes.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the checkbox |
+| `placeholder` | `string` | The label text for the checkbox |
+| `type` | `NodeType` | The type of node (set to `'checkbox'`) |
+| `value` | `boolean` | The current checked state |
+| `singleLine` | `boolean` | Single line layout flag |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Disabled state |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validator |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text displayed near the checkbox |
+| `autoFocus` | `boolean` | Whether to auto-focus the checkbox |
+
+## Methods
+
+### apply()
+
+Inherited from `ObjectBase`. Applies additional properties to the node instance.
+
+```typescript
+apply(options: Partial<Checkbox>): this
+```
+
+### getNativeElement()
+
+Returns the native DOM element for this checkbox.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Examples
+
+### Basic Checkbox
+
+```typescript
+import { Checkbox } from 'mat-dynamic-form';
+
+const acceptTerms = new Checkbox('acceptTerms', 'I accept the terms and conditions');
+```
+
+### Required Checkbox
+
+```typescript
+import { Checkbox } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const acceptTerms = new Checkbox('acceptTerms', 'I accept the terms and conditions').apply({
+  validator: Validators.requiredTrue,
+  errorMessage: 'You must accept the terms and conditions'
+});
+```
+
+### Checkbox with Initial Value
+
+```typescript
+const newsletter = new Checkbox('newsletter', 'Subscribe to newsletter', true).apply({
+  hint: 'Receive updates about new features and promotions'
+});
+```
+
+### Disabled Checkbox
+
+```typescript
+const autoSave = new Checkbox('autoSave', 'Auto-save enabled', true).apply({
+  disabled: true,
+  hint: 'This feature is always enabled'
+});
+```
+
+### Checkbox with Icon
+
+```typescript
+const notifications = new Checkbox('notifications', 'Enable notifications').apply({
+  icon: 'notifications',
+  hint: 'Receive real-time notifications'
+});
+```
+
+### Checkbox with Action
+
+```typescript
+const showAdvanced = new Checkbox('showAdvanced', 'Show advanced options').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      console.log('Show advanced options:', param.event);
+      
+      // Toggle visibility of advanced fields
+      const advancedFields = param.structure.getNodeById('advancedSection');
+      if (advancedFields) {
+        advancedFields.disabled = !param.event;
+      }
+    }
+  }
+});
+```
+
+### Terms and Conditions Checkbox
+
+```typescript
+import { Checkbox, Button } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const termsCheckbox = new Checkbox('terms', 'I have read and agree to the terms and conditions').apply({
+  validator: Validators.requiredTrue,
+  errorMessage: 'You must accept the terms to continue',
+  icon: 'gavel'
+});
+
+const submitButton = new Button('submit', 'Submit', {
+  onEvent: (param) => {
+    console.log('Form submitted');
+  },
+  style: 'primary'
+}).apply({
+  validateForm: true
+});
+```
+
+### Checkbox Group (Multiple Checkboxes)
+
+```typescript
+import { FormStructure, Checkbox } from 'mat-dynamic-form';
+
+const formStructure = new FormStructure();
+formStructure.title = 'Select Preferences';
+formStructure.nodes = [
+  new Checkbox('emailNotifications', 'Email notifications').apply({
+    value: true,
+    hint: 'Receive updates via email'
+  }),
+  
+  new Checkbox('smsNotifications', 'SMS notifications').apply({
+    value: false,
+    hint: 'Receive updates via SMS'
+  }),
+  
+  new Checkbox('pushNotifications', 'Push notifications').apply({
+    value: true,
+    hint: 'Receive push notifications in the app'
+  }),
+  
+  new Checkbox('marketingEmails', 'Marketing emails').apply({
+    value: false,
+    hint: 'Receive promotional offers and updates'
+  })
+];
+```
+
+### Conditional Fields Based on Checkbox
+
+```typescript
+import { Checkbox, Input } from 'mat-dynamic-form';
+
+const hasCompanyCheckbox = new Checkbox('hasCompany', 'I represent a company').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      if (param.event === true) {
+        // Add company fields
+        const companyFields = [
+          new Input('companyName', 'Company Name').apply({
+            validator: Validators.required
+          }),
+          new Input('taxId', 'Tax ID').apply({
+            validator: Validators.required
+          })
+        ];
+        
+        // Insert after the checkbox
+        param.structure.createNodes(1, companyFields);
+      } else {
+        // Remove company fields
+        param.structure.removeNode('companyName');
+        param.structure.removeNode('taxId');
+      }
+    }
+  }
+});
+```
+
+### Privacy Settings Form
+
+```typescript
+import { FormStructure, Checkbox, Button } from 'mat-dynamic-form';
+
+const privacyForm = new FormStructure();
+privacyForm.title = 'Privacy Settings';
+privacyForm.appearance = 'outline';
+
+privacyForm.nodes = [
+  new Checkbox('profileVisible', 'Make my profile visible to others', true).apply({
+    hint: 'Other users can view your profile'
+  }),
+  
+  new Checkbox('showEmail', 'Display my email address', false).apply({
+    hint: 'Your email will be visible on your profile'
+  }),
+  
+  new Checkbox('allowMessages', 'Allow others to send me messages', true).apply({
+    hint: 'Enable direct messaging from other users'
+  }),
+  
+  new Checkbox('dataSharing', 'Share my data for analytics', false).apply({
+    hint: 'Help us improve by sharing anonymous usage data',
+    icon: 'analytics'
+  })
+];
+
+privacyForm.validateActions = [
+  new Button('save', 'Save Settings', {
+    onEvent: (param) => {
+      const settings = param.structure?.getValue();
+      console.log('Privacy settings:', settings);
+      // Save settings to backend
+    },
+    style: 'primary'
+  }).apply({
+    icon: 'save'
+  })
+];
+```
+
+### Toggle All Checkboxes
+
+```typescript
+import { Checkbox } from 'mat-dynamic-form';
+
+const selectAllCheckbox = new Checkbox('selectAll', 'Select All').apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const checkboxIds = ['option1', 'option2', 'option3', 'option4'];
+      
+      checkboxIds.forEach(id => {
+        const checkbox = param.structure.getNodeById(id);
+        if (checkbox) {
+          checkbox.value = param.event;
+        }
+      });
+    }
+  }
+});
+
+const option1 = new Checkbox('option1', 'Option 1');
+const option2 = new Checkbox('option2', 'Option 2');
+const option3 = new Checkbox('option3', 'Option 3');
+const option4 = new Checkbox('option4', 'Option 4');
+```
+
+### Checkbox with Custom Validation
+
+```typescript
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+
+function mustBeCheckedValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    return control.value === true ? null : { mustBeChecked: true };
+  };
+}
+
+const ageConfirmation = new Checkbox('ageConfirm', 'I confirm that I am 18 years or older').apply({
+  validator: mustBeCheckedValidator(),
+  errorMessage: 'You must be 18 or older to continue'
+});
+```
+
+## Validation
+
+### Required Checkbox (Must be Checked)
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const checkbox = new Checkbox('agree', 'I agree').apply({
+  validator: Validators.requiredTrue,
+  errorMessage: 'You must check this box to continue'
+});
+```
+
+Note: Use `Validators.requiredTrue` (not `Validators.required`) to ensure the checkbox is checked.
+
+## Best Practices
+
+1. **Clear Labels**: Use descriptive `placeholder` text that clearly explains what checking the box means
+
+2. **Required Checkboxes**: Use `Validators.requiredTrue` for checkboxes that must be checked
+
+3. **Helpful Hints**: Add `hint` text to provide additional context
+
+4. **Default Values**: Set appropriate default `value` based on user expectations
+
+5. **Accessibility**: Ensure checkbox labels are clear and accessible
+
+6. **Grouping**: Logically group related checkboxes together
+
+7. **Actions**: Use actions to create dynamic forms based on checkbox state
+
+## Related Node Types
+
+- [Switch](/api/nodes/switch) - Toggle switch for boolean values
+- [RadioGroup](/api/nodes/radiogroup) - Single selection from multiple options
+- [Dropdown](/api/nodes/dropdown) - Select from dropdown list

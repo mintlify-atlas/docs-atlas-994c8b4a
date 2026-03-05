@@ -1,0 +1,491 @@
+---
+title: 'OptionChild'
+description: 'Option item class for selectable form controls'
+icon: 'square-code'
+---
+
+## Overview
+
+The `OptionChild` class represents an individual option item for selectable form controls like Dropdown, RadioGroup, and AutoComplete. Each option consists of a display title and an underlying value.
+
+**Source:** `projects/mat-dynamic-form/src/lib/models/OptionChild.ts:3`
+
+## Class Definition
+
+```typescript
+class OptionChild extends ObjectBase {
+  title: string;
+  value?: string;
+  
+  constructor(title: string, value: string)
+}
+```
+
+## Constructor
+
+```typescript
+constructor(title: string, value: string)
+```
+
+Creates a new option item.
+
+<ParamField path="title" type="string" required>
+  The display text shown to users in the UI
+</ParamField>
+
+<ParamField path="value" type="string" required>
+  The underlying value stored in the form control when this option is selected
+</ParamField>
+
+## Properties
+
+<ResponseField name="title" type="string">
+  The human-readable text displayed in the dropdown, radio group, or autocomplete list
+</ResponseField>
+
+<ResponseField name="value" type="string" optional>
+  The programmatic value used internally by the form. This is what gets submitted with the form data.
+</ResponseField>
+
+## Inheritance
+
+OptionChild extends [ObjectBase](/api/form-structure#objectbase), which provides the `apply()` method for merging properties.
+
+## Usage Examples
+
+### Basic Dropdown Options
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+
+const countryDropdown = new Dropdown(
+  'country',
+  'Select Country',
+  [
+    new OptionChild('United States', 'us'),
+    new OptionChild('Canada', 'ca'),
+    new OptionChild('Mexico', 'mx'),
+    new OptionChild('United Kingdom', 'uk'),
+    new OptionChild('Germany', 'de'),
+    new OptionChild('France', 'fr')
+  ],
+  'us' // default selected value
+);
+```
+
+### RadioGroup Options
+
+```typescript
+import { RadioGroup, OptionChild } from 'mat-dynamic-form';
+
+const shippingOptions = new RadioGroup(
+  'shipping',
+  'Shipping Method',
+  [
+    new OptionChild('Standard (5-7 days)', 'standard'),
+    new OptionChild('Express (2-3 days)', 'express'),
+    new OptionChild('Overnight (1 day)', 'overnight')
+  ],
+  'standard'
+);
+```
+
+### AutoComplete Options
+
+```typescript
+import { AutoComplete, OptionChild } from 'mat-dynamic-form';
+
+const cityAutocomplete = new AutoComplete(
+  'city',
+  'City',
+  [
+    new OptionChild('New York', 'nyc'),
+    new OptionChild('Los Angeles', 'la'),
+    new OptionChild('Chicago', 'chi'),
+    new OptionChild('Houston', 'hou'),
+    new OptionChild('Phoenix', 'phx'),
+    new OptionChild('Philadelphia', 'phl'),
+    new OptionChild('San Antonio', 'sat'),
+    new OptionChild('San Diego', 'sd'),
+    new OptionChild('Dallas', 'dal'),
+    new OptionChild('San Jose', 'sj')
+  ],
+  null,
+  false
+);
+
+// Options are automatically filtered as user types
+```
+
+### Options from API Data
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+
+// Convert API response to OptionChild instances
+interface CategoryDTO {
+  id: number;
+  name: string;
+}
+
+fetch('/api/categories')
+  .then(res => res.json())
+  .then((categories: CategoryDTO[]) => {
+    const options = categories.map(cat => 
+      new OptionChild(cat.name, cat.id.toString())
+    );
+    
+    const categoryDropdown = new Dropdown(
+      'category',
+      'Category',
+      options
+    );
+  });
+```
+
+### Using Promises
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+
+const departmentDropdown = new Dropdown(
+  'department',
+  'Department',
+  fetch('/api/departments')
+    .then(res => res.json())
+    .then(data => data.map(dept => 
+      new OptionChild(dept.name, dept.id)
+    ))
+);
+```
+
+### Using Observables (Angular)
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+
+@Injectable()
+export class FormService {
+  constructor(private http: HttpClient) {}
+  
+  createProductDropdown() {
+    return new Dropdown(
+      'product',
+      'Select Product',
+      this.http.get<any[]>('/api/products').pipe(
+        map(products => products.map(p => 
+          new OptionChild(p.name, p.sku)
+        ))
+      )
+    );
+  }
+}
+```
+
+### Multi-Select Dropdown
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+
+const skillsDropdown = new Dropdown(
+  'skills',
+  'Your Skills',
+  [
+    new OptionChild('JavaScript', 'js'),
+    new OptionChild('TypeScript', 'ts'),
+    new OptionChild('Angular', 'angular'),
+    new OptionChild('React', 'react'),
+    new OptionChild('Vue', 'vue'),
+    new OptionChild('Node.js', 'node'),
+    new OptionChild('Python', 'python'),
+    new OptionChild('Java', 'java')
+  ],
+  null,
+  true // multiple = true
+);
+
+// Selected value will be an array: ['js', 'ts', 'angular']
+```
+
+### Same Title and Value
+
+```typescript
+import { RadioGroup, OptionChild } from 'mat-dynamic-form';
+
+// When title and value are the same
+const sizeRadio = new RadioGroup(
+  'size',
+  'T-Shirt Size',
+  [
+    new OptionChild('Small', 'Small'),
+    new OptionChild('Medium', 'Medium'),
+    new OptionChild('Large', 'Large'),
+    new OptionChild('X-Large', 'X-Large')
+  ]
+);
+```
+
+### Hierarchical/Grouped Options
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+
+// Note: Mat Dynamic Form doesn't support optgroups directly,
+// but you can include group info in the title
+const locationDropdown = new Dropdown(
+  'location',
+  'Location',
+  [
+    new OptionChild('North America - United States', 'us'),
+    new OptionChild('North America - Canada', 'ca'),
+    new OptionChild('North America - Mexico', 'mx'),
+    new OptionChild('Europe - United Kingdom', 'uk'),
+    new OptionChild('Europe - Germany', 'de'),
+    new OptionChild('Europe - France', 'fr'),
+    new OptionChild('Asia - Japan', 'jp'),
+    new OptionChild('Asia - China', 'cn'),
+    new OptionChild('Asia - India', 'in')
+  ]
+);
+```
+
+### Dynamic Options Based on Another Field
+
+```typescript
+import { Dropdown, OptionChild, ActionEvent } from 'mat-dynamic-form';
+
+const countryDropdown = new Dropdown(
+  'country',
+  'Country',
+  [
+    new OptionChild('United States', 'us'),
+    new OptionChild('Canada', 'ca')
+  ],
+  null,
+  false,
+  false,
+  'public',
+  null,
+  false,
+  null,
+  null,
+  {
+    type: 'valueChange',
+    onEvent: ({ event, structure }: ActionEvent) => {
+      const selectedCountry = event;
+      
+      // Update state options based on country
+      const stateNode = structure.getNodeById<Dropdown>('state');
+      
+      if (selectedCountry === 'us') {
+        stateNode.value = [
+          new OptionChild('California', 'ca'),
+          new OptionChild('New York', 'ny'),
+          new OptionChild('Texas', 'tx'),
+          new OptionChild('Florida', 'fl')
+        ];
+      } else if (selectedCountry === 'ca') {
+        stateNode.value = [
+          new OptionChild('Ontario', 'on'),
+          new OptionChild('Quebec', 'qc'),
+          new OptionChild('British Columbia', 'bc'),
+          new OptionChild('Alberta', 'ab')
+        ];
+      }
+    }
+  }
+);
+
+const stateDropdown = new Dropdown(
+  'state',
+  'State/Province',
+  [] // Initially empty
+);
+```
+
+### Search/Filter with Additional Data
+
+```typescript
+import { AutoComplete, OptionChild } from 'mat-dynamic-form';
+
+// Extended OptionChild to include additional searchable data
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+}
+
+function createProductOptions(products: Product[]): OptionChild[] {
+  return products.map(product => {
+    const option = new OptionChild(
+      `${product.name} (${product.sku})`,
+      product.id
+    );
+    // Store additional data for searching
+    option['category'] = product.category;
+    option['sku'] = product.sku;
+    return option;
+  });
+}
+
+const products: Product[] = [
+  { id: '1', name: 'Laptop', sku: 'LAP-001', category: 'Electronics' },
+  { id: '2', name: 'Mouse', sku: 'MOU-002', category: 'Electronics' },
+  { id: '3', name: 'Keyboard', sku: 'KEY-003', category: 'Electronics' },
+  { id: '4', name: 'Monitor', sku: 'MON-004', category: 'Electronics' }
+];
+
+const productAutocomplete = new AutoComplete(
+  'product',
+  'Search Products',
+  createProductOptions(products)
+);
+```
+
+### Localization/Internationalization
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+import { TranslateService } from '@ngx-translate/core';
+
+@Injectable()
+export class LocalizedFormService {
+  constructor(private translate: TranslateService) {}
+  
+  createLanguageDropdown(): Dropdown {
+    return new Dropdown(
+      'language',
+      this.translate.instant('FORM.LANGUAGE'),
+      [
+        new OptionChild(
+          this.translate.instant('LANGUAGES.ENGLISH'),
+          'en'
+        ),
+        new OptionChild(
+          this.translate.instant('LANGUAGES.SPANISH'),
+          'es'
+        ),
+        new OptionChild(
+          this.translate.instant('LANGUAGES.FRENCH'),
+          'fr'
+        ),
+        new OptionChild(
+          this.translate.instant('LANGUAGES.GERMAN'),
+          'de'
+        )
+      ],
+      this.translate.currentLang
+    );
+  }
+}
+```
+
+### Empty/Placeholder Option
+
+```typescript
+import { Dropdown, OptionChild } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+const roleDropdown = new Dropdown(
+  'role',
+  'Select Role',
+  [
+    new OptionChild('-- Select a Role --', ''),
+    new OptionChild('Administrator', 'admin'),
+    new OptionChild('Editor', 'editor'),
+    new OptionChild('Viewer', 'viewer')
+  ],
+  '',
+  false,
+  false,
+  'badge',
+  'Role is required',
+  false,
+  Validators.required // Will fail validation if empty string is selected
+);
+```
+
+## Use Cases
+
+OptionChild is used with:
+
+- **[Dropdown](/api/node#dropdown)** - Single or multi-select dropdowns
+- **[RadioGroup](/api/node#radiogroup)** - Radio button groups
+- **[AutoComplete](/api/node#autocomplete)** - Autocomplete/typeahead inputs
+
+## Related Classes
+
+- [Node](/api/node) - Form field nodes
+- [Dropdown](/api/node#dropdown) - Dropdown node using options
+- [RadioGroup](/api/node#radiogroup) - Radio group node using options
+- [AutoComplete](/api/node#autocomplete) - Autocomplete node using options
+- [FormStructure](/api/form-structure) - Form container
+
+## Best Practices
+
+### Unique Values
+
+Ensure option values are unique within a selectable control:
+
+```typescript
+// Good
+const options = [
+  new OptionChild('Apple', 'apple'),
+  new OptionChild('Orange', 'orange'),
+  new OptionChild('Banana', 'banana')
+];
+
+// Bad - duplicate values
+const options = [
+  new OptionChild('Red Apple', 'apple'),
+  new OptionChild('Green Apple', 'apple'), // Duplicate value!
+  new OptionChild('Orange', 'orange')
+];
+```
+
+### Meaningful Values
+
+Use meaningful values that can be understood without the title:
+
+```typescript
+// Good
+new OptionChild('United States', 'us')
+
+// Less ideal
+new OptionChild('United States', '1')
+```
+
+### Consistent Data Types
+
+Keep values as strings (they'll be automatically converted):
+
+```typescript
+// Recommended
+const options = [
+  new OptionChild('Option 1', '1'),
+  new OptionChild('Option 2', '2'),
+  new OptionChild('Option 3', '3')
+];
+
+// Also works, but less consistent
+const options = [
+  new OptionChild('Option 1', 1 as any),
+  new OptionChild('Option 2', 2 as any)
+];
+```
+
+### Clear Display Text
+
+Use descriptive titles that users can easily understand:
+
+```typescript
+// Good
+new OptionChild('2-3 Business Days', 'express')
+
+// Less clear
+new OptionChild('Express', 'express')
+```

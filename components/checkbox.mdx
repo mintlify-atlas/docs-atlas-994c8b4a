@@ -1,0 +1,432 @@
+---
+title: 'Checkbox'
+description: 'Boolean checkbox component for toggleable options and user agreements'
+---
+
+## Overview
+
+The `Checkbox` component provides a simple boolean toggle for yes/no choices, feature toggles, and user agreements. It's ideal for single options that can be independently toggled.
+
+## When to Use
+
+Use the Checkbox component when you need to:
+
+- Accept terms and conditions or user agreements
+- Toggle optional features on or off
+- Create lists of independent options (where multiple can be selected)
+- Represent boolean (true/false) values
+
+<Note>
+  For mutually exclusive options, use [Radio Group](/components/radio-group) instead. For a more visual toggle, consider using [Switch](/api/nodes/switch).
+</Note>
+
+## Basic Usage
+
+```typescript
+import { Checkbox } from 'mat-dynamic-form';
+
+const agreeCheckbox = new Checkbox(
+  'terms',
+  'I agree to the terms and conditions'
+);
+```
+
+## Common Patterns
+
+### Required Checkbox (Terms Acceptance)
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const termsCheckbox = new Checkbox(
+  'acceptTerms',
+  'I agree to the terms and conditions',
+  false // initial value
+).apply({
+  validator: Validators.requiredTrue,
+  errorMessage: 'You must accept the terms to continue',
+  singleLine: true
+});
+```
+
+<Warning>
+  Use `Validators.requiredTrue` (not `Validators.required`) to ensure the checkbox must be checked, not just interacted with.
+</Warning>
+
+### Pre-checked Checkbox
+
+```typescript
+const newsletterCheckbox = new Checkbox(
+  'newsletter',
+  'Subscribe to our newsletter',
+  true // pre-checked
+).apply({
+  icon: 'mail',
+  hint: 'You can unsubscribe at any time'
+});
+```
+
+### Checkbox with Value Change Handler
+
+```typescript
+const notificationCheckbox = new Checkbox(
+  'notifications',
+  'Enable email notifications'
+).apply({
+  icon: 'notifications',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const enabled = param.event;
+      console.log('Notifications:', enabled ? 'enabled' : 'disabled');
+      
+      // Show/hide additional options based on checkbox state
+      if (enabled) {
+        this.showNotificationSettings();
+      } else {
+        this.hideNotificationSettings();
+      }
+    }
+  }
+});
+```
+
+### Multiple Independent Checkboxes
+
+```typescript
+const interestsCheckboxes = [
+  new Checkbox('interestTech', 'Technology & Software').apply({
+    icon: 'computer'
+  }),
+  
+  new Checkbox('interestDesign', 'Design & Creativity').apply({
+    icon: 'palette'
+  }),
+  
+  new Checkbox('interestBusiness', 'Business & Marketing').apply({
+    icon: 'business'
+  }),
+  
+  new Checkbox('interestScience', 'Science & Research').apply({
+    icon: 'science'
+  })
+];
+```
+
+### Disabled Checkbox
+
+```typescript
+const disabledCheckbox = new Checkbox(
+  'feature',
+  'Premium feature (requires upgrade)',
+  false
+).apply({
+  disabled: true,
+  hint: 'Upgrade to Pro to enable this feature'
+});
+```
+
+## Properties
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the checkbox.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The label text displayed next to the checkbox.
+</ParamField>
+
+<ParamField path="value" type="boolean" default="false">
+  Initial checked state of the checkbox.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the checkbox.
+</ParamField>
+
+<ParamField path="validator" type="ValidatorFn | ValidatorFn[]">
+  Angular validators to apply. Use `Validators.requiredTrue` to require checkbox to be checked.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message shown when validation fails.
+</ParamField>
+
+<ParamField path="hint" type="string">
+  Helper text displayed below the checkbox.
+</ParamField>
+
+<ParamField path="disabled" type="boolean" default="false">
+  Whether the checkbox is disabled and non-interactive.
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the checkbox takes up a full row in the form grid.
+</ParamField>
+
+## Methods
+
+### apply()
+
+Applies multiple properties at once.
+
+```typescript
+checkbox.apply({
+  icon: 'check',
+  validator: Validators.requiredTrue,
+  hint: 'This is required'
+});
+```
+
+### getNativeElement()
+
+Returns the native DOM element.
+
+```typescript
+const element = checkbox.getNativeElement();
+if (element) {
+  element.focus();
+}
+```
+
+## Validation Examples
+
+### Required Checkbox
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const checkbox = new Checkbox(
+  'terms',
+  'I accept the terms'
+).apply({
+  validator: Validators.requiredTrue,
+  errorMessage: 'You must accept the terms'
+});
+```
+
+### Custom Validator
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+function mustBeCheckedValidator(control: AbstractControl): ValidationErrors | null {
+  if (control.value !== true) {
+    return { mustBeChecked: true };
+  }
+  return null;
+}
+
+const checkbox = new Checkbox('consent', 'I provide consent').apply({
+  validator: mustBeCheckedValidator,
+  errorMessage: 'Consent is required to continue'
+});
+```
+
+## Dynamic Behavior Example
+
+### Show/Hide Fields Based on Checkbox
+
+```typescript
+import { Component } from '@angular/core';
+import { FormStructure, Checkbox, Input, ActionEvent } from 'mat-dynamic-form';
+import { Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-shipping-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class ShippingFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Shipping Information');
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new Input('billingAddress', 'Billing Address').apply({
+        validator: Validators.required,
+        singleLine: true
+      }),
+      
+      new Checkbox(
+        'sameAsShipping',
+        'Shipping address is the same as billing'
+      ).apply({
+        singleLine: true,
+        action: {
+          type: 'valueChange',
+          onEvent: (param) => this.onSameAddressChange(param)
+        }
+      })
+    ];
+  }
+  
+  onSameAddressChange(param: ActionEvent) {
+    const isSameAddress = param.event;
+    
+    if (!isSameAddress) {
+      // Add shipping address field
+      this.formStructure.createNodes(2, [
+        new Input('shippingAddress', 'Shipping Address').apply({
+          validator: Validators.required,
+          singleLine: true
+        })
+      ]);
+    } else {
+      // Remove shipping address field
+      const shippingNode = this.formStructure.getNodeById('shippingAddress');
+      if (shippingNode) {
+        this.formStructure.removeNodes([shippingNode]);
+      }
+    }
+  }
+}
+```
+
+## Best Practices
+
+<Tip>
+  **Use clear, action-oriented labels** - Instead of "Terms and Conditions", use "I agree to the terms and conditions".
+</Tip>
+
+<Tip>
+  **Group related checkboxes** - When presenting multiple checkboxes, group them logically and provide a section heading.
+</Tip>
+
+<Warning>
+  **Don't use negative phrasing** - Avoid labels like "Don't send me emails". Use positive phrasing: "Send me emails" (unchecked by default).
+</Warning>
+
+<Tip>
+  **Make required checkboxes obvious** - Use `Validators.requiredTrue` and clear error messages for required checkboxes.
+</Tip>
+
+<Tip>
+  **Consider default states carefully** - For marketing/newsletter opt-ins, default to unchecked. For essential features, you might default to checked.
+</Tip>
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { FormStructure, Input, Checkbox, Button } from 'mat-dynamic-form';
+
+@Component({
+  selector: 'app-registration-form',
+  template: '<mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>'
+})
+export class RegistrationFormComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure('Create Account');
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new Input('email', 'Email').apply({
+        icon: 'email',
+        validator: [Validators.required, Validators.email],
+        singleLine: true
+      }),
+      
+      new Input('password', 'Password').apply({
+        icon: 'lock',
+        validator: [Validators.required, Validators.minLength(8)],
+        singleLine: true
+      }),
+      
+      // Preferences section
+      new Checkbox('newsletter', 'Send me product updates and newsletters').apply({
+        icon: 'mail',
+        hint: 'You can unsubscribe at any time',
+        singleLine: true
+      }),
+      
+      new Checkbox('notifications', 'Enable email notifications').apply({
+        icon: 'notifications',
+        value: true, // Default to enabled
+        singleLine: true
+      }),
+      
+      new Checkbox('shareData', 'Share anonymous usage data to improve the product').apply({
+        icon: 'analytics',
+        hint: 'Helps us make the product better for everyone',
+        singleLine: true
+      }),
+      
+      // Required terms acceptance
+      new Checkbox(
+        'terms',
+        'I agree to the Terms of Service and Privacy Policy'
+      ).apply({
+        validator: Validators.requiredTrue,
+        errorMessage: 'You must accept the terms to create an account',
+        singleLine: true
+      }),
+      
+      new Checkbox(
+        'age',
+        'I confirm that I am at least 18 years old'
+      ).apply({
+        validator: Validators.requiredTrue,
+        errorMessage: 'You must be at least 18 years old',
+        singleLine: true
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('submit', 'Create Account', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'person_add'
+      })
+    ];
+  }
+  
+  onSubmit(structure: FormStructure) {
+    const data = structure.getValue();
+    console.log('Registration data:', data);
+    // data.newsletter, data.notifications, etc. will be boolean values
+  }
+}
+```
+
+## Checkbox vs Switch
+
+Both `Checkbox` and `Switch` represent boolean values, but use them differently:
+
+| Use Case | Component | Reason |
+|----------|-----------|--------|
+| Terms acceptance | Checkbox | Conventional for agreements |
+| Feature toggle | Switch | More intuitive for on/off states |
+| Multiple options | Checkbox | Better for lists |
+| Single setting | Switch | More prominent |
+| Form submission | Checkbox | More formal |
+| Instant action | Switch | Implies immediate effect |
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Radio Group" icon="circle-dot" href="/components/radio-group">
+    For mutually exclusive options
+  </Card>
+  
+  <Card title="Switch" icon="toggle-on" href="/api/nodes/switch">
+    Alternative toggle with different visual style
+  </Card>
+  
+  <Card title="Dropdown" icon="chevron-down" href="/components/dropdown">
+    For selecting from many options
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [Validators](/concepts/validators) - Learn about validation
+- [Actions](/concepts/actions) - Handle checkbox changes
+- [Form Structure](/concepts/form-structure) - Form layout and organization

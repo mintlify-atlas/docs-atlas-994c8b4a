@@ -1,0 +1,374 @@
+---
+title: 'TimePicker'
+description: 'API reference for the TimePicker node class'
+---
+
+## Overview
+
+The `TimePicker` class provides a time-only selection interface. It extends `DateTimePicker` but is configured specifically for time selection without date components.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → InputBaseNode → DateTimePicker → TimePicker
+```
+
+## Constructor
+
+```typescript
+new TimePicker(
+  id: string,
+  placeholder?: string,
+  value?: any,
+  dateFormat?: string,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator | AbstractControlOptions,
+  asyncValidator?: AsyncValidatorFn,
+  action?: Action | Action[],
+  minDate?: Date,
+  maxDate?: Date,
+  acceptLabel?: string,
+  cancelLabel?: string
+)
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the time picker node in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The placeholder text to display when no time is selected.
+</ParamField>
+
+<ParamField path="value" type="any">
+  The initial time value. Can be a Date object, string, or timestamp.
+</ParamField>
+
+<ParamField path="dateFormat" type="string">
+  The time format to display. Example: `'HH:mm'` or `'hh:mm a'`
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether to display the node in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display in the picker field.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the time picker is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator | AbstractControlOptions">
+  Synchronous validator function(s) or control options.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidatorFn">
+  Asynchronous validator function(s) for the picker.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when a time is selected.
+</ParamField>
+
+<ParamField path="minDate" type="Date">
+  The minimum selectable time (time component is used).
+</ParamField>
+
+<ParamField path="maxDate" type="Date">
+  The maximum selectable time (time component is used).
+</ParamField>
+
+<ParamField path="acceptLabel" type="string" default="'OK'">
+  Custom label for the accept/confirm button.
+</ParamField>
+
+<ParamField path="cancelLabel" type="string" default="'Cancel'">
+  Custom label for the cancel button.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the node |
+| `placeholder` | `string` | The placeholder text |
+| `type` | `'timepicker'` | The node type (read-only) |
+| `value` | `any` | The selected time value |
+| `readOnly` | `boolean` | Whether the input field is read-only |
+| `dateFormat` | `string` | Display format for time |
+| `minDate` | `Date` | Minimum selectable time |
+| `maxDate` | `Date` | Maximum selectable time |
+| `acceptLabel` | `string` | Label for accept button |
+| `cancelLabel` | `string` | Label for cancel button |
+| `selectTimeLabel` | `string` | Label for select time action |
+| `enterTimeLabel` | `string` | Label for enter time action |
+| `showClockPicker` | `boolean` | Whether to show clock picker (inherited) |
+| `orientation` | `'portrait' \| 'landscape'` | Picker dialog orientation (inherited) |
+| `singleLine` | `boolean` | Whether displayed in single line layout |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Whether the node is disabled |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validators |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text to display |
+| `autoFocus` | `boolean` | Whether to auto-focus on load |
+
+## Methods
+
+### getNativeElement()
+
+Returns the native DOM element for this node.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Example
+
+```typescript
+import { TimePicker, Action } from '@ng-mdf/core';
+import { Validators } from '@angular/forms';
+
+// Simple time picker with 12-hour format
+const arrivalTime = new TimePicker(
+  'arrivalTime',
+  'Select arrival time',
+  undefined,
+  'hh:mm a',  // 12-hour format with AM/PM
+  false,
+  'access_time',
+  'Please select a valid time',
+  false,
+  Validators.required
+);
+
+// Time picker with 24-hour format
+const departureTime = new TimePicker(
+  'departureTime',
+  'Departure time',
+  undefined,
+  'HH:mm',  // 24-hour format
+  false,
+  'schedule',
+  undefined,
+  false,
+  Validators.required
+);
+
+// Time picker with custom labels
+const meetingTime = new TimePicker(
+  'meetingTime',
+  'Meeting time',
+  undefined,
+  'hh:mm a',
+  false,
+  'event',
+  'Please select a meeting time',
+  false,
+  Validators.required,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  'Confirm',  // acceptLabel
+  'Cancel'    // cancelLabel
+);
+
+// Time picker with action
+const reminderTime = new TimePicker(
+  'reminderTime',
+  'Set reminder time',
+  undefined,
+  'hh:mm a',
+  false,
+  'alarm',
+  undefined,
+  false,
+  undefined,
+  undefined,
+  new Action('change', (event) => {
+    console.log('Reminder set for:', event.value);
+    // Schedule notification
+    scheduleReminder(event.value);
+  })
+);
+
+// Time picker with default value
+const workStartTime = new TimePicker(
+  'workStart',
+  'Work start time',
+  new Date(2024, 0, 1, 9, 0),  // 9:00 AM
+  'hh:mm a',
+  false,
+  'work',
+  undefined,
+  false,
+  Validators.required
+);
+
+// Time picker with time range constraints
+const minTime = new Date();
+minTime.setHours(8, 0, 0);  // 8:00 AM
+
+const maxTime = new Date();
+maxTime.setHours(18, 0, 0);  // 6:00 PM
+
+const businessHoursTime = new TimePicker(
+  'businessHours',
+  'Select time (business hours)',
+  undefined,
+  'hh:mm a',
+  false,
+  'business',
+  'Please select a time during business hours (8 AM - 6 PM)',
+  false,
+  Validators.required,
+  undefined,
+  undefined,
+  minTime,  // minimum: 8:00 AM
+  maxTime   // maximum: 6:00 PM
+);
+```
+
+## Time Format Patterns
+
+The `dateFormat` property accepts time-specific format patterns:
+
+| Pattern | Description | Example |
+|---------|-------------|----------|
+| `HH` | 24-hour format (00-23) | 14 |
+| `hh` | 12-hour format (01-12) | 02 |
+| `h` | 12-hour format (1-12) | 2 |
+| `mm` | Minutes (00-59) | 30 |
+| `ss` | Seconds (00-59) | 45 |
+| `a` | AM/PM marker | PM |
+| `A` | AM/PM marker uppercase | PM |
+
+### Common Time Formats
+
+```typescript
+// 12-hour with AM/PM
+'hh:mm a'     // 02:30 PM
+'h:mm a'      // 2:30 PM
+'hh:mm:ss a'  // 02:30:45 PM
+
+// 24-hour format
+'HH:mm'       // 14:30
+'HH:mm:ss'    // 14:30:45
+
+// With separators
+'HH.mm'       // 14.30
+'HH-mm'       // 14-30
+```
+
+## Time Constraints
+
+### Business Hours Example
+
+Restrict time selection to business hours:
+
+```typescript
+const startOfDay = new Date();
+startOfDay.setHours(9, 0, 0, 0);  // 9:00 AM
+
+const endOfDay = new Date();
+endOfDay.setHours(17, 0, 0, 0);  // 5:00 PM
+
+const businessTime = new TimePicker(
+  'businessTime',
+  'Business hours only',
+  undefined,
+  'hh:mm a',
+  false,
+  'access_time',
+  'Please select a time between 9 AM and 5 PM',
+  false,
+  Validators.required,
+  undefined,
+  undefined,
+  startOfDay,
+  endOfDay
+);
+```
+
+### Time Intervals
+
+While the time picker doesn't directly support time intervals, you can validate selected times:
+
+```typescript
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+
+// Custom validator for 15-minute intervals
+function intervalValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  
+  const minutes = new Date(control.value).getMinutes();
+  if (minutes % 15 !== 0) {
+    return { interval: 'Time must be in 15-minute intervals' };
+  }
+  return null;
+}
+
+const intervalTime = new TimePicker(
+  'intervalTime',
+  'Select time (15-min intervals)',
+  undefined,
+  'hh:mm a',
+  false,
+  'access_time',
+  'Please select a time in 15-minute intervals',
+  false,
+  intervalValidator
+);
+```
+
+## Best Practices
+
+### When to Use TimePicker
+
+- **Time-only input**: When you need time selection without a date
+- **Scheduling**: For appointment times, reminder times, alarm times
+- **Duration selection**: Start/end times within a day
+- **Time preferences**: User settings for time-based features
+
+### Format Selection
+
+- Use **12-hour format** (`hh:mm a`) for user-facing applications in regions that prefer it
+- Use **24-hour format** (`HH:mm`) for technical applications or international audiences
+- Consider locale preferences when setting the format
+
+## Inherited Features
+
+Since `TimePicker` extends `DateTimePicker`, it inherits additional properties that may be useful:
+
+- `showClockPicker`: Enable analog clock interface
+- `orientation`: Set picker dialog orientation
+- `selectTimeLabel`: Customize selection labels
+- `enterTimeLabel`: Customize entry labels
+
+These can be modified after instantiation:
+
+```typescript
+const timePicker = new TimePicker('time', 'Select time');
+timePicker.showClockPicker = true;
+timePicker.orientation = 'landscape';
+```
+
+## Related Node Types
+
+- [DateTimePicker](/api/nodes/date-time-picker) - For selecting both date and time
+- [DatePicker](/api/nodes/date-picker) - For selecting date only
+- [DateRangePicker](/api/nodes/date-range-picker) - For selecting a date range
+- [Input](/api/nodes/input) - Base input node for text values

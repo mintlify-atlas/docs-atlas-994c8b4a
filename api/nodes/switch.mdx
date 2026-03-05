@@ -1,0 +1,446 @@
+---
+title: Switch
+description: Toggle switch for boolean true/false selections
+---
+
+The `Switch` class creates a toggle switch input for capturing boolean values (true/false). It extends `NodeBase` directly and provides a modern alternative to checkboxes for on/off states. Switches are ideal for settings, feature toggles, and binary options.
+
+## Inheritance
+
+```
+ObjectBase → NodeBase → Switch
+```
+
+## Constructor
+
+```typescript
+new Switch(
+  id: string,
+  placeholder?: string,
+  value?: boolean,
+  singleLine?: boolean,
+  icon?: string,
+  errorMessage?: string,
+  disabled?: boolean,
+  validator?: Validator,
+  asyncValidator?: AsyncValidator,
+  action?: Action | Action[]
+)
+```
+
+## Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier for the switch in the DOM.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  The label text displayed next to the switch.
+</ParamField>
+
+<ParamField path="value" type="boolean">
+  The initial state of the switch (`true` for on, `false` for off).
+</ParamField>
+
+<ParamField path="singleLine" type="boolean" default="false">
+  Whether the switch should be displayed in a single line layout.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Material icon name to display alongside the switch.
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display when validation fails.
+</ParamField>
+
+<ParamField path="disabled" type="boolean">
+  Whether the switch is disabled.
+</ParamField>
+
+<ParamField path="validator" type="Validator">
+  Synchronous validator(s) to apply to the switch. Can be a single `ValidatorFn`, an array of `ValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="asyncValidator" type="AsyncValidator">
+  Asynchronous validator(s) to apply to the switch. Can be a single `AsyncValidatorFn`, an array of `AsyncValidatorFn`, or `null`.
+</ParamField>
+
+<ParamField path="action" type="Action | Action[]">
+  Action(s) to execute when the switch state changes.
+</ParamField>
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The unique identifier for the switch |
+| `placeholder` | `string` | The label text for the switch |
+| `type` | `NodeType` | The type of node (set to `'switch'`) |
+| `value` | `boolean` | The current state (true = on, false = off) |
+| `singleLine` | `boolean` | Single line layout flag |
+| `icon` | `string` | Material icon name |
+| `errorMessage` | `string` | Custom error message |
+| `disabled` | `boolean` | Disabled state |
+| `validator` | `Validator \| AbstractControlOptions` | Synchronous validators |
+| `asyncValidator` | `AsyncValidatorFn` | Asynchronous validator |
+| `action` | `Action \| Action[]` | Associated actions |
+| `hint` | `string` | Hint text displayed near the switch |
+| `autoFocus` | `boolean` | Whether to auto-focus the switch |
+
+## Methods
+
+### apply()
+
+Inherited from `ObjectBase`. Applies additional properties to the node instance.
+
+```typescript
+apply(options: Partial<Switch>): this
+```
+
+### getNativeElement()
+
+Returns the native DOM element for this switch.
+
+```typescript
+getNativeElement(): HTMLElement | null
+```
+
+## Usage Examples
+
+### Basic Switch
+
+```typescript
+import { Switch } from 'mat-dynamic-form';
+
+const darkModeSwitch = new Switch('darkMode', 'Dark Mode');
+```
+
+### Switch with Initial Value
+
+```typescript
+const notificationsSwitch = new Switch('notifications', 'Enable Notifications', true).apply({
+  hint: 'Receive push notifications'
+});
+```
+
+### Switch with Icon
+
+```typescript
+const wifiSwitch = new Switch('wifi', 'Wi-Fi', true).apply({
+  icon: 'wifi',
+  hint: 'Connect to Wi-Fi network'
+});
+```
+
+### Disabled Switch
+
+```typescript
+const airplaneModeSwitch = new Switch('airplaneMode', 'Airplane Mode', false).apply({
+  disabled: true,
+  icon: 'airplanemode_active',
+  hint: 'Airplane mode is controlled by system settings'
+});
+```
+
+### Switch with Action
+
+```typescript
+const autoSaveSwitch = new Switch('autoSave', 'Auto-Save', true).apply({
+  icon: 'save',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      console.log('Auto-save is now:', param.event ? 'enabled' : 'disabled');
+      
+      // Update application setting
+      if (param.event) {
+        enableAutoSave();
+      } else {
+        disableAutoSave();
+      }
+    }
+  }
+});
+```
+
+### Settings Form with Multiple Switches
+
+```typescript
+import { FormStructure, Switch, Button } from 'mat-dynamic-form';
+
+const settingsForm = new FormStructure();
+settingsForm.title = 'Application Settings';
+settingsForm.appearance = 'outline';
+
+settingsForm.nodes = [
+  new Switch('notifications', 'Push Notifications', true).apply({
+    icon: 'notifications',
+    hint: 'Receive real-time notifications'
+  }),
+  
+  new Switch('emailDigest', 'Daily Email Digest', false).apply({
+    icon: 'email',
+    hint: 'Get a daily summary via email'
+  }),
+  
+  new Switch('soundEffects', 'Sound Effects', true).apply({
+    icon: 'volume_up',
+    hint: 'Play sounds for actions'
+  }),
+  
+  new Switch('autoUpdate', 'Automatic Updates', true).apply({
+    icon: 'update',
+    hint: 'Automatically download and install updates'
+  })
+];
+
+settingsForm.validateActions = [
+  new Button('save', 'Save Settings', {
+    onEvent: (param) => {
+      const settings = param.structure?.getValue();
+      console.log('Settings saved:', settings);
+    },
+    style: 'primary'
+  }).apply({
+    icon: 'save'
+  })
+];
+```
+
+### Privacy Settings
+
+```typescript
+import { FormStructure, Switch } from 'mat-dynamic-form';
+
+const privacyForm = new FormStructure();
+privacyForm.title = 'Privacy Settings';
+
+privacyForm.nodes = [
+  new Switch('profilePublic', 'Public Profile', false).apply({
+    icon: 'public',
+    hint: 'Make your profile visible to everyone'
+  }),
+  
+  new Switch('showOnlineStatus', 'Show Online Status', true).apply({
+    icon: 'online_prediction',
+    hint: 'Let others see when you\'re online'
+  }),
+  
+  new Switch('allowSearchIndexing', 'Search Engine Indexing', false).apply({
+    icon: 'search',
+    hint: 'Allow search engines to index your profile'
+  }),
+  
+  new Switch('shareAnalytics', 'Share Analytics', false).apply({
+    icon: 'analytics',
+    hint: 'Help improve our service with anonymous usage data'
+  })
+];
+```
+
+### Feature Toggle with Conditional Fields
+
+```typescript
+import { Switch, Input } from 'mat-dynamic-form';
+
+const twoFactorSwitch = new Switch('enableTwoFactor', 'Two-Factor Authentication').apply({
+  icon: 'security',
+  hint: 'Add an extra layer of security',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      if (param.event === true) {
+        // Add phone number field for 2FA
+        const phoneField = new Input('phoneNumber', 'Phone Number').apply({
+          icon: 'phone',
+          validator: Validators.required,
+          hint: 'Enter your phone number for verification codes'
+        });
+        
+        param.structure.createNodes(1, [phoneField]);
+      } else {
+        // Remove phone number field
+        param.structure.removeNode('phoneNumber');
+      }
+    }
+  }
+});
+```
+
+### Theme Switcher
+
+```typescript
+const themeSwitch = new Switch('darkTheme', 'Dark Theme', false).apply({
+  icon: 'dark_mode',
+  hint: 'Switch between light and dark themes',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const theme = param.event ? 'dark' : 'light';
+      console.log('Switching to', theme, 'theme');
+      
+      // Apply theme to application
+      document.body.classList.remove('light-theme', 'dark-theme');
+      document.body.classList.add(`${theme}-theme`);
+      
+      // Save preference
+      localStorage.setItem('theme', theme);
+    }
+  }
+});
+```
+
+### Conditional Enable/Disable
+
+```typescript
+import { Switch, Dropdown, OptionChild } from 'mat-dynamic-form';
+
+const advancedModeSwitch = new Switch('advancedMode', 'Advanced Mode').apply({
+  icon: 'settings',
+  hint: 'Show advanced configuration options',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      // Enable/disable advanced fields
+      const advancedDropdown = param.structure.getNodeById('advancedOptions');
+      if (advancedDropdown) {
+        advancedDropdown.disabled = !param.event;
+      }
+    }
+  }
+});
+
+const advancedDropdown = new Dropdown('advancedOptions', 'Advanced Options', [
+  new OptionChild('Option 1', '1'),
+  new OptionChild('Option 2', '2')
+]).apply({
+  disabled: true // Initially disabled
+});
+```
+
+### Notification Preferences
+
+```typescript
+import { FormStructure, Switch } from 'mat-dynamic-form';
+
+const notificationForm = new FormStructure();
+notificationForm.title = 'Notification Preferences';
+notificationForm.nodeGrid = 2; // 2-column layout
+
+notificationForm.nodes = [
+  new Switch('emailNotifications', 'Email Notifications', true).apply({
+    icon: 'email',
+    hint: 'Receive notifications via email'
+  }),
+  
+  new Switch('smsNotifications', 'SMS Notifications', false).apply({
+    icon: 'sms',
+    hint: 'Receive notifications via SMS'
+  }),
+  
+  new Switch('pushNotifications', 'Push Notifications', true).apply({
+    icon: 'notifications_active',
+    hint: 'Receive push notifications'
+  }),
+  
+  new Switch('desktopNotifications', 'Desktop Notifications', true).apply({
+    icon: 'notifications',
+    hint: 'Show desktop notifications'
+  }),
+  
+  new Switch('soundAlerts', 'Sound Alerts', true).apply({
+    icon: 'volume_up',
+    hint: 'Play sound for notifications'
+  }),
+  
+  new Switch('vibrate', 'Vibration', true).apply({
+    icon: 'vibration',
+    hint: 'Vibrate on notifications (mobile only)'
+  })
+];
+```
+
+### Master Switch with Sub-Options
+
+```typescript
+import { Switch } from 'mat-dynamic-form';
+
+const masterSwitch = new Switch('masterNotifications', 'Enable All Notifications', true).apply({
+  icon: 'notifications',
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => {
+      const subSwitchIds = ['emailNotif', 'smsNotif', 'pushNotif', 'desktopNotif'];
+      
+      subSwitchIds.forEach(id => {
+        const subSwitch = param.structure.getNodeById(id);
+        if (subSwitch) {
+          subSwitch.disabled = !param.event;
+          if (!param.event) {
+            subSwitch.value = false;
+          }
+        }
+      });
+    }
+  }
+});
+
+const emailNotif = new Switch('emailNotif', 'Email', true).apply({ icon: 'email' });
+const smsNotif = new Switch('smsNotif', 'SMS', false).apply({ icon: 'sms' });
+const pushNotif = new Switch('pushNotif', 'Push', true).apply({ icon: 'notifications_active' });
+const desktopNotif = new Switch('desktopNotif', 'Desktop', true).apply({ icon: 'computer' });
+```
+
+### Switch with Validation
+
+```typescript
+import { Validators } from '@angular/forms';
+
+const termsSwitch = new Switch('acceptTerms', 'I accept the terms and conditions').apply({
+  validator: Validators.requiredTrue,
+  errorMessage: 'You must accept the terms to continue',
+  icon: 'gavel'
+});
+```
+
+## Switch vs Checkbox
+
+### When to Use Switch
+
+- Instant effects (changes apply immediately)
+- Settings and preferences
+- Enable/disable features
+- On/off states
+- Binary options that take effect right away
+
+### When to Use Checkbox
+
+- Form submissions (changes apply on submit)
+- Multiple selections
+- Accepting terms and conditions
+- Options that require confirmation
+
+## Best Practices
+
+1. **Clear Labels**: Use descriptive labels that indicate what the switch controls
+
+2. **Immediate Feedback**: Switches should take effect immediately; use actions to respond to changes
+
+3. **Default States**: Set appropriate default values based on common use cases
+
+4. **Icons**: Use relevant icons to make switches more recognizable
+
+5. **Hints**: Provide helpful hint text to explain what the switch controls
+
+6. **Grouping**: Group related switches together logically
+
+7. **Accessibility**: Ensure switches are keyboard accessible and have clear labels
+
+8. **Master Controls**: Use master switches to control groups of related switches
+
+## Related Node Types
+
+- [Checkbox](/api/nodes/checkbox) - Boolean input for form submissions
+- [RadioGroup](/api/nodes/radiogroup) - Single selection from multiple options
+- [Dropdown](/api/nodes/dropdown) - Select from dropdown list

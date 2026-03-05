@@ -1,80 +1,558 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Create your first dynamic form in 5 minutes
 ---
 
-## Get started in three steps
+# Quick Start
 
-Get your documentation site running locally and make your first customization.
+This guide will walk you through creating a complete, functional user registration form using Mat Dynamic Form. You'll learn the basics of form structure, validation, and retrieving form values.
 
-### Step 1: Set up your local environment
+<Note>
+Before starting, make sure you've completed the [installation](/installation) steps.
+</Note>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+## What We'll Build
+
+We're going to create a user registration form with:
+
+- Name and email inputs with validation
+- Password field with confirmation
+- Birth date picker
+- Country dropdown selection
+- Terms and conditions checkbox
+- Submit and reset buttons
+
+## Step-by-Step Guide
+
+<Steps>
+  <Step title="Generate a new component">
+    Create a component for your registration form:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    ```bash
+    ng generate component user-registration
+    ```
+  </Step>
+  
+  <Step title="Import required classes">
+    Open `user-registration.component.ts` and import the necessary classes from Mat Dynamic Form:
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    ```typescript user-registration.component.ts
+    import { Component } from '@angular/core';
+    import { Validators } from '@angular/forms';
+    import {
+      FormStructure,
+      Input,
+      InputPassword,
+      DatePicker,
+      Dropdown,
+      Checkbox,
+      Button,
+      OptionChild
+    } from 'mat-dynamic-form';
+    ```
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    <Tip>
+    All form control classes (Input, Dropdown, etc.) are exported from the main `mat-dynamic-form` package.
+    </Tip>
+  </Step>
+  
+  <Step title="Define the form structure">
+    Create the form structure in your component class:
+    
+    ```typescript user-registration.component.ts
+    export class UserRegistrationComponent {
+      formStructure: FormStructure;
+      
+      constructor() {
+        // Initialize the form structure
+        this.formStructure = new FormStructure();
+        
+        // Set form properties
+        this.formStructure.title = 'User Registration';
+        this.formStructure.appearance = 'outline';
+        this.formStructure.nodeGrid = 2; // 2-column layout
+        
+        // Define form fields
+        this.formStructure.nodes = [
+          new Input('name', 'Full Name').apply({
+            icon: 'person',
+            maxCharCount: 100,
+            validator: Validators.required
+          }),
+          
+          new Input('email', 'Email Address').apply({
+            icon: 'email',
+            validator: [Validators.required, Validators.email],
+            errorMessage: 'Please enter a valid email address'
+          }),
+          
+          new InputPassword('password', 'Password').apply({
+            validator: [Validators.required, Validators.minLength(8)],
+            hint: 'Minimum 8 characters'
+          }),
+          
+          new InputPassword('confirmPassword', 'Confirm Password').apply({
+            validator: Validators.required
+          }),
+          
+          new DatePicker('birthDate', 'Birth Date').apply({
+            validator: Validators.required,
+            singleLine: false
+          }),
+          
+          new Dropdown('country', 'Country', [
+            new OptionChild('United States', 'US'),
+            new OptionChild('United Kingdom', 'UK'),
+            new OptionChild('Canada', 'CA'),
+            new OptionChild('Australia', 'AU')
+          ]).apply({
+            validator: Validators.required,
+            singleLine: false
+          }),
+          
+          new Checkbox(
+            'terms',
+            'I agree to the terms and conditions'
+          ).apply({
+            singleLine: true,
+            validator: Validators.requiredTrue
+          })
+        ];
+        
+        // Define action buttons
+        this.formStructure.validateActions = [
+          new Button('reset', 'Reset', {
+            style: 'warn',
+            onEvent: (param) => {
+              param.structure.reset();
+              param.structure.remapValues();
+            }
+          }).apply({
+            icon: 'refresh'
+          }),
+          
+          new Button('submit', 'Register', {
+            style: 'primary',
+            onEvent: (param) => this.onSubmit(param.structure)
+          }).apply({
+            validateForm: true,
+            icon: 'check'
+          })
+        ];
+      }
+      
+      onSubmit(structure: FormStructure) {
+        const formData = structure.getValue();
+        console.log('Form submitted:', formData);
+        // Handle form submission
+      }
+    }
+    ```
+    
+    <Info>
+    **Key concepts used here:**
+    
+    - `FormStructure` - The main container for your form
+    - `nodes` - Array of form fields
+    - `validateActions` - Action buttons (submit, reset, etc.)
+    - `.apply()` - Method to configure field properties
+    - `validator` - Angular validators for field validation
+    </Info>
+  </Step>
+  
+  <Step title="Add the template">
+    Update `user-registration.component.html` with the form component:
+    
+    ```html user-registration.component.html
+    <div class="form-container">
+      <mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>
+    </div>
+    ```
+    
+    That's it! The `mat-dynamic-form` component renders the entire form based on your configuration.
+  </Step>
+  
+  <Step title="Add styling (optional)">
+    Add some basic styling in `user-registration.component.scss`:
+    
+    ```scss user-registration.component.scss
+    .form-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    ```
+  </Step>
+  
+  <Step title="Run the application">
+    Start your development server:
+    
+    ```bash
+    ng serve
+    ```
+    
+    Navigate to `http://localhost:4200/user-registration` and you should see your fully functional registration form!
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Check>
+**Success!** You've created your first Mat Dynamic Form. The form includes validation, Material Design styling, and is fully reactive.
+</Check>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+## Understanding the Code
 
-### Step 3: Go live
+### Form Structure Properties
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```typescript
+this.formStructure.title = 'User Registration';
+this.formStructure.appearance = 'outline';
+this.formStructure.nodeGrid = 2;
+```
 
-## Next steps
+- `title` - Displays at the top of the form
+- `appearance` - Material form field style: `'fill'`, `'outline'`, or `'standard'`
+- `nodeGrid` - Number of columns (1-4) for responsive grid layout
 
-Now that you have your docs running, explore these key features:
+### Creating Form Fields
+
+Each field is created using its corresponding class:
+
+```typescript
+new Input('fieldId', 'Field Label').apply({
+  // Configuration options
+  icon: 'iconName',
+  validator: Validators.required,
+  hint: 'Helper text'
+})
+```
+
+The first parameter is the **field ID** (used as the key in form values), and the second is the **label** shown to users.
+
+### The apply() Method
+
+The `.apply()` method is a convenient way to set multiple properties on a node:
+
+```typescript
+// Instead of:
+const nameInput = new Input('name', 'Full Name');
+nameInput.icon = 'person';
+nameInput.validator = Validators.required;
+nameInput.maxCharCount = 100;
+
+// Use apply():
+new Input('name', 'Full Name').apply({
+  icon: 'person',
+  validator: Validators.required,
+  maxCharCount: 100
+})
+```
+
+### Action Buttons
+
+Buttons are defined in the `validateActions` array:
+
+```typescript
+this.formStructure.validateActions = [
+  new Button('buttonId', 'Button Label', {
+    style: 'primary', // 'primary' | 'accent' | 'warn'
+    onEvent: (param) => {
+      // Handle button click
+      // param.event - Click event
+      // param.structure - Reference to FormStructure
+    }
+  }).apply({
+    validateForm: true, // Disable button if form is invalid
+    icon: 'check'
+  })
+];
+```
+
+<Warning>
+**Important:** The `validateActions` array supports a maximum of 4 buttons. Adding more will throw an error.
+</Warning>
+
+## Getting Form Values
+
+There are several ways to retrieve form values:
+
+### Get All Values
+
+```typescript
+// Get all form values as an object
+const formData = this.formStructure.getValue<UserData>();
+
+// Example output:
+// {
+//   name: 'John Doe',
+//   email: 'john@example.com',
+//   password: 'secret123',
+//   confirmPassword: 'secret123',
+//   birthDate: '1990-01-15',
+//   country: 'US',
+//   terms: true
+// }
+```
+
+### Get Raw Values (Including Disabled Fields)
+
+```typescript
+const rawData = this.formStructure.getRawValue<UserData>();
+```
+
+### Get Individual Field Values
+
+```typescript
+// Get a specific control
+const emailControl = this.formStructure.getControlById('email');
+const emailValue = emailControl?.value;
+
+// Or get the node with its current value
+const emailNode = this.formStructure.getNodeById<Input>('email');
+console.log(emailNode.value);
+```
+
+### Check Form Validity
+
+```typescript
+if (this.formStructure.isValid()) {
+  console.log('Form is valid!');
+} else {
+  console.log('Form has errors');
+}
+```
+
+## Setting Form Values
+
+You can programmatically set form values:
+
+```typescript
+// Set multiple values at once
+this.formStructure.patchValue({
+  name: 'Jane Smith',
+  email: 'jane@example.com',
+  country: 'UK'
+});
+
+// Reset the form to initial values
+this.formStructure.reset();
+this.formStructure.remapValues();
+```
+
+## Adding Dynamic Behavior
+
+Let's enhance the form to show additional fields based on user selection:
+
+```typescript
+new Dropdown('employmentStatus', 'Employment Status', [
+  new OptionChild('Employed', 'employed'),
+  new OptionChild('Self-Employed', 'self-employed'),
+  new OptionChild('Unemployed', 'unemployed')
+]).apply({
+  action: {
+    type: 'valueChange',
+    onEvent: (param) => this.onEmploymentChange(param)
+  }
+})
+```
+
+Then add the event handler:
+
+```typescript
+onEmploymentChange(param: ActionEvent) {
+  const value = param.event;
+  
+  if (value === 'employed' || value === 'self-employed') {
+    // Add company name field
+    this.formStructure.createNodes(6, [
+      new Input('companyName', 'Company Name').apply({
+        validator: Validators.required
+      })
+    ]);
+  } else {
+    // Remove company name field
+    const companyNode = this.formStructure.getNodeById('companyName');
+    if (companyNode) {
+      this.formStructure.removeNodes([companyNode]);
+    }
+  }
+}
+```
+
+<Tip>
+The `createNodes()` method takes a position index and an array of nodes. The position determines where in the form the new fields appear.
+</Tip>
+
+## Complete Example
+
+Here's the complete working example:
+
+<CodeGroup>
+```typescript user-registration.component.ts
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import {
+  FormStructure,
+  Input,
+  InputPassword,
+  DatePicker,
+  Dropdown,
+  Checkbox,
+  Button,
+  OptionChild,
+  ActionEvent
+} from 'mat-dynamic-form';
+
+interface UserData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  birthDate: string;
+  country: string;
+  terms: boolean;
+}
+
+@Component({
+  selector: 'app-user-registration',
+  templateUrl: './user-registration.component.html',
+  styleUrls: ['./user-registration.component.scss']
+})
+export class UserRegistrationComponent {
+  formStructure: FormStructure;
+  
+  constructor() {
+    this.formStructure = new FormStructure();
+    this.formStructure.title = 'User Registration';
+    this.formStructure.appearance = 'outline';
+    this.formStructure.nodeGrid = 2;
+    
+    this.formStructure.nodes = [
+      new Input('name', 'Full Name').apply({
+        icon: 'person',
+        maxCharCount: 100,
+        validator: Validators.required
+      }),
+      
+      new Input('email', 'Email Address').apply({
+        icon: 'email',
+        validator: [Validators.required, Validators.email],
+        errorMessage: 'Please enter a valid email address'
+      }),
+      
+      new InputPassword('password', 'Password').apply({
+        validator: [Validators.required, Validators.minLength(8)],
+        hint: 'Minimum 8 characters'
+      }),
+      
+      new InputPassword('confirmPassword', 'Confirm Password').apply({
+        validator: Validators.required
+      }),
+      
+      new DatePicker('birthDate', 'Birth Date').apply({
+        validator: Validators.required,
+        singleLine: false
+      }),
+      
+      new Dropdown('country', 'Country', [
+        new OptionChild('United States', 'US'),
+        new OptionChild('United Kingdom', 'UK'),
+        new OptionChild('Canada', 'CA'),
+        new OptionChild('Australia', 'AU')
+      ]).apply({
+        validator: Validators.required,
+        singleLine: false
+      }),
+      
+      new Checkbox(
+        'terms',
+        'I agree to the terms and conditions'
+      ).apply({
+        singleLine: true,
+        validator: Validators.requiredTrue
+      })
+    ];
+    
+    this.formStructure.validateActions = [
+      new Button('reset', 'Reset', {
+        style: 'warn',
+        onEvent: (param) => {
+          param.structure.reset();
+          param.structure.remapValues();
+        }
+      }).apply({
+        icon: 'refresh'
+      }),
+      
+      new Button('submit', 'Register', {
+        style: 'primary',
+        onEvent: (param) => this.onSubmit(param.structure)
+      }).apply({
+        validateForm: true,
+        icon: 'check'
+      })
+    ];
+  }
+  
+  onSubmit(structure: FormStructure) {
+    const formData = structure.getValue<UserData>();
+    
+    // Validate password confirmation
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
+    
+    console.log('Registration data:', formData);
+    alert('Registration successful!');
+    
+    // Here you would typically send data to your backend
+    // this.userService.register(formData).subscribe(...);
+  }
+}
+```
+
+```html user-registration.component.html
+<div class="form-container">
+  <mat-dynamic-form [structure]="formStructure"></mat-dynamic-form>
+</div>
+```
+
+```scss user-registration.component.scss
+.form-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background-color: white;
+}
+```
+</CodeGroup>
+
+## What's Next?
+
+Now that you've built your first dynamic form, explore more advanced features:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Core Concepts" icon="book" href="/core-concepts">
+    Deep dive into FormStructure, Nodes, and the apply() method
+  </Card>
+  
+  <Card title="Form Fields" icon="input-text" href="/form-fields">
+    Learn about all available form field types and their options
+  </Card>
+  
+  <Card title="Validation" icon="shield-check" href="/validation">
+    Master form validation with built-in and custom validators
+  </Card>
+  
+  <Card title="Actions & Events" icon="bolt" href="/actions-events">
+    Handle user interactions and create dynamic forms
+  </Card>
 </CardGroup>
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+**Pro Tip:** Check out the [GitHub repository](https://github.com/Charlieras262/DynamicFrom) for more examples and the complete source code.
 </Note>
