@@ -1,0 +1,142 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Mat Dynamic Form",
+  "projectDescription": "Angular library for creating dynamic, JSON-driven forms with Angular Material components",
+  "theme": "palm",
+  "primaryColor": "#94cb04",
+  "lightColor": "#545454",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/form-structure",
+              "concepts/nodes",
+              "concepts/actions",
+              "concepts/validators"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/overview",
+              "components/input",
+              "components/dropdown",
+              "components/checkbox",
+              "components/radio-group",
+              "components/date-picker",
+              "components/date-time-picker",
+              "components/time-picker",
+              "components/input-file",
+              "components/textarea",
+              "components/button",
+              "components/custom-component"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/dynamic-nodes",
+              "advanced/custom-validators",
+              "advanced/form-events",
+              "advanced/styling"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "examples/sign-up-form",
+              "examples/conditional-fields",
+              "examples/file-upload"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Classes",
+            "pages": [
+              "api/form-structure",
+              "api/node",
+              "api/action",
+              "api/option-child",
+              "api/dataset"
+            ]
+          },
+          {
+            "group": "Node Types",
+            "pages": [
+              "api/nodes/input",
+              "api/nodes/input-password",
+              "api/nodes/input-number",
+              "api/nodes/input-file",
+              "api/nodes/textarea",
+              "api/nodes/checkbox",
+              "api/nodes/switch",
+              "api/nodes/dropdown",
+              "api/nodes/autocomplete",
+              "api/nodes/radio-group",
+              "api/nodes/date-picker",
+              "api/nodes/date-time-picker",
+              "api/nodes/time-picker",
+              "api/nodes/date-range-picker",
+              "api/nodes/button",
+              "api/nodes/custom-node"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "JSON-driven form generation",
+    "Angular Material integration",
+    "Dynamic node creation and removal",
+    "Built-in validation support",
+    "Custom component integration",
+    "File upload with drag & drop",
+    "Date/time pickers with multiple formats",
+    "Reactive form controls",
+    "Form event handling",
+    "Conditional field rendering"
+  ],
+  "publicApiSurface": [
+    "MatDynamicFormModule",
+    "MatDynamicFormComponent",
+    "FormStructure",
+    "Node",
+    "Input",
+    "InputPassword",
+    "InputNumber",
+    "InputFile",
+    "TextArea",
+    "Checkbox",
+    "Switch",
+    "Dropdown",
+    "AutoComplete",
+    "RadioGroup",
+    "DatePicker",
+    "DateTimePicker",
+    "TimePicker",
+    "DateRangePicker",
+    "Button",
+    "CustomNode",
+    "Action",
+    "OptionChild",
+    "DataSet"
+  ]
+}
